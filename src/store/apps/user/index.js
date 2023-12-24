@@ -27,6 +27,15 @@ export const addUser = createAsyncThunk(
     return response
   }
 )
+// ** update User
+export const updateUser = createAsyncThunk(
+  'appUsers/updateUser',
+  async (data, { getState, dispatch }) => {
+    const response = await instance.put(endpoints.Updateuser, data)
+
+    return response
+  }
+)
 
 // ** Delete User
 export const deleteUser = createAsyncThunk(
@@ -48,11 +57,15 @@ export const appUsersSlice = createSlice({
     total: 1,
     params: {},
     allData: [],
-    skills: []
+    skills: [],
+    userId: 0
   },
   reducers: {
     setLoggedInUser: (state, action) => {
       state.loggedInUser = action.payload
+    },
+    setUserId: (state, { payload }) => {
+      state.userId = payload
     }
   },
   extraReducers: builder => {
@@ -69,6 +82,6 @@ export const appUsersSlice = createSlice({
   }
 })
 
-export const { setLoggedInUser } = appUsersSlice.actions
+export const { setLoggedInUser, setUserId } = appUsersSlice.actions
 
 export default appUsersSlice.reducer

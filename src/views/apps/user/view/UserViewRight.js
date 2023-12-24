@@ -92,7 +92,7 @@ const UserViewRight = ({ tab, invoiceData }) => {
             </Box>
           }
         />
-        <Tab
+        {/* <Tab
           value='security'
           label={
             <Box sx={{ display: 'flex', alignItems: 'center', '& svg': { mr: 2 } }}>
@@ -127,7 +127,7 @@ const UserViewRight = ({ tab, invoiceData }) => {
               Connection
             </Box>
           }
-        />
+        /> */}
       </TabList>
       <Box sx={{ mt: 4 }}>
         {isLoading ? (

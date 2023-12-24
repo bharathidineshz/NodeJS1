@@ -9,7 +9,7 @@ import Icon from 'src/@core/components/icon'
 
 const ClientTableHeader = props => {
   // ** Props
-  const { handleFilter, value } = props
+  const { handleFilter, value, setOpen } = props
 
   return (
     <Box
@@ -39,7 +39,7 @@ const ClientTableHeader = props => {
           onChange={e => handleFilter(e.target.value)} // Pass the search value to handleFilter
         />
 
-        <Button sx={{ mb: 2 }} variant='contained' component={Link} href='/clients/add'>
+        <Button sx={{ mb: 2 }} variant='contained' onClick={()=> setOpen()}>
           New Client
         </Button>
       </Box>

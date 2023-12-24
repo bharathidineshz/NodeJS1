@@ -85,7 +85,13 @@ const LeavePolicy = ({ data }) => {
       flex: 0.2,
       minWidth: 120,
       headerName: 'Count',
-      field: 'leaveCount'
+      field: 'allowanceCount'
+    },
+    {
+      flex: 0.2,
+      minWidth: 120,
+      headerName: 'Time',
+      field: 'allowanceTime'
     },
     {
       flex: 0.2,

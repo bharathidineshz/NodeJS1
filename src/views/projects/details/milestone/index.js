@@ -27,6 +27,8 @@ import { TimelineOppositeContent } from '@mui/lab'
 import { useDispatch, useSelector } from 'react-redux'
 import EmptyMileStone from './EmptyMilestone'
 import MileStoneCard from './MilestoneCard'
+import { useEffect } from 'react'
+import { fetchCategories, fetchMileStones } from 'src/store/apps/projects'
 
 // Styled Timeline component
 const Timeline = styled(MuiTimeline)(({ theme }) => ({
@@ -55,6 +57,12 @@ const MileStone = () => {
   const hiddenMD = useMediaQuery(theme => theme.breakpoints.down('md'))
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
+
+  useEffect(() => {
+    dispatch(fetchCategories()).then(()=>{
+      dispatch(fetchMileStones())
+    })
+  }, [dispatch])
 
   return (
     <Timeline position={hiddenMD ? 'right' : 'alternate'}>

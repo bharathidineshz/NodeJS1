@@ -5,32 +5,34 @@ import { Avatar, Box, Chip } from '@mui/material'
 import CustomChip from 'src/@core/components/mui/chip'
 import { getInitials } from 'src/@core/utils/get-initials'
 
-const CustomPeoplePicker = ({ items, label, onSelect }) => {
+const CustomDepartmentPicker = ({ values, items, label, setDepartments }) => {
   const [selectedValues, setSelectedValues] = React.useState([])
   const [fieldValue, setFieldValue] = React.useState([])
   const [options, setOptions] = React.useState([])
   React.useEffect(() => {
     setOptions(items)
-  }, [items])
+    setSelectedValues(values)
+  }, [items, values])
 
   const handleChange = (event, newValue) => {
     var _options = [...options]
     const values = [...selectedValues.flat(), newValue[0]]
     setSelectedValues(values.flat())
-    const index = _options.findIndex(o => o.userName === newValue[0].userName)
+    const index = _options.findIndex(o => o.skillName === newValue[0].skillName)
     _options.splice(index, 1)
     setOptions(_options)
-    onSelect(values.flat())
+    setDepartments && setDepartments(values.flat())
   }
 
   const handleDelete = selectedValue => {
     const values = [...selectedValues]
-    const person = items.find(o => o.userName === selectedValue.userName)
-    const indx = values.findIndex(o => o.userName === selectedValue.userName)
+    const person = items.find(o => o.skillName === selectedValue.skillName)
+    const indx = values.findIndex(o => o.skillName === selectedValue.skillName)
     values.splice(indx, 1)
     !options.includes(person) && options.push(person)
     setOptions(options)
     setSelectedValues(values)
+    setDepartments && setDepartments(values)
   }
 
   return (
@@ -44,7 +46,7 @@ const CustomPeoplePicker = ({ items, label, onSelect }) => {
         value={fieldValue}
         onChange={handleChange}
         options={options}
-        getOptionLabel={option => option.userName}
+        getOptionLabel={option => option.skillName}
         renderInput={params => <TextField {...params} label={label} />}
       />
       <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 3 }}>
@@ -52,11 +54,10 @@ const CustomPeoplePicker = ({ items, label, onSelect }) => {
           return (
             <Chip
               key={key}
-              avatar={<Avatar src={`/images/avatars/${key + 1}.png`} />}
               color='primary'
-              variant='outlined'
+              variant='filled'
               onDelete={() => handleDelete(selectedValue)}
-              label={selectedValue.userName}
+              label={selectedValue.skillName}
               size='small'
               sx={{ m: 1.5 }}
             />
@@ -67,4 +68,4 @@ const CustomPeoplePicker = ({ items, label, onSelect }) => {
   )
 }
 
-export default React.memo(CustomPeoplePicker)
+export default React.memo(CustomDepartmentPicker)

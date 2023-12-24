@@ -46,26 +46,24 @@ import { customToast } from 'src/helpers/helpers'
 import { useTheme } from '@emotion/react'
 import { postProject } from 'src/store/apps/projects'
 import { leavePolicyRequest } from 'src/helpers/requests'
+import { unwrapResult } from '@reduxjs/toolkit'
+import toast from 'react-hot-toast'
 
 const defaultValues = {
   typeOfLeave: '',
-  hours: '',
-  days: '',
-  allowance: '',
+  allowanceTime: 0,
+  allowanceCount: 0,
   period: '',
   isPermission: false,
-  carryForward: false,
-  carryForwardCount: ''
+  carryForwardCount: 0
 }
 
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
-  allowance: yup.number().min(0),
-  hours: yup.number().min(0),
-  days: yup.number().min(0).required('Days should be greater than 0'),
+  allowanceCount: yup.number().min(0).required('Allowance Required'),
+  allowanceTime: yup.number().min(0),
   period: yup.string().required('Period is Required'),
   isPermission: yup.boolean(),
-  carryForward: yup.boolean(),
   carryForwardCount: yup.number().min(0)
 })
 
@@ -98,18 +96,24 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
   //submit
 
   const onSubmit = async () => {
-    const req = await leavePolicyRequest(watch())
-    await dispatch(postPolicy(req))
-    await dispatch(fetchPolicies())
-    setOpen(false)
-    customToast({ theme: theme, message: 'Request Submitted', isSuccess: true })
-    reset({
-      typeOfLeave: '',
-      count: '',
-      period: '',
-      carryForward: false,
-      carryForwardCount: 0
-    })
+    const req = leavePolicyRequest(watch())
+    dispatch(postPolicy(req))
+      .then(unwrapResult)
+      .then(res => {
+        dispatch(fetchPolicies())
+        setOpen(false)
+        res.status === 200 || res.status === 201
+          ? toast.success('Leave Policy Created')
+          : toast.error('Error Occurred')
+        reset({
+          typeOfLeave: '',
+          allowanceTime: 0,
+          allowanceCount: 0,
+          period: '',
+          isPermission: false,
+          carryForwardCount: 0
+        })
+      })
   }
 
   return (
@@ -160,7 +164,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
             <Grid item xs={12} sm={5}>
               <FormControl fullWidth>
                 <Controller
-                  name='allowance'
+                  name='allowanceCount'
                   control={control}
                   rules={{ required: true }}
                   render={({ field: { value, onChange } }) => (
@@ -210,8 +214,8 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                         aria-describedby='stepper-linear-client'
                       >
                         {[
-                          { id: '1', name: 'Monthly' },
-                          { id: '2', name: 'Yearly' }
+                          { id: '1', name: 'Month' },
+                          { id: '2', name: 'Year' }
                         ].map(client => (
                           <MenuItem key={client.id} value={client.name}>
                             {client.name}
@@ -229,15 +233,45 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='carryForwardCount'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={watch('carryForward') ? value : 0}
+                      label='Carry forward count'
+                      onChange={onChange}
+                    />
+                  )}
+                />
+                {errors.carryForwardCount && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.carryForwardCount.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormControl>
                 <Controller
                   name='isPermission'
                   control={control}
+                  rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <FormControlLabel
                       label='Permission'
-                      control={<Checkbox value={value} onChange={onChange} name='Permission' />}
+                      control={
+                        <Checkbox
+                          value={value}
+                          checked={value}
+                          onChange={onChange}
+                          name='Permission'
+                        />
+                      }
                     />
                   )}
                 />
@@ -247,13 +281,15 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <Controller
-                  name={watch('isPermission') ? 'hours' : 'days'}
+                  name='allowanceTime'
                   control={control}
+                  rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <TextField
-                      value={value}
+                      value={watch('isPermission') ? value : 0}
                       type='number'
-                      label={watch('isPermission') ? 'Hours' : 'Days'}
+                      label='Hours'
+                      disabled={!watch('isPermission')}
                       onChange={onChange}
                     />
                   )}
@@ -266,43 +302,28 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            {/* <Grid item xs={12} sm={6}>
               <FormControl>
                 <Controller
                   name='carryForward'
                   control={control}
-                  render={({ field }) => (
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
                     <FormControlLabel
                       label='Carry Forward'
-                      control={<Checkbox {...field} name='carryForward' />}
+                      control={
+                        <Checkbox
+                          checked={value}
+                          value={value}
+                          onChange={onChange}
+                          name='carryForward'
+                        />
+                      }
                     />
                   )}
                 />
               </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <Controller
-                  name='carryForwardCount'
-                  control={control}
-                  render={({ field: { value, onChange } }) => (
-                    <TextField
-                      value={value}
-                      type='number'
-                      label='Carry forward count'
-                      disabled={watch('carryForward') ? false : true}
-                      onChange={onChange}
-                    />
-                  )}
-                />
-                {errors.carryForwardCount && (
-                  <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.carryForwardCount.message}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
+            </Grid> */}
           </Grid>
         </DialogContent>
         <DialogActions
@@ -312,7 +333,21 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
             pb: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
           }}
         >
-          <Button variant='outlined' color='secondary' onClick={() => setOpen(false)}>
+          <Button
+            variant='outlined'
+            color='secondary'
+            onClick={() => {
+              reset({
+                typeOfLeave: '',
+                allowanceTime: 0,
+                allowanceCount: 0,
+                period: '',
+                isPermission: false,
+                carryForwardCount: 0
+              })
+              setOpen(false)
+            }}
+          >
             Discard
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>

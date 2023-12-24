@@ -13,32 +13,40 @@ export const fetchClients = createAsyncThunk('appClient/fetchClients', async par
   return response.data
 })
 
+export const fetchClientById = createAsyncThunk('appClient/fetchClientById', async params => {
+  const response = await instance.get(endpoints.clientById(params))
+
+  return response.data
+})
+
 export const addClients = createAsyncThunk(
   'appClient/addClients',
   async (data, { getState, dispatch }) => {
     console.log(data)
 
     const response = await instance.post(endpoints.addClient, data)
-    dispatch(fetchData(getState().client.params))
 
-    return response.data
+    return response
+  }
+)
+
+export const updateClient = createAsyncThunk(
+  'appClient/updateClient',
+  async (data) => {
+    console.log(data)
+
+    const response = await instance.put(endpoints.updateClient, data)
+
+    return response
   }
 )
 
 export const deleteClient = createAsyncThunk(
   'appClient/deleteClient',
   async (id, { getState, dispatch }) => {
-    console.log(id)
+    const response = await instance.delete(endpoints.deleteClient(id))
 
-    const response = await instance.delete(endpoints.deletClient, {
-      data: id,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-    dispatch(fetchData(getState().client.params))
-
-    return response.data
+    return response
   }
 )
 
@@ -46,7 +54,8 @@ export const appClientSlice = createSlice({
   name: 'appClient',
   initialState: {
     clients: [],
-    allData: []
+    allData: [],
+    client: {}
   },
   reducers: {
     setClients: (state, { payload }) => {
@@ -56,6 +65,9 @@ export const appClientSlice = createSlice({
   extraReducers: builder => {
     builder.addCase(fetchClients.fulfilled, (state, action) => {
       state.clients = action.payload
+    })
+    builder.addCase(fetchClientById.fulfilled, (state, action) => {
+      state.client = action.payload
     })
   }
 })

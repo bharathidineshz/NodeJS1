@@ -32,7 +32,9 @@ import {
   fetchTaskData,
   fetchProjectData,
   postData,
-  fetchData
+  fetchData,
+  fetchAssignedProject,
+  fetchAssignedTask
 } from 'src/store/apps/timesheets/index'
 import TimeSheetTextField from 'src/pages/apps/timesheets/timesheet-steps/TimeSheetTextField'
 import FallbackSpinner from 'src/@core/components/spinner'
@@ -44,8 +46,8 @@ const TimesheetsDay = ({ popperPlacement }) => {
 
   useEffect(() => {
     dispatch(fetchData())
-    dispatch(fetchTaskData())
-    dispatch(fetchProjectData())
+    dispatch(fetchAssignedTask())
+    dispatch(fetchAssignedProject())
       .then(unwrapResult)
       .then(() => {
         setLoading(false)
@@ -53,7 +55,7 @@ const TimesheetsDay = ({ popperPlacement }) => {
   }, [dispatch])
 
   const [date, setDate] = useState(new Date())
-  const [description, setDescription] = useState('')
+  const [selectedTask, setDescription] = useState('')
   const [timeInput, setTimeInput] = useState('')
   const [selectedValue, setSelectedValue] = useState('')
   const [descriptionError, setDescriptionError] = useState(false)
@@ -77,64 +79,49 @@ const TimesheetsDay = ({ popperPlacement }) => {
   }
 
   const handleAutocompleteChange = (event, newValue) => {
-    setDescription(newValue ? newValue.description : '')
+    setDescription(newValue ? newValue : '')
   }
 
   const handleMenuItemClick = uniqueId => {
     setSelectedValue(uniqueId)
-
-    const project = mappedUsers.find(proj => proj.projects.some(p => p.projectId === uniqueId))
-    if (project) {
-      const selectedProject = project.projects.find(p => p.projectId === uniqueId)
-
-      if (selectedProject) {
-        const tasks = selectedProject.taskCategories.flatMap(category => category.tasks)
-        setSelectedProjectTasks(tasks)
-      }
-    }
+    setSelectedProjectTasks(taskData.filter(item => item.projectId === uniqueId) ?? [])
   }
 
   const handleSubmit = () => {
     setDescriptionError(false)
     setTimeError(false)
     setSelectedValueError(false)
-    setLoading(true)
 
     // Checking each field and setting error states if empty
-    if (description === '') {
+    if (!selectedTask) {
       setDescriptionError(true)
     }
-    if (timeInput === '') {
+    if (!timeInput) {
       setTimeError(true)
     }
-    if (selectedValue === '') {
+    if (!selectedValue) {
       setSelectedValueError(true)
     }
-    const selectedTask = taskData.find(task => task.description === description)
+    // const selectedTask = taskData.find(task => task.description === description)
 
-    // Creating a timesheet entry object
-    const timesheetEntry = {
-      tsMappingUid: '',
-      predefinedTaskId: selectedTask ? selectedTask.uniqueId : '',
-      date: date == null || '' || undefined ? new Date().toISOString() : formatDateString(date),
-      time: timeInput.concat(':00'),
-      category: selectedTask?.taskUniqueId ? selectedTask?.taskUniqueId : '',
-      categoryName: selectedTask?.name ? selectedTask?.name : '',
-      description: description
+    const data = {
+      id: 0,
+      burnedHours: timeInput?.concat(':00'),
+      timeSheetDate:
+        date == null || '' || undefined ? new Date()?.toISOString() : formatDateString(date),
+      isBillable: true,
+      taskId: selectedTask?.id,
+      projectId: selectedValue,
+      taskCategoryId: selectedTask?.taskCategoryId
     }
 
-    const payload = [
-      {
-        projectId: selectedValue,
-        timesheet: [timesheetEntry]
-      }
-    ]
-
-    if (description !== '' && timeInput !== '' && selectedValue !== '') {
+    if (selectedTask && timeInput && selectedValue) {
       try {
-        dispatch(postData(payload)).then(() => {
-          setLoading(false)
-        })
+        dispatch(postData(data))
+          .then(unwrapResult)
+          .then(() => {
+            setLoading(false)
+          })
         setDescription('')
         setDate(new Date())
         setTimeInput('')
@@ -145,35 +132,6 @@ const TimesheetsDay = ({ popperPlacement }) => {
       }
     }
   }
-
-  const mappedUsers = projectData.map(user => {
-    const mappedProjects = user.projects.map(project => {
-      const mappedTaskCategories = project.taskCategory.map(category => {
-        const mappedTasks = category.tasks.map(task => {
-          return {
-            taskId: task.uniqueId,
-            description: task.description
-          }
-        })
-
-        return {
-          categoryId: category.uniqueId,
-          categoryName: category.name,
-          tasks: mappedTasks
-        }
-      })
-
-      return {
-        projectId: project.uniqueId,
-        projectName: project.name,
-        taskCategories: mappedTaskCategories
-      }
-    })
-
-    return {
-      projects: mappedProjects
-    }
-  })
 
   return (
     <div>
@@ -195,20 +153,18 @@ const TimesheetsDay = ({ popperPlacement }) => {
                       handleMenuItemClick(event.target.value, event.target.innerText)
                     }
                   >
-                    {projectData?.map(project =>
-                      project?.projects?.map(nestedProject => (
-                        <MenuItem
-                          key={nestedProject?.uniqueId}
-                          value={nestedProject?.uniqueId}
-                          onClick={() => handleMenuItemClick(nestedProject?.uniqueId)}
-                        >
-                          {nestedProject.name ? nestedProject.name : 'NO Data'}
-                        </MenuItem>
-                      ))
-                    )}
+                    {projectData?.map(project => (
+                      <MenuItem
+                        key={project?.projectId}
+                        value={project?.projectId}
+                        onClick={() => handleMenuItemClick(project?.projectId)}
+                      >
+                        {project?.projectName ? project?.projectName : 'NO Data'}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
-                {selectedValueError && selectedValue === '' && (
+                {selectedValueError && !selectedValue && (
                   <FormHelperText sx={{ color: 'error.main', position: 'absolute' }}>
                     Please select a value
                   </FormHelperText>
@@ -221,15 +177,12 @@ const TimesheetsDay = ({ popperPlacement }) => {
                   sx={{ width: '100%' }}
                   size='small'
                   options={selectedProjectTasks}
-                  getOptionLabel={option => option?.description || ''}
-                  value={
-                    selectedProjectTasks?.find(option => option?.description === description) ||
-                    null
-                  }
+                  getOptionLabel={option => option?.taskDescription || ''}
+                  value={selectedTask}
                   onChange={handleAutocompleteChange}
                   renderInput={params => <TextField {...params} label='Description' />}
                 />
-                {descriptionError && description === '' && (
+                {descriptionError && !selectedTask && (
                   <FormHelperText sx={{ color: 'error.main', position: 'absolute' }}>
                     Please fill Description
                   </FormHelperText>
@@ -255,7 +208,7 @@ const TimesheetsDay = ({ popperPlacement }) => {
                   time={'0:00'}
                   handlechange={(event, value) => setTimeInput(value)}
                 />{' '}
-                {timeError && timeInput === '' && (
+                {timeError && !timeInput && (
                   <FormHelperText sx={{ color: 'error.main', position: 'absolute' }}>
                     Please fill Time
                   </FormHelperText>

@@ -34,6 +34,7 @@ import NewMember from './details/members/NewMember'
 import NewFeedback from './details/feedback/NewFeedback'
 import Files from './details/files'
 import Link from 'next/link'
+import { fetchProjectAssignees } from 'src/store/apps/projects'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
   '& .MuiTabs-indicator': {
@@ -73,7 +74,7 @@ const ProjectDetails = ({ tab, data }) => {
     setActiveTab(value)
     router
       .push({
-        pathname: `//projects/details/${value}`
+        pathname: `/projects/details/${value}`
       })
       .then(() => setIsLoading(false))
   }
@@ -86,7 +87,7 @@ const ProjectDetails = ({ tab, data }) => {
     if (tab && tab !== activeTab) {
       setActiveTab(tab)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    dispatch(fetchProjectAssignees())
   }, [tab])
 
   const tabContentList = {
@@ -168,7 +169,7 @@ const ProjectDetails = ({ tab, data }) => {
                       </Box>
                     }
                   />
-                  <Tab
+                  {/* <Tab
                     value='feedback'
                     label={
                       <Box
@@ -182,7 +183,7 @@ const ProjectDetails = ({ tab, data }) => {
                         {!hideText && 'Feedbacks'}
                       </Box>
                     }
-                  />
+                  /> */}
                   <Tab
                     value='members'
                     label={
@@ -230,22 +231,28 @@ const ProjectDetails = ({ tab, data }) => {
                   />
                 </TabList>
 
-                <Box display="flex" className="gap-1">
-                  <Button variant="contained" color="secondary" component={Link} href="/projects/reports/0" startIcon={<Icon icon='mdi:chart-box' fontSize={20} />}>Reports</Button>
-                  {
-                    tab !== 'settings' && (
-                      <Button
-                        variant='contained'
-                        startIcon={<Icon icon='mdi:add' fontSize={20} />}
-                        onClick={showDrawer(tab === 'task' ? 'Category' : tab)}
-                      >
-                        Add {tab === 'task' ? 'Category' : tab}
-                      </Button>
-                    )
-                  }
+                <Box display='flex' className='gap-1'>
+                  <Button
+                    variant='contained'
+                    color='secondary'
+                    component={Link}
+                    href='/projects/reports/0'
+                    startIcon={<Icon icon='mdi:chart-box' fontSize={20} />}
+                  >
+                    Reports
+                  </Button>
+                  {tab !== 'settings' && tab != 'members' ? (
+                    <Button
+                      variant='contained'
+                      startIcon={<Icon icon='mdi:add' fontSize={20} />}
+                      onClick={showDrawer(tab === 'task' ? 'Category' : tab)}
+                    >
+                      Add {tab === 'task' ? 'Category' : tab}
+                    </Button>
+                  ) : (
+                    <></>
+                  )}
                 </Box>
-
-
               </Grid>
               <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
                 {isLoading ? (

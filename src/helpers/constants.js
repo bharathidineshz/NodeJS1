@@ -13,6 +13,15 @@ export const SKILLS = [
   { name: 'React' }
 ]
 
+export const STATUS = [
+  { id: 1, name: 'Not Started', color: 'info' },
+  { id: 2, name: 'Inprogress', color: 'warning' },
+  { id: 3, name: 'Completed', color: 'success' },
+  { id: 4, name: 'Due', color: 'error' }
+]
+
+
+
 export const ORG_UNITS = [{ name: 'Marketing' }, ...SKILLS]
 
 export const CATEGORIES = ['Leave Management', 'Tasks', 'Milestone']
@@ -23,6 +32,8 @@ export const roles = {
   3: { name: 'Operations', icon: 'mdi:pencil-outline', color: 'info.main' },
   4: { name: 'User', icon: 'mdi:account-outline', color: 'primary.main' }
 }
+
+export const TASK_PRIORITIES = [{id:1, name:'Low',color:'error'},{id:2, name:'Medium',color:'warning'},{id:3, name:'High',color:'success'}]
 
 export const TASk_LIST = [
   {

@@ -2,15 +2,14 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 // ** Axios Imports
 import axios from 'axios'
+import dayjs from 'dayjs'
 import toast from 'react-hot-toast'
 import { endpointURL, endpoints } from 'src/store/endpoints/endpoints'
 import instance from 'src/store/endpoints/interceptor'
 
-
 // ** Fetch Timesheets
 export const fetchData = createAsyncThunk('appTimesheet/getTimeSheet', async params => {
   const response = await instance.get(endpoints.getTimesheetList)
-
 
   return response.data
 })
@@ -29,47 +28,70 @@ export const fetchProjectData = createAsyncThunk('appTimesheet/getProjectData', 
   return response.data
 })
 
-// ** Post Data (POST)
-export const postData = createAsyncThunk('appTimesheet/postData', async (postData, { store, dispatch }) => {
+export const fetchAssignedTask = createAsyncThunk(
+  'appTimesheet/getAssignedTaskData',
+  async params => {
+    const response = await instance.get(endpoints.getTaskbyProject)
 
-  try {
-    const response = await instance.post(endpoints.postTimesheetList, postData)
-    dispatch(fetchData())
-    toast.success("Time sheet entry created succesfully")
-  } catch (error) {
-    toast.error(error.message)
-
+    return response.data
   }
+)
 
-  return response.data
-})
+export const fetchAssignedProject = createAsyncThunk(
+  'appTimesheet/getAssignedProjectData',
+  async params => {
+    const response = await instance.get(endpoints.getAssignedProject)
+
+    return response.data
+  }
+)
+
+// ** Post Data (POST)
+export const postData = createAsyncThunk(
+  'appTimesheet/postData',
+  async (postData, { store, dispatch }) => {
+    try {
+      const response = await instance.post(endpoints.postTimesheetList, postData)
+      dispatch(fetchData())
+      toast.success('Time sheet entry created succesfully')
+    } catch (error) {
+      toast.error(error.message)
+    }
+
+    return response.data
+  }
+)
 
 // ** Update Data (PUT)
-export const UpdateData = createAsyncThunk('appTimesheet/UpdateData', async (UpdateData, { store, dispatch }) => {
-  try {
-    const response = await instance.put(endpoints.putTimesheetList, UpdateData)
-    dispatch(fetchData())
-    toast.success("Time sheet Updated succesfully")
-  } catch (error) {
-    toast.error(error.message)
+export const UpdateData = createAsyncThunk(
+  'appTimesheet/UpdateData',
+  async (UpdateData, { store, dispatch }) => {
+    try {
+      const response = await instance.put(endpoints.putTimesheetList, UpdateData)
+      dispatch(fetchData())
+      toast.success('Time sheet Updated succesfully')
+    } catch (error) {
+      toast.error(error.message)
+    }
 
+    return response.data
   }
+)
 
-  return response.data
-})
+export const DeleteData = createAsyncThunk(
+  'appTimesheet/deleteTimesheet',
+  async (DeleteData, { store, dispatch }) => {
+    try {
+      const response = await instance.delete(endpoints.deleteTimesheetList(DeleteData))
+      dispatch(fetchData())
+      toast.success('Time sheet Deleted succesfully')
+    } catch (error) {
+      toast.error(error.message)
+    }
 
-export const DeleteData = createAsyncThunk('appTimesheet/deleteTimesheet', async (DeleteData, { store, dispatch }) => {
-  try {
-    const response = await instance.delete(endpoints.deleteTimesheetList(DeleteData))
-    dispatch(fetchData())
-    toast.success("Time sheet Deleted succesfully")
-  } catch (error) {
-    toast.error(error.message)
-
+    return response.data
   }
-
-  return response.data
-})
+)
 
 export const appTimeSheetSlice = createSlice({
   name: 'appTimesheet',
@@ -82,12 +104,15 @@ export const appTimeSheetSlice = createSlice({
   extraReducers: builder => {
     builder
       .addCase(fetchData.fulfilled, (state, action) => {
-        state.data = action.payload
+        let sortedArray = action.payload.sort((a, b) => {
+          return new Date(b.timeSheetDate).getTime() - new Date(a.timeSheetDate).getTime()
+        })
+        state.data = sortedArray ?? []
       })
-      .addCase(fetchTaskData.fulfilled, (state, action) => {
+      .addCase(fetchAssignedTask.fulfilled, (state, action) => {
         state.taskData = action.payload
       })
-      .addCase(fetchProjectData.fulfilled, (state, action) => {
+      .addCase(fetchAssignedProject.fulfilled, (state, action) => {
         state.projectData = action.payload
       })
   }

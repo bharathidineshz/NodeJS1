@@ -79,10 +79,10 @@ const AccountSettings = ({ tab, apiPricingPlanData }) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        <TabContext value={activeTab}>
-          <Grid container spacing={6}>
-            <Grid item xs={12}>
-              <TabList
+        {/* <TabContext value={activeTab}> */}
+        <Grid container spacing={6}>
+          <Grid item xs={12}>
+            {/* <TabList
                 variant='scrollable'
                 scrollButtons='auto'
                 onChange={handleChange}
@@ -178,22 +178,22 @@ const AccountSettings = ({ tab, apiPricingPlanData }) => {
                     </Box>
                   }
                 />
-              </TabList>
-            </Grid>
-            <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
-              {isLoading ? (
-                <Box sx={{ mt: 6, display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-                  <CircularProgress sx={{ mb: 4 }} />
-                  <Typography>Loading...</Typography>
-                </Box>
-              ) : (
-                <TabPanel sx={{ p: 0 }} value={activeTab}>
-                  {tabContentList[activeTab]}
-                </TabPanel>
-              )}
-            </Grid>
+              </TabList> */}
           </Grid>
-        </TabContext>
+          <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
+            {isLoading ? (
+              <Box sx={{ mt: 6, display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
+                <CircularProgress sx={{ mb: 4 }} />
+                <Typography>Loading...</Typography>
+              </Box>
+            ) : (
+              <TabHolidayManagement />
+
+              // </TabPanel>
+            )}
+          </Grid>
+        </Grid>
+        {/* </TabContext> */}
       </Grid>
     </Grid>
   )

@@ -10,7 +10,7 @@ import CustomChip from 'src/@core/components/mui/chip'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
-import { Avatar, Chip, Drawer, FormControl, FormControlLabel, FormHelperText, InputLabel, MenuItem, Radio, RadioGroup, Select, Switch, Typography } from '@mui/material'
+import { Avatar, Checkbox, Chip, Drawer, FormControl, FormControlLabel, FormHelperText, InputLabel, MenuItem, Radio, RadioGroup, Select, Switch, Typography } from '@mui/material'
 
 //** Third Party */
 import DatePicker, { ReactDatePickerProps } from 'react-datepicker'
@@ -19,14 +19,16 @@ import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { Box } from '@mui/system'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { setCategories, setEditTask, setEmpty, setNewTask, setTaskLists } from 'src/store/apps/projects'
+import { fetchTasks, postCategory, setCategories, setEditTask, setEmpty, setNewTask, setTaskLists } from 'src/store/apps/projects'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import toast from 'react-hot-toast'
+import { categoryRequest } from 'src/helpers/requests'
 
 const NewTaskCategory = ({ isOpen, setOpen }) => {
 
   const [assignees, setAssignees] = useState([{ name: "Babysha Papanasam" }, { name: "Dhineshkumar Selvam" }, { name: "Naveenkumar Mounsamy" }, { name: "Pavithra Murugesan" }, { name: "BabySha Papanasam" }])
   const [categoryName, setCategoryName] = useState('')
+  const [isBillable, setBillable] = useState(true)
   const dispatch = useDispatch();
   const store = useSelector(state => state.projects);
 
@@ -41,13 +43,20 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
 
   //CREATE
   const createNewCategory = () => {
-
     try {
-      store.categories.length > 0 ? dispatch(setCategories([categoryName, ...store.categories])) : dispatch(setCategories([categoryName]))
-      dispatch(setEmpty(false))
-      setOpen(false)
-      toast.success("Task Category Created", { duration: 3000, position: "top-right" })
-      setCategoryName('')
+      const request  = categoryRequest(categoryName,isBillable, localStorage.getItem("projectId"))
+      dispatch(postCategory(request)).then(({payload})=>{
+        if(payload.status === 200 || payload.status === 201){
+          dispatch(fetchTasks())
+          dispatch(setEmpty(false))
+          setOpen(false)
+          toast.success("Task Category Created", { duration: 3000, position: "top-right" })
+          setCategoryName('')
+        }else{
+          toast.error('Error Occurred', { duration: 3000, position: "top-right" })
+        }
+      })
+     
     } catch (error) {
       toast.error(error, { duration: 3000, position: "top-right" })
     }
@@ -102,6 +111,10 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
                   )
                 }}
               />
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControlLabel label='Billable' control={<Checkbox  defaultChecked={isBillable} value={isBillable} onChange={()=> setBillable(!isBillable)} name='color-primary' />} />
             </Grid>
 
             <Grid columnGap={2} item xs={12} className='flex-right' sx={{ mt: 5 }}>

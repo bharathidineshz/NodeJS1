@@ -36,6 +36,9 @@ import axios from 'axios'
 // ** Custom Table Components Imports
 import ClientTableHeader from 'src/views/clients/list/ClientTableHeader'
 import AddClientDrawer from 'src/views/clients/list/AddClientDrawer'
+import { useRouter } from 'next/router'
+import { unwrapResult } from '@reduxjs/toolkit'
+import toast from 'react-hot-toast'
 
 // ** Vars
 const userRoleObj = {
@@ -63,144 +66,7 @@ const LinkStyled = styled(Link)(({ theme }) => ({
   }
 }))
 
-const RowOptions = ({ id, rowData, onEdit }) => {
-  // ** Hooks
-  const dispatch = useDispatch()
 
-  // ** State
-  const [anchorEl, setAnchorEl] = useState(null)
-  const rowOptionsOpen = Boolean(anchorEl)
-
-  const handleRowOptionsClick = event => {
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handleRowOptionsClose = () => {
-    setAnchorEl(null)
-  }
-
-  const handleDelete = () => {
-    console.log([id])
-    dispatch(deleteClient([id]))
-    handleRowOptionsClose()
-  }
-
-  const handleEditClick = () => {
-    console.log(rowData)
-  }
-
-  return (
-    <>
-      <IconButton size='small' onClick={handleRowOptionsClick}>
-        <Icon icon='mdi:dots-vertical' />
-      </IconButton>
-      <Menu
-        keepMounted
-        anchorEl={anchorEl}
-        open={rowOptionsOpen}
-        onClose={handleRowOptionsClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right'
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right'
-        }}
-        PaperProps={{ style: { minWidth: '8rem' } }}
-      >
-        <MenuItem
-          component={Link}
-          sx={{ '& svg': { mr: 2 } }}
-          onClick={handleRowOptionsClose}
-          href='/apps/user/view/overview/'
-        >
-          <Icon icon='mdi:eye-outline' fontSize={20} />
-          View
-        </MenuItem>
-        <MenuItem onClick={handleEditClick} sx={{ '& svg': { mr: 2 } }}>
-          <Icon icon='mdi:pencil-outline' fontSize={20} />
-          Edit
-        </MenuItem>
-        <MenuItem onClick={handleDelete} sx={{ '& svg': { mr: 2 } }}>
-          <Icon icon='mdi:delete-outline' fontSize={20} />
-          Delete
-        </MenuItem>
-      </Menu>
-    </>
-  )
-}
-
-const columns = [
-  {
-    flex: 0.2,
-    minWidth: 230,
-    field: 'ClientName',
-    headerName: 'Client',
-    renderCell: ({ row }) => {
-      const { clientName } = row
-
-      return (
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
-            <LinkStyled href='/apps/user/view/overview/'>{clientName}</LinkStyled>
-          </Box>
-        </Box>
-      )
-    }
-  },
-  {
-    flex: 0.2,
-    minWidth: 250,
-    field: 'email',
-    headerName: 'Email'
-  },
-  {
-    flex: 0.15,
-    field: 'taxId',
-    minWidth: 150,
-    headerName: 'Tax Id'
-  },
-  {
-    flex: 0.15,
-    minWidth: 120,
-    headerName: 'CompanyId',
-    field: 'CompanyId',
-    renderCell: ({ row }) => {
-      return (
-        <Typography noWrap sx={{ textTransform: 'capitalize' }}>
-          {row.companyId}
-        </Typography>
-      )
-    }
-  },
-  {
-    flex: 0.15,
-    minWidth: 120,
-    headerName: 'Active',
-    field: 'isActive',
-    renderCell: (params) => (
-      <Grid>
-        {params.value ? (
-          <CustomAvatar skin='light' color='success'>
-            <Icon icon='mdi:checkbox-marked-circle-outline' />
-          </CustomAvatar>
-        ) : (
-          <CustomAvatar skin='light' color='error'>
-            <Icon icon='mdi:close-circle-outline' />
-          </CustomAvatar>
-        )}
-      </Grid>
-    ),
-  },
-  {
-    flex: 0.1,
-    minWidth: 90,
-    sortable: false,
-    field: 'actions',
-    headerName: 'Actions'
-  }
-]
 
 const ClientList = ({ apiData }) => {
   // ** State
@@ -216,8 +82,6 @@ const ClientList = ({ apiData }) => {
   // ** Hooks
   const dispatch = useDispatch()
   const store = useSelector(state => state.clients)
-  console.log(store.clients)
-
   useEffect(() => {
     dispatch(fetchClients())
   }, [dispatch, store.clients])
@@ -225,6 +89,99 @@ const ClientList = ({ apiData }) => {
   const handleFilter = useCallback(val => {
     setValue(val)
   }, [])
+
+  const columns = [
+    {
+      flex: 0.2,
+      field: 'companyName',
+      headerName: 'Client',
+      renderCell: ({ row }) => {
+        const { companyName } = row
+  
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
+              <LinkStyled href=''>{companyName}</LinkStyled>
+            </Box>
+          </Box>
+        )
+      }
+    },
+    {
+      flex: 0.175,
+      field: 'email',
+      headerName: 'Email'
+    },
+    {
+      flex: 0.16,
+      field: 'primaryContatctName',
+      headerName: 'Contact'
+    },
+    {
+      flex: 0.15,
+      field: 'taxId',
+      minWidth: 150,
+      headerName: 'Tax Id'
+    },
+    {
+      flex: 0.15,
+      minWidth: 120,
+      headerName: 'CompanyId',
+      field: 'CompanyId',
+      renderCell: ({ row }) => {
+        return (
+          <Typography noWrap sx={{ textTransform: 'capitalize' }}>
+            {row.companyId}
+          </Typography>
+        )
+      }
+    },
+    {
+      flex: 0.15,
+      minWidth: 120,
+      headerName: 'Address',
+      field: 'address',
+    },
+    {
+      flex: 0.15,
+      minWidth: 120,
+      headerName: 'Active',
+      field: 'isActive',
+      renderCell: (params) => (
+        <Grid>
+          {params.value ? (
+            <CustomAvatar skin='light' color='success'>
+              <Icon icon='mdi:checkbox-marked-circle-outline' />
+            </CustomAvatar>
+          ) : (
+            <CustomAvatar skin='light' color='error'>
+              <Icon icon='mdi:close-circle-outline' />
+            </CustomAvatar>
+          )}
+        </Grid>
+      ),
+    },
+    {
+      flex: 0.1,
+      sortable: false,
+      field: 'actions',
+      headerName: 'Actions',
+      renderCell: params => (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconButton
+              color='info'
+              size='small'
+              onClick={handleEdit(params.row)}
+            >
+              <Icon icon='mdi:edit-outline' fontSize={20} />
+            </IconButton>
+            <IconButton color='error' size='small' onClick={handleDelete(params.row.id)}>
+              <Icon icon='mdi:trash-outline' fontSize={20} />
+            </IconButton>
+        </Box>
+      )
+    }
+  ]
 
   const handleRoleChange = useCallback(e => {
     setRole(e.target.value)
@@ -239,9 +196,18 @@ const ClientList = ({ apiData }) => {
   }, [])
   const toggleAddUserDrawer = () => setAddUserOpen(!addUserOpen)
 
-  const handleEdit = rowData => {
+  const handleEdit = rowData => e => {
     setEditedRowData(rowData)
     toggleAddUserDrawer() // Open the drawer
+  }
+
+  const handleDelete = id => e => {
+    dispatch(deleteClient(id)).then(unwrapResult).then((res)=>{
+      if(res.status === 200){
+        toast.success("Client Deleted")
+        dispatch(fetchClients())
+      }
+    })// Open the drawer
   }
 
   return (
@@ -251,12 +217,11 @@ const ClientList = ({ apiData }) => {
           <CardHeader />
 
           {/* <Divider /> */}
-          <ClientTableHeader value={value} handleFilter={handleFilter} />
+          <ClientTableHeader setOpen={toggleAddUserDrawer} value={value} handleFilter={handleFilter} />
           <DataGrid
             autoHeight
-            rows={store.clients}
+            rows={store.clients ||[]}
             columns={columns}
-            checkboxSelection
             disableRowSelectionOnClick
             pageSizeOptions={[10, 25, 50]}
             paginationModel={paginationModel}

@@ -14,29 +14,18 @@ const CategoriesTreeView = ({ categories }) => {
     <div>
 
       {
-        categories.map((category, i) => (
+        categories && categories.map((category, i) => (
           <Accordion key={i} sx={{ mt: 1 }}>
             <AccordionSummary
               id='panel-header-1'
               aria-controls='panel-content-1'
               expandIcon={<Icon icon='mdi:chevron-down' />}
             >
-              <Typography>{category}</Typography>
+              <Typography>{category.name}</Typography>
             </AccordionSummary>
             <AccordionDetails>
 
-              {
-                TASk_LIST.map((task, key) => (
-                  <Box key={key} display="flex" justifyContent="space-between">
-                    <Typography variant='body1'>
-                      {task.task}
-                    </Typography>
-                    <Typography variant='body2'>
-                      25
-                    </Typography>
-                  </Box>
-                ))
-              }
+             
 
             </AccordionDetails>
           </Accordion>

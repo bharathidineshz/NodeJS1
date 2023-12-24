@@ -27,8 +27,6 @@ import LeavePolicy from 'src/views/leave-management/leave-policy'
 import { Button } from '@mui/material'
 import LeaveApplyForm from 'src/views/leave-management/apply/LeaveApplyForm'
 import NewLeavePolicy from 'src/views/leave-management/leave-policy/NewLeavePolicy'
-import AllRequests from 'src/views/leave-management/all-requests'
-import LeaveSettings from 'src/views/leave-management/settings'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
   '& .MuiTabs-indicator': {
@@ -87,8 +85,7 @@ const LeaveManagement = ({ tab, data }) => {
     // 'all requests': <AllRequests />,
     approval: <Approval />,
     reports: <LeaveReports />,
-    leave_policy: <LeavePolicy />,
-    settings: <LeaveSettings />
+    leave_policy: <LeavePolicy />
   }
 
   const tabs = [
@@ -96,8 +93,7 @@ const LeaveManagement = ({ tab, data }) => {
     // { name: 'all requests', icon: 'mdi:calendar-outline' },
     { name: 'approval', icon: 'mdi:check-decagram' },
     { name: 'reports', icon: 'mdi:chart-box' },
-    { name: 'leave_policy', icon: 'mdi:text-box-multiple-outline' },
-    { name: 'settings', icon: 'mdi:gear-outline' }
+    { name: 'leave_policy', icon: 'mdi:text-box-multiple-outline' }
   ]
 
   return (
@@ -137,13 +133,22 @@ const LeaveManagement = ({ tab, data }) => {
                     />
                   ))}
                 </TabList>
-                {(activeTab === 'my leaves' || activeTab === 'leave_policy') && (
+                {activeTab === 'my leaves' && (
                   <Button
                     variant='contained'
                     startIcon={<Icon icon='mdi:add' fontSize={20} />}
                     onClick={() => setOpen(true)}
                   >
-                    Add {activeTab}
+                    Apply Leave
+                  </Button>
+                )}
+                {activeTab === 'leave_policy' && (
+                  <Button
+                    variant='contained'
+                    startIcon={<Icon icon='mdi:add' fontSize={20} />}
+                    onClick={() => setOpen(true)}
+                  >
+                    Add {activeTab === 'leave_policy' ? 'Leave Policy' : activeTab}
                   </Button>
                 )}
               </Grid>

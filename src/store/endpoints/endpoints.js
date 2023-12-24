@@ -12,7 +12,7 @@ export const endpoints = {
   // refresh token
   refreshtoken: 'api/Account/refresh-token',
 
-  addOrganizationSetup: 'api/Organization/AddOrganization',
+  addOrganizationSetup: 'api/Organization/CreateOrganization',
   getOrganizationSetup: 'api/Organization/GetOrganization',
   updateOrganizationSetup: 'api/Organization/UpdateAddOrganization',
 
@@ -25,32 +25,24 @@ export const endpoints = {
   Updateuser: 'api/User/UpdateUser/',
 
   Deleteuser: mail => `api/User/DeleteUser?email=${mail}`,
-  getProjects: 'api/Project/Get',
-  getProjectById: 'api/Project/?id=',
-  getAllProjects: 'api/Project/GetProjects',
-  getProjectsbyEmail: email => `api/ProjectMap/ProjectMapping/?mail=${email}`,
-  getAssignedProjects: `api/Project/GetAssignedProjects`,
+ 
 
-  createProject: 'api/Project/Create',
-  putProjects: 'api/Project/Update',
-  deleteProject: projectUId => `api/Project/Delete?uId=${projectUId}`,
-
-  postTaskCategory: 'api/TaskCategory/',
-  putTaskCategory: 'api/TaskCategory',
-  getAllProjectTask: 'api/project/task-category/all/',
+  createCategory: 'api/TaskCategory/CreateTaskCategory',
+  taskCategories: 'api/TaskCategory',
   getTaskCategoriesbyProjectID: id => `api/TaskCategory?projectId=${id}`,
   deleteTaskCategory: 'api/project/task-category/',
 
-  postTask: 'api/Task',
-  putTask: 'api/Task',
-  getTask: 'api/Task',
 
-  getTimesheetList: 'api/timesheet',
-  getTimesheetwithDateRange: (sdate, edate) => `api/timesheet/?sdate=${sdate}&edate=${edate}`,
+  // timesheet
+  getTimesheetList: 'api/TimeSheet/GetTimeSheet',
+  getTimesheetwithDateRange: (sdate, edate) =>
+    `api/TimeSheet/GetTimeSheet?sdate=${sdate}&edate=${edate}`,
 
-  postTimesheetList: 'api/TimeSheet',
+  postTimesheetList: 'api/TimeSheet/CreateTimeSheet',
   putTimesheetList: 'api/TimeSheet/UpdateTimeSheet',
-  deleteTimesheetList: id => `api/TimeSheet?ts_mapping_uid=${id}`,
+  deleteTimesheetList: id => `api/TimeSheet/DeleteTimeSheet?id=${id}`,
+  getTaskbyProject: 'api/TimeSheet/GetTasksForTimeSheet',
+  getAssignedProject: 'api/Project/GetProjectsByUser',
 
   // assign users
   assignUsers: 'api/ProjectMapping/Create',
@@ -111,16 +103,17 @@ export const endpoints = {
   postCurrency: 'api/Settings/CreateSettings',
 
   //Holidays
-  getHolidayRequests: 'api/HolidayCalendar/GetHolidayRequests',
-  addHolidayRequests: 'api/HolidayCalendar/CreateHolidayRequest',
-  updateHolidayRequests: 'api/HolidayCalendar/UpdateHolidayRequest',
-  deleteHolidayRequests: 'api/HolidayCalendar/DeleteHolidayRequest',
+  getHolidayRequests: 'api/LeavePolicy/GetHolidayRequests',
+  addHolidayRequests: 'api/LeavePolicy/CreateHolidayRequest',
+  updateHolidayRequests: 'api/LeavePolicy/UpdateHolidayRequest',
+  deleteHolidayRequests: 'api/LeavePolicy/DeleteHolidayRequest',
 
-  // add client
-  addClient: 'api/Client/Create',
+  //client
+  addClient: 'api/Client/CreateClient',
+  updateClient: 'api/Client/UpdateClient',
   getAllClient: 'api/Client/GetClients',
-  deletClient: 'api/Client/Delete',
-  deleteClient: id => `api/Client?ClientUId=${id}`,
+  deleteClient:(id)=>  `api/Client/DeleteClient/${id}`,
+  clientById :(id)=>  `/api/Client/GetClientById/${id}`,
   editClient: 'api/Client/Update',
 
   getProjectReport: id => `api/Report?projectUid=${id}`,
@@ -132,17 +125,43 @@ export const endpoints = {
   saveInvoice: '/api/Invoice',
   getInvoiceAll: 'api/Invoice/GetInvoices',
 
+  //projects
+  projects: 'api/Project',
+  getProjects: 'api/Project/GetProject',
+  deleteProject: id => `api/Project?id=${id}`,
+  projectMembers:(id)=> `api/ProjectAssignee/GetProjectAssigneesByID?projectId=${id}`,
+  projectAssignees: 'api/ProjectAssignee',
+  projectsByUser : '/api/Project/GetProjectsByUser',
+
+  // tasks
+  postTask: 'api/Task/CreateTask',
+  putTask: 'api/Task/UpdateTask',
+  getTaskList: (projectId)=> `api/Task/GetTasksByProject?ProjectId=${projectId}`,
+  deleteTask :(id)=> `api/Task/DeleteTask?id=${id}`,
+
+
+  //milestone
+
+  mileStones: 'api/Milestone',
+
+
+  //skills
+  skills: 'api/MasterSkill',
+
+
   //leave Management
 
   deleteLeavePolicy: id => `api/LeavePolicy?policyId=${id}`,
   myLeaves: 'api/LeaveRequest',
   getLeavePolicy: '/api/LeavePolicy/GetLeavePolicy',
   createLeavePolicy: '/api/LeavePolicy/CreateLeavePolicy',
-  requestTypes: 'api/LeaveRequest',
+  updateLeavePolicy: 'api/LeavePolicy/UpdatePolicy',
+  requests: 'api/LeaveRequest',
   getApprovals: 'api/LeaveRequestApprove/GetLeaveRequestApproval',
+  createApproval: 'api/LeaveRequestApprove/CreateLeaveRequestApproval',
 
   getStatus: '/api/Status/GetStatus',
-  getSkills: 'api/MasterSkill/GetSkills',
+  getSkills: 'api/MasterSkill',
   getUserReports: (userId, fromDate, toDate) =>
     `api/Report/getUserLeaveRequest?UserId=${userId}&FromDate=${fromDate}&ToDate=${toDate}`,
   getDashboard: userId => `api/Report/getUserLeaveRequest?UserId=${userId}`

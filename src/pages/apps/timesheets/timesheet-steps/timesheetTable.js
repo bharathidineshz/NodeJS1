@@ -3,7 +3,15 @@ import { useDispatch, useSelector } from 'react-redux'
 import Box from '@mui/material/Box'
 import { DataGrid } from '@mui/x-data-grid'
 import TextField from '@mui/material/TextField'
-import { fetchData, fetchTaskData, fetchProjectData, UpdateData, DeleteData } from 'src/store/apps/timesheets/index'
+import {
+  fetchData,
+  fetchTaskData,
+  fetchProjectData,
+  UpdateData,
+  DeleteData,
+  fetchAssignedProject,
+  fetchAssignedTask
+} from 'src/store/apps/timesheets/index'
 import Autocomplete from '@mui/material/Autocomplete'
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 import DatePicker from 'react-datepicker'
@@ -16,7 +24,9 @@ import InputLabel from '@mui/material/InputLabel'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
 import { IconButton, Tooltip } from '@mui/material'
-import TimeSheetTextField from 'src/pages/apps/timesheets/timesheet-steps/TimeSheetTextField';
+import TimeSheetTextField from 'src/pages/apps/timesheets/timesheet-steps/TimeSheetTextField'
+import dayjs from 'dayjs'
+import { unwrapResult } from '@reduxjs/toolkit'
 
 const TimeSheetTable = ({ popperPlacement, loading }) => {
   const dispatch = useDispatch()
@@ -29,8 +39,8 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
 
   useEffect(() => {
     dispatch(fetchData())
-    dispatch(fetchTaskData())
-    dispatch(fetchProjectData())
+    dispatch(fetchAssignedTask())
+    dispatch(fetchAssignedProject())
   }, [dispatch, loading])
 
   const formatDateString = date => {
@@ -48,87 +58,44 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
   }
 
   const handleTimeInputChange = (value, params) => {
-    handleUpdate({ ...params, row: { ...params.row, time: value } })
+    handleUpdate({ ...params, row: { ...params.row, burnedHours: value } })
   }
 
   const handleDateChange = (date, params) => {
     setDate(date)
     if (date instanceof Date && !isNaN(date)) {
-      handleUpdate({ ...params, row: { ...params.row, date } })
+      handleUpdate({ ...params, row: { ...params.row, timeSheetDate: date } })
     }
   }
 
   const handleAutocompleteChange = (e, params) => {
-    setDescription(e.target.value);
-    handleUpdate({ ...params, row: { ...params?.row, description: e.target.value || '' } });
-
-  };
-
-  useEffect(() => {
-    if (data) {
-      const flattenedData = []
-      data.forEach(project => {
-        const projectName = project.project_name
-        const projectId = project.projectId
-
-        project.timesheet.forEach(entry => {
-          const flattenedEntry = {
-            projectId: projectId,
-            project_name: projectName,
-            id: entry.tsMappingUid,
-            date: new Date(entry.date),
-            time: entry.time,
-            description: entry.description,
-            category: entry.category,
-            categoryName: entry.categoryName,
-            tsMappingUid: entry.tsMappingUid
-          }
-
-          flattenedData.push(flattenedEntry)
-        })
-      })
-
-
-      // Sort the flattened data based on the 'date' field in descending order
-      flattenedData.sort((a, b) => {
-        return b.date - a.date
-      })
-
-      setFlattenedTimesheets(flattenedData)
-
-    }
-  }, [data])
-
-  const handleUpdate = params => {
-    const descriptionToCheck = params?.row?.description
-    const selectedTask = taskData.find(task => task.description === descriptionToCheck)
-
-    // Creating a timesheet entry object
-    const timesheetEntry = {
-      tsMappingUid: params?.row?.id,
-      predefinedTaskId: '',
-      date: formatDateString(params?.row?.date),
-      time: params?.row?.time,
-      category: selectedTask?.taskUniqueId ? selectedTask?.taskUniqueId : params?.row?.category,
-      categoryName: selectedTask?.name ? selectedTask.name : params?.row?.categoryName,
-      description: params?.row?.description
-    }
-
-    const payload = [
-      {
-        projectId: params?.row?.projectId,
-        timesheet: [timesheetEntry]
-      }
-    ]
-    dispatch(UpdateData(payload))
+    setDescription(e.target.value)
+    handleUpdate({ ...params, row: { ...params?.row, taskId: e.target.value || '' } })
   }
 
+  const handleUpdate = params => {
+    const data = {
+      id: params?.row?.id,
+      burnedHours: params?.row?.burnedHours,
+      timeSheetDate: formatDateString(params?.row?.timeSheetDate),
+      isBillable: true,
+      taskId: params?.row?.taskId,
+      projectId: params?.row?.projectId,
+      taskCategoryId: params?.row?.taskCategoryId
+    }
+    dispatch(UpdateData(data))
+      .then(unwrapResult)
+      .then(() => {
+        setDate('')
+        setDescription('')
+        setTimeInput('')
+      })
+  }
 
-
-  const mappedUsers = projectData.map(user => {
-    const mappedProjects = user.projects.map(project => {
-      const mappedTaskCategories = project.taskCategory.map(category => {
-        const mappedTasks = category.tasks.map(task => {
+  const mappedUsers = projectData?.map(user => {
+    const mappedProjects = user?.projects?.map(project => {
+      const mappedTaskCategories = project?.taskCategory?.map(category => {
+        const mappedTasks = category?.tasks?.map(task => {
           return {
             taskId: task.uniqueId,
             description: task.description
@@ -158,43 +125,34 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
     {
       flex: 0.25,
       minWidth: 200,
-      field: 'project_name',
+      field: 'projectName',
       headerName: 'Project',
-      editable: false,
+      editable: false
     },
     {
       flex: 0.15,
       minWidth: 300,
       editable: true,
-      field: 'description',
+      field: 'taskId',
       headerName: 'Description',
+      renderCell: params => params.row.taskDescription,
       renderEditCell: params => {
-        const project = mappedUsers.find(proj => proj.projects.some(p => p.projectId === params?.row?.projectId));
-        let selectedProjectTasks = [];
-
-        if (project) {
-          const selectedProject = project.projects.find(p => p.projectId === params?.row?.projectId);
-          if (selectedProject) {
-            const tasks = selectedProject.taskCategories.flatMap(category => category.tasks);
-            selectedProjectTasks = tasks;
-          }
-        }
-
         return (
           <Select
             sx={{ minWidth: 310, marginLeft: '-15px', outline: 'none' }}
             value={description || params.value}
-            onChange={(e) => handleAutocompleteChange(e, params)}
+            onChange={e => handleAutocompleteChange(e, params)}
             label='Projects'
-
           >
-            {selectedProjectTasks.map(option => (
-              <MenuItem key={option.description} value={option.description}>
-                {option.description}
-              </MenuItem>
-            ))}
+            {taskData
+              .filter(x => x.projectId === params?.row?.projectId)
+              .map(option => (
+                <MenuItem key={option.id} value={option.id}>
+                  {option.taskDescription}
+                </MenuItem>
+              ))}
           </Select>
-        );
+        )
       }
     },
 
@@ -202,17 +160,17 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
       flex: 0.25,
       minWidth: 150,
       editable: true,
-      field: 'date',
+      field: 'timeSheetDate',
       headerName: 'Date',
-      renderCell: params => params.value.toLocaleDateString(), // Render date as a string
-      editField: 'date',
+      renderCell: params => dayjs(params.value).format('DD-MM-YYYY'), // Render date as a string
+      editField: 'timeSheetDate',
       renderEditCell: params => (
         <DatePicker
-          selected={date || params.value}
+          selected={date || new Date()}
           id='basic-input'
           popperPlacement={popperPlacement}
           onChange={date => handleDateChange(date, params)}
-          customInput={< CustomInput sx={{ width: 145, marginLeft: '-13px' }} />}
+          customInput={<CustomInput sx={{ width: 145, marginLeft: '-13px' }} />}
         />
       )
     },
@@ -221,8 +179,8 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
       type: 'time',
       minWidth: 130,
       editable: true,
-      headerName: 'Time',
-      field: 'time',
+      headerName: 'Hours',
+      field: 'burnedHours',
       renderEditCell: params => (
         <TimeSheetTextField
           style={{ width: 100 }}
@@ -242,7 +200,11 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
       renderCell: params => (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Tooltip title='Delete Project'>
-            <IconButton size='small' onClick={() => dispatch(DeleteData(params?.row?.tsMappingUid))} color='error'>
+            <IconButton
+              size='small'
+              onClick={() => dispatch(DeleteData(params?.row?.id))}
+              color='error'
+            >
               <Icon icon='mdi:delete-outline' fontSize={20} />
             </IconButton>
           </Tooltip>
@@ -251,10 +213,9 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
     }
   ]
 
-
   return (
     <Box sx={{ height: 500 }}>
-      <DataGrid rows={flattenedTimesheets} loading={loading} columns={columns} pageSize={10} />
+      <DataGrid rows={data} loading={loading} columns={columns} pageSize={10} />
     </Box>
   )
 }

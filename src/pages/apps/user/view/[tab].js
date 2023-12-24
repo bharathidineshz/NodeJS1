@@ -1,11 +1,15 @@
 // ** Third Party Imports
 import axios from 'axios'
+import { useSelector } from 'react-redux'
 
 // ** Demo Components Imports
 import UserViewPage from 'src/views/apps/user/view/UserViewPage'
 
 const UserView = ({ tab, invoiceData }) => {
-  return <UserViewPage tab={tab} invoiceData={invoiceData} />
+  const store = useSelector(state => state.user)
+  const user = store.users.find(o => o.id === store?.userId)
+
+  return <UserViewPage tab={tab} id={store?.userId} user={user} invoiceData={invoiceData} />
 }
 
 export const getStaticPaths = () => {

@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { useDispatch } from 'react-redux'
 
 // ** Axios Imports
 import { endpointURL, endpoints } from 'src/store/endpoints/endpoints'
@@ -23,14 +24,11 @@ export const fetchStatus = createAsyncThunk('fetchStatus/Status', async params =
   return response.data
 })
 
-export const fetchRequestTypes = createAsyncThunk(
-  'fetchRequestTypes/RequestTypes',
-  async params => {
-    const response = await instance.get(endpoints.requestTypes)
+export const fetchRequests = createAsyncThunk('fetchRequestTypes/RequestTypes', async params => {
+  const response = await instance.get(endpoints.requests)
 
-    return response.data
-  }
-)
+  return response.data
+})
 
 export const fetchUsers = createAsyncThunk('fetchUsers/users', async params => {
   const response = await instance.get(endpoints.allUsers)
@@ -66,6 +64,12 @@ export const postLeaveRequest = createAsyncThunk('postLeaveRequest/LeaveRequest'
   return response
 })
 
+export const postLeaveApproval = createAsyncThunk('postApproval/LeaveApproval', async params => {
+  const response = await instance.post(endpoints.createApproval, params)
+
+  return response
+})
+
 export const postPolicy = createAsyncThunk('postPolicy/LeavePolicy', async params => {
   const response = await instance.post(endpoints.createLeavePolicy, params)
 
@@ -80,7 +84,7 @@ export const putRequest = createAsyncThunk('putRequest/LeaveRequest', async para
 })
 
 export const putPolicy = createAsyncThunk('putPolicy/LeavePolicy', async params => {
-  const response = await instance.put(endpoints.leavePolicy, params)
+  const response = await instance.put(endpoints.updateLeavePolicy, params)
 
   return response
 })
@@ -92,19 +96,27 @@ export const deletePolicy = createAsyncThunk('deletePolicy/LeavePolicy', async p
   return response.data
 })
 
+const initialStates = {
+  myLeaves: [],
+  requestTypes: [],
+  policies: [],
+  statuses: [],
+  users: [],
+  approvals: [],
+  reports: [],
+  dashboards: []
+}
+
 export const LeaveManagement = createSlice({
   name: 'leaveManagement',
-  initialState: {
-    myLeaves: [],
-    requestTypes: [],
-    policies: [],
-    statuses: [],
-    users: [],
-    approvals: [],
-    reports: [],
-    dashboards: []
+  initialState: initialStates,
+  reducers: {
+    resetLeaves: () => initialStates,
+
+    setLeaveApproval: (state, action) => {
+      state.approvals = action.payload
+    }
   },
-  reducers: {},
   extraReducers: builder => {
     builder.addCase(fetchMyLeaves.fulfilled, (state, action) => {
       const requests = [...action.payload]
@@ -116,7 +128,7 @@ export const LeaveManagement = createSlice({
 
       state.myLeaves = requests
     })
-    builder.addCase(fetchRequestTypes.fulfilled, (state, action) => {
+    builder.addCase(fetchRequests.fulfilled, (state, action) => {
       state.requestTypes = action.payload
     })
     builder.addCase(fetchPolicies.fulfilled, (state, action) => {
@@ -128,11 +140,12 @@ export const LeaveManagement = createSlice({
     builder.addCase(fetchApprovals.fulfilled, (state, action) => {
       const approvals = [...action.payload]
       approvals.forEach(approval => {
-        const requestType = state.requestTypes.find(o => o.id === approval.leaveRequestId)
-        approval.user = state.users?.find(o => o.id == requestType.submittedUserId)
-        approval.fromDate = requestType.fromDate
-        approval.toDate = requestType.toDate
-        approval.requestReason = requestType.requestReason
+        approval.user = state.users?.find(o => o.id == approval.submittedUserId)
+        approval.request = state.policies.find(o => o.id === approval.requestTypeId)?.typeOfLeave
+        // approval.fromDate = requestType.fromDate
+        // approval.toDate = requestType.toDate
+        // approval.requestReason = requestType.requestReason
+
         if (approval.user)
           approval.user.fullName = `${approval.user.firstName} ${approval.user.lastName}`
       })
@@ -162,6 +175,6 @@ export const LeaveManagement = createSlice({
   }
 })
 
-export const {} = LeaveManagement.actions
+export const { resetLeaves, setLeaveApproval } = LeaveManagement.actions
 
 export default LeaveManagement.reducer

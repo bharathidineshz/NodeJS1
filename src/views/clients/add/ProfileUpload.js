@@ -34,7 +34,7 @@ const HeadingTypography = styled(Typography)(({ theme }) => ({
   }
 }))
 
-const ProfileUpload = () => {
+const ProfileUpload = props => {
   // ** State
   const [files, setFiles] = useState([])
 
@@ -44,20 +44,36 @@ const ProfileUpload = () => {
     accept: {
       'image/*': ['.png', '.jpg', '.jpeg', '.webp']
     },
-    onDrop: acceptedFiles => {
-      setFiles(acceptedFiles.map(file => Object.assign(file)))
+    onDrop: async acceptedFiles => {
+      const base64Strings = await Promise.all(
+        acceptedFiles.map(async file => {
+          const base64String = await getBase64String(file)
+
+          return { file, base64String }
+        })
+      )
+      setFiles(base64Strings)
+      props?.handleProfile
+        ? props.handleProfile(base64Strings)
+        : null
     }
   })
 
-  const img = files.map(file => (
-    <img
-      key={file.name}
-      alt={file.name}
-      className='single-file-image'
-      style={{ height: 50 }}
-      src={URL.createObjectURL(file)}
-    />
-  ))
+  const getBase64String = file => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+
+      reader.onload = () => {
+        resolve(reader.result)
+      }
+
+      reader.onerror = error => {
+        reject(error)
+      }
+    })
+  }
+  
 
   return (
     <Box {...getRootProps({ className: 'dropzone' })}>
@@ -79,10 +95,16 @@ const ProfileUpload = () => {
             textAlign: ['center', 'center', 'inherit']
           }}
         >
-          {files.length ? (
+          {(files.length && props.profile )? (
             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3, alignItems: 'center' }}>
-              {img}
-              <Typography>{files[0].name}</Typography>
+               <img
+      key={''}
+      alt={''}
+      className='single-file-image'
+      style={{ height: 50 }}
+      src={files[0].base64String}
+    />
+              <Typography>{files[0].file.name}</Typography>
             </Box>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3, alignItems: 'center' }}>

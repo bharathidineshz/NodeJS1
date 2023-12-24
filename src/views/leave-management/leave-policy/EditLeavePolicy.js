@@ -11,6 +11,7 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Icon from 'src/@core/components/icon'
 import {
   Autocomplete,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -34,7 +35,7 @@ import DatePicker, { ReactDatePicker, ReactDatePickerProps } from 'react-datepic
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { useDispatch, useSelector } from 'react-redux'
-import { putPolicy, setApply } from 'src/store/leave-management'
+import { fetchPolicies, putPolicy, setApply } from 'src/store/leave-management'
 import { useEffect } from 'react'
 import { Box } from '@mui/system'
 import { Controller, useForm } from 'react-hook-form'
@@ -45,13 +46,16 @@ import { customToast, errorToast, successToast } from 'src/helpers/helpers'
 import { useTheme } from '@emotion/react'
 import { postProject } from 'src/store/apps/projects'
 import { leavePolicyRequest } from 'src/helpers/requests'
+import { unwrapResult } from '@reduxjs/toolkit'
+import toast from 'react-hot-toast'
 
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
-  count: yup.number().required('Count should be greater than 0'),
   period: yup.string().required('Period is Required'),
-  carryForward: yup.boolean(),
-  carryForwardCount: yup.number()
+  carryForwardCount: yup.number().min(0),
+  allowanceTime: yup.number().min(0),
+  allowanceCount: yup.number().min(0).required('Allowance required'),
+  isPermission: yup.boolean()
 })
 
 const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
@@ -71,15 +75,15 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
           typeOfLeave: row?.typeOfLeave,
           count: row?.leaveCount,
           period: row?.period,
-          carryForward: row?.carryForward,
           carryForwardCount: row?.carryForwardCount
         }
       : {
           typeOfLeave: '',
-          count: '',
+          allowanceCount: 0,
+          allowanceTime: 0,
+          isPermission: false,
           period: '',
-          carryForward: '',
-          carryForwardCount: ''
+          carryForwardCount: 0
         },
     mode: 'onChange',
     resolver: yupResolver(schema)
@@ -88,9 +92,10 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
   useEffect(() => {
     reset({
       typeOfLeave: row?.typeOfLeave,
-      count: row?.leaveCount,
+      allowanceCount: row?.allowanceCount,
+      allowanceTime: row?.allowanceTime,
+      isPermission: row?.isPermission,
       period: row?.period,
-      carryForward: row?.carryForward,
       carryForwardCount: row?.carryForwardCount
     })
   }, [row])
@@ -107,18 +112,22 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
     try {
       const req = { id: row?.id, ...watch() }
       dispatch(putPolicy(leavePolicyRequest(req)))
-      setOpen(false)
-      successToast('Leave Policy Created')
+        .then(unwrapResult)
+        .then(res => {
+          res.status === 200 ? toast.success('Policy Updated') : toast.error('Error Occurred')
+          dispatch(fetchPolicies())
+          setOpen(false)
+          reset({
+            typeOfLeave: '',
+            count: '',
+            period: '',
+            carryForward: '',
+            carryForwardCount: ''
+          })
+        })
     } catch (error) {
       errorToast(error)
     }
-    reset({
-      typeOfLeave: '',
-      count: '',
-      period: '',
-      carryForward: '',
-      carryForwardCount: ''
-    })
   }
 
   return (
@@ -149,8 +158,13 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   name='typeOfLeave'
                   control={control}
                   rules={{ required: true }}
-                  render={field => (
-                    <TextField label='Policy Type' {...field} error={Boolean(errors.typeOfLeave)} />
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      label='Leave Type'
+                      onChange={onChange}
+                      error={Boolean(errors.typeOfLeave)}
+                    />
                   )}
                 />
                 {errors.typeOfLeave && (
@@ -161,31 +175,42 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={5}>
               <FormControl fullWidth>
                 <Controller
-                  name='count'
+                  name='allowanceCount'
                   control={control}
                   rules={{ required: true }}
                   render={({ field: { value, onChange } }) => (
                     <TextField
                       value={value}
                       type='number'
-                      label='Policy Count'
+                      label='Allowance'
                       onChange={onChange}
-                      error={Boolean(errors.count)}
+                      error={Boolean(errors.allowance)}
                     />
                   )}
                 />
-                {errors.count && (
+                {errors.allowance && (
                   <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.count.message}
+                    {errors.allowance.message}
                   </FormHelperText>
                 )}
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+              sm={2}
+              display='flex'
+              alignItems='center'
+              justifyContent='space-evenly'
+            >
+              <Typography variant='body2'>Per</Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={5}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <InputLabel id='demo-select-small-label'>Period</InputLabel>
@@ -203,8 +228,8 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                         aria-describedby='stepper-linear-client'
                       >
                         {[
-                          { id: '1', name: 'Monthly' },
-                          { id: '2', name: 'Yearly' }
+                          { id: '1', name: 'Month' },
+                          { id: '2', name: 'Year' }
                         ].map(client => (
                           <MenuItem key={client.id} value={client.name}>
                             {client.name}
@@ -223,38 +248,65 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             </Grid>
 
             <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='carryForwardCount'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      type='number'
+                      label='Carry forward count'
+                      onChange={onChange}
+                    />
+                  )}
+                />
+                {errors.carryForwardCount && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.carryForwardCount.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
               <FormControl>
                 <Controller
-                  name='carryForward'
+                  name='isPermission'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <FormControlLabel
-                      control={<Switch value={value} onChange={onChange} />}
-                      label='Carry Forward'
+                      label='Permission'
+                      control={<Checkbox checked={value} onChange={onChange} name='Permission' />}
                     />
                   )}
                 />
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <Controller
-                  name='carryForwardCount'
+                  name='allowanceTime'
                   control={control}
-                  rules={{ required: watch('carryForward') ? true : false }}
+                  rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <TextField
                       value={value}
                       type='number'
-                      label='Carry forward count'
-                      disabled={watch('carryForward') ? false : true}
+                      label='Hours'
+                      disabled={!watch('isPermission')}
                       onChange={onChange}
-                      error={Boolean(errors.carryForwardCount)}
                     />
                   )}
                 />
+                {(watch('isPermission') ? errors.hours : errors.days) && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {watch('isPermission') ? errors.hours.message : errors.days.message}
+                  </FormHelperText>
+                )}
               </FormControl>
             </Grid>
           </Grid>
@@ -270,7 +322,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             Discard
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
-            Add
+            Update
           </Button>
         </DialogActions>
       </form>

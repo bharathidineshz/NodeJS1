@@ -1,5 +1,5 @@
 // ** React Imports
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ** MUI Imports
 import Drawer from '@mui/material/Drawer'
@@ -27,7 +27,12 @@ import Icon from 'src/@core/components/icon'
 import { useDispatch, useSelector } from 'react-redux'
 
 // ** Actions Imports
-import { addClients } from 'src/store/clients'
+import { addClients, fetchClients, updateClient } from 'src/store/clients'
+import { Checkbox, FormControlLabel, Grid } from '@mui/material'
+import ProfileUpload from '../add/ProfileUpload'
+import { clientRequest } from 'src/helpers/requests'
+import { unwrapResult } from '@reduxjs/toolkit'
+import toast from 'react-hot-toast'
 
 const showErrors = (field, valueLen, min) => {
   if (valueLen === 0) {
@@ -47,31 +52,45 @@ const Header = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.default
 }))
 
+const phoneRegExp =
+  /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
+
 const schema = yup.object().shape({
   address: yup.string().required(),
   taxId: yup.string().required(),
-  companyId: yup.string().required(),
-  name: yup
+  email: yup.string().email().required('Email is required').typeError('Email is invalid'),
+  primaryContactName: yup.string().required('Contact is required'),
+  phoneNumber: yup
     .string()
-    .min(3, obj => showErrors('Clientname', obj.value.length, obj.min))
-    .required()
+    .required('Phone Number is required')
+    .matches(phoneRegExp, 'Phone number is not valid')
+    .min(10, 'too short')
+    .max(10, 'too long'),
+  companyName: yup
+    .string()
+    .min(3, obj => showErrors('companyName', obj.value.length, obj.min))
+    .required(),
+  isActive: yup.boolean().notRequired(),
+  companyId: yup.string().required('Company ID is required')
 })
 
 const defaultValues = {
-  //   email: '',
+  companyName: '',
+  primaryContactName: '',
   address: '',
-  taxId: '',
+  email: '',
+  phoneNumber: '',
   companyId: '',
-  name: ''
+  taxId: '',
+  isActive: true
 }
-
 const SidebarAddClient = props => {
   // ** Props
-  const { open, toggle } = props
+  const { open, toggle, editedRowData , handleEdit} = props
 
   // ** State
   const [plan, setPlan] = useState('basic')
-  const [role, setRole] = useState('subscriber')
+  const [profile, setProfile] = useState(null)
 
   // ** Hooks
   const dispatch = useDispatch()
@@ -90,28 +109,51 @@ const SidebarAddClient = props => {
     resolver: yupResolver(schema)
   })
 
+  useEffect(()=>{
+    if(editedRowData){
+      const {companyName,primaryContatctName,address,email,phoneNumber,companyId,taxId,isActive}= editedRowData;
+      reset( {
+        companyName: companyName,
+        primaryContactName: primaryContatctName ||'',
+        address: address,
+        email: email,
+        phoneNumber: phoneNumber,
+        companyId: companyId,
+        taxId: taxId,
+        isActive: isActive
+      })
+    }
+  },[editedRowData])
+
   const onSubmit = data => {
-    if (store.allData.some(u => u.companyId === data.companyId || u.name === data.name)) {
-      store.allData.forEach(u => {
-        if (u.companyId === data.companyId) {
-          setError('email', {
-            message: 'Company Id already exist'
-          })
+    const profilePhoto = (profile == null ) ? '' :  profile[0].base64String;
+const contactName = data.primaryContactName;
+    delete data.primaryContactName;
+
+    const req = {profilePhoto : profilePhoto, primaryContatctName : contactName,  ...data}
+    dispatch(editedRowData ? updateClient({id: editedRowData?.id, ...req}) : addClients(req))
+      .then(unwrapResult)
+      .then(res => {
+        if (res.status === 200 || res.status === 201) {
+          dispatch(fetchClients())
+          toast.success(editedRowData ? 'Client Updated' : 'Client Created')
+          toggle()
+          handleEdit(null)
+          reset()
+        } else {
+          toast.error(res.data)
         }
       })
-    } else {
-      dispatch(addClients({ ...data, type: 'form' }))
-      toggle()
-      reset()
-    }
+  }
+
+  const handleProfile = file => {
+    setProfile(file)
   }
 
   const handleClose = () => {
-    setPlan('basic')
-    setRole('subscriber')
-    setValue('contact', Number(''))
     toggle()
     reset()
+    setProfile(null)
   }
 
   return (
@@ -121,7 +163,7 @@ const SidebarAddClient = props => {
       variant='temporary'
       onClose={handleClose}
       ModalProps={{ keepMounted: true }}
-      sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
+      sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 500 } } }}
     >
       <Header>
         <Typography variant='h6'>Create New Client</Typography>
@@ -132,26 +174,76 @@ const SidebarAddClient = props => {
       <Box sx={{ p: 5 }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <FormControl fullWidth sx={{ mb: 6 }}>
+            <ProfileUpload profile={profile} handleProfile={handleProfile} />
+            {errors.name && (
+              <FormHelperText sx={{ color: 'error.main' }}>{errors.name.message}</FormHelperText>
+            )}
+          </FormControl>
+          <FormControl fullWidth sx={{ mb: 6 }}>
             <Controller
-              name='name'
+              name='companyName'
               control={control}
               rules={{ required: true }}
               render={({ field: { value, onChange } }) => (
                 <TextField
                   value={value}
-                  label='Client Name'
+                  label='Company name'
                   onChange={onChange}
                   //   placeholder='johndoe'
-                  error={Boolean(errors.name)}
+                  error={Boolean(errors.companyName)}
                 />
               )}
             />
-            {errors.name && (
-              <FormHelperText sx={{ color: 'error.main' }}>{errors.name.message}</FormHelperText>
+            {errors.companyName && (
+              <FormHelperText sx={{ color: 'error.main' }}>
+                {errors.companyName.message}
+              </FormHelperText>
             )}
           </FormControl>
 
-          {/* <FormControl fullWidth sx={{ mb: 6 }}>
+          <FormControl fullWidth sx={{ mb: 6 }}>
+            <Controller
+              name='primaryContactName'
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { value, onChange } }) => (
+                <TextField
+                  value={value}
+                  label='Contact name'
+                  onChange={onChange}
+                  error={Boolean(errors.primaryContactName)}
+                />
+              )}
+            />
+            {errors.primaryContactName && (
+              <FormHelperText sx={{ color: 'error.main' }}>
+                {errors.primaryContactName.message}
+              </FormHelperText>
+            )}
+          </FormControl>
+
+          <FormControl fullWidth sx={{ mb: 6 }}>
+            <Controller
+              name='phoneNumber'
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { value, onChange } }) => (
+                <TextField
+                  value={value}
+                  label='Phone Number'
+                  onChange={onChange}
+                  error={Boolean(errors.phoneNumber)}
+                />
+              )}
+            />
+            {errors.phoneNumber && (
+              <FormHelperText sx={{ color: 'error.main' }}>
+                {errors.phoneNumber.message}
+              </FormHelperText>
+            )}
+          </FormControl>
+
+          <FormControl fullWidth sx={{ mb: 6 }}>
             <Controller
               name='email'
               control={control}
@@ -162,13 +254,15 @@ const SidebarAddClient = props => {
                   value={value}
                   label='Email'
                   onChange={onChange}
-                  placeholder='johndoe@email.com'
                   error={Boolean(errors.email)}
                 />
               )}
             />
-            {errors.email && <FormHelperText sx={{ color: 'error.main' }}>{errors.email.message}</FormHelperText>}
-          </FormControl> */}
+            {errors.email && (
+              <FormHelperText sx={{ color: 'error.main' }}>{errors.email.message}</FormHelperText>
+            )}
+          </FormControl>
+
           <FormControl fullWidth sx={{ mb: 6 }}>
             <Controller
               name='address'
@@ -178,6 +272,8 @@ const SidebarAddClient = props => {
                 <TextField
                   value={value}
                   label='Address'
+                  multiline
+                  minRows={2}
                   onChange={onChange}
                   //   placeholder='Company PVT LTD'
                   error={Boolean(errors.address)}
@@ -188,25 +284,7 @@ const SidebarAddClient = props => {
               <FormHelperText sx={{ color: 'error.main' }}>{errors.address.message}</FormHelperText>
             )}
           </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <Controller
-              name='taxId'
-              control={control}
-              rules={{ required: true }}
-              render={({ field: { value, onChange } }) => (
-                <TextField
-                  value={value}
-                  label='Tax Id'
-                  onChange={onChange}
-                  //   placeholder='Australia'
-                  error={Boolean(errors.taxId)}
-                />
-              )}
-            />
-            {errors.taxId && (
-              <FormHelperText sx={{ color: 'error.main' }}>{errors.taxId.message}</FormHelperText>
-            )}
-          </FormControl>
+
           <FormControl fullWidth sx={{ mb: 6 }}>
             <Controller
               name='companyId'
@@ -228,65 +306,56 @@ const SidebarAddClient = props => {
               </FormHelperText>
             )}
           </FormControl>
-          {/* <FormControl fullWidth sx={{ mb: 6 }}>
+
+          <FormControl fullWidth sx={{ mb: 6 }}>
             <Controller
-              name='contact'
+              name='taxId'
               control={control}
               rules={{ required: true }}
               render={({ field: { value, onChange } }) => (
                 <TextField
-                  type='number'
                   value={value}
-                  label='Contact'
+                  label='Tax Id'
                   onChange={onChange}
-                  placeholder='(397) 294-5153'
-                  error={Boolean(errors.contact)}
+                  //   placeholder='Australia'
+                  error={Boolean(errors.taxId)}
                 />
               )}
             />
-            {errors.contact && <FormHelperText sx={{ color: 'error.main' }}>{errors.contact.message}</FormHelperText>}
-          </FormControl> */}
-          {/* <FormControl fullWidth sx={{ mb: 6 }}>
-            <InputLabel id='role-select'>Select Role</InputLabel>
-            <Select
-              fullWidth
-              value={role}
-              id='select-role'
-              label='Select Role'
-              labelId='role-select'
-              onChange={e => setRole(e.target.value)}
-              inputProps={{ placeholder: 'Select Role' }}
-            >
-              <MenuItem value='admin'>Admin</MenuItem>
-              <MenuItem value='author'>Author</MenuItem>
-              <MenuItem value='editor'>Editor</MenuItem>
-              <MenuItem value='maintainer'>Maintainer</MenuItem>
-              <MenuItem value='subscriber'>Subscriber</MenuItem>
-            </Select>
+            {errors.taxId && (
+              <FormHelperText sx={{ color: 'error.main' }}>{errors.taxId.message}</FormHelperText>
+            )}
           </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <InputLabel id='plan-select'>Select Plan</InputLabel>
-            <Select
-              fullWidth
-              value={plan}
-              id='select-plan'
-              label='Select Plan'
-              labelId='plan-select'
-              onChange={e => setPlan(e.target.value)}
-              inputProps={{ placeholder: 'Select Plan' }}
-            >
-              <MenuItem value='basic'>Basic</MenuItem>
-              <MenuItem value='company'>Company</MenuItem>
-              <MenuItem value='enterprise'>Enterprise</MenuItem>
-              <MenuItem value='team'>Team</MenuItem>
-            </Select>
-          </FormControl> */}
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Button size='large' type='submit' variant='contained' sx={{ mr: 3 }}>
-              Submit
-            </Button>
+
+          <FormControl sx={{ mb: 6 }}>
+            <Controller
+              name='isActive'
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <FormControlLabel
+                  label='Active'
+                  control={
+                    <Checkbox
+                      size='medium'
+                      defaultChecked={value}
+                      value={value}
+                      onChange={onChange}
+                    />
+                  }
+                />
+              )}
+            />
+            {errors.taxId && (
+              <FormHelperText sx={{ color: 'error.main' }}>{errors.taxId.message}</FormHelperText>
+            )}
+          </FormControl>
+
+          <Box sx={{ display: 'flex', gap: 5, alignItems: 'center', justifyContent: 'flex-end' }}>
             <Button size='large' variant='outlined' color='secondary' onClick={handleClose}>
               Cancel
+            </Button>
+            <Button size='large' type='submit' variant='contained' sx={{ mr: 3 }}>
+              Submit
             </Button>
           </Box>
         </form>

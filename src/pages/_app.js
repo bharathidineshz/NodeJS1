@@ -102,7 +102,7 @@ const App = props => {
           query: { returnUrl: router.asPath }
         })
       }
-    } else {
+    } else if (!router.pathname.includes('employee-signup'.toLowerCase())) {
       router.push('/login')
     }
   }, [])
@@ -112,14 +112,8 @@ const App = props => {
       <CacheProvider value={emotionCache}>
         <Head>
           <title>{`${themeConfig.templateName} - Streamlining project profitability through AI-driven resource optimization and real-time insights.`}</title>
-          <meta
-            name='description'
-            content={`${themeConfig.templateName} – Material Design React Admin Dashboard Template – is the most developer friendly & highly customizable Admin Dashboard Template based on MUI v5.`}
-          />
-          <meta
-            name='keywords'
-            content='Material Design, MUI, Admin Template, React Admin Template'
-          />
+          <meta name='description' content='' />
+          <meta name='keywords' content='LeanProfit' />
           <meta name='viewport' content='initial-scale=1, width=device-width' />
         </Head>
 

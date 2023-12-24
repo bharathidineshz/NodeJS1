@@ -2,18 +2,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { endpointURL, endpoints } from '../endpoints/endpoints';
+import instance from '../endpoints/interceptor';
+
+
 
 // Create a Redux-thunk action for signup
-export const signUpUser = createAsyncThunk('auth/signUpUser', async () => {
-    const userData = {
-        first_name:'Naveen',
-        last_name:'Mounasamy',
-        email:'naveenkumar.mounasamy@athen.club',
-        password:'123qwe'
-    };
-  const response = await axios.post(endpointURL(endpoints.tenant), userData);
+export const signUpUser = createAsyncThunk('auth/signUpUser', async (params) => {
+  const response = await axios.put(endpoints.Updateuser, params)
 
-return response.data;
+  return response;
 });
 
 // Create a slice for authentication

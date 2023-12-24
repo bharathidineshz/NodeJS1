@@ -159,6 +159,7 @@ const Register = () => {
 
   // ** Vars
   const { skin } = settings
+
   const imageSource =
     skin === 'bordered' ? 'auth-v2-register-illustration-bordered' : 'auth-v2-register-illustration'
 
@@ -211,7 +212,15 @@ const Register = () => {
                 justifyContent: 'center'
               }}
             >
-              <img src='/images/leanprofit-white.png' alt='' height={40} />
+              <img
+                src={
+                  themeConfig.mode === 'dark'
+                    ? '/images/leanprofit-white.png'
+                    : '/images/leanprofit-purple.png'
+                }
+                alt='Leanprofit'
+                height={40}
+              />
             </Box>
             <Box sx={{ mb: 6 }}>
               <Typography variant='h5'>Welcome to LeanProfit!</Typography>

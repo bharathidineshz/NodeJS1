@@ -11,6 +11,7 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Icon from 'src/@core/components/icon'
 import {
   Autocomplete,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -57,9 +58,11 @@ import toast from 'react-hot-toast'
 const defaultValues = {
   requestType: '',
   requestReason: '',
-  approver: '',
+  requiresApproval: true,
   fromDate: new Date(),
-  toDate: new Date()
+  toDate: new Date(),
+  fromSession: '',
+  toSession: ''
 }
 
 const schema = yup.object().shape({
@@ -67,7 +70,9 @@ const schema = yup.object().shape({
   requestReason: yup.string().required('Reason is Required'),
   fromDate: yup.date().required('From date is Required'),
   toDate: yup.date().required('To date is Required'),
-  approver: yup.string().required('Approver is Required')
+  fromSession: yup.string(),
+  toSession: yup.string(),
+  requiresApproval: yup.boolean()
 })
 
 const LeaveApplyForm = ({ isOpen, setOpen }) => {
@@ -108,44 +113,50 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
       const currentUser = JSON.parse(localStorage.getItem('userData'))
       const user = store.users.find(o => currentUser.user === o.email)
       const req = store.policies.find(o => o.typeOfLeave === watch('requestType'))
-      const request = await myLeaveRequest({
+
+      const request =  myLeaveRequest({
         submittedUserId: user.id,
         requestTypeId: req.id,
+        isFromDateHalfDay: watch('fromSession') ? true : false,
+        isToDateHalfDay: watch('toSession') ? true : false,
+        fromDateSession:watch('fromSession'),
+        toDateSession: watch('toSession'),
         ...watch()
       })
       dispatch(postLeaveRequest(request))
         .then(unwrapResult)
         .then(res => {
-          if (res?.status === 200) {
+          if (res?.status == 200 || res.status == 201) {
             setOpen(false)
             toast.success('Leave Request Submitted', {
               position: 'top-right',
               duration: 3000
             })
             dispatch(fetchMyLeaves())
+            reset({
+              requestType: '',
+              requestReason: '',
+              fromDate: new Date(),
+              toDate: new Date(),
+              fromSession: '',
+              toSession: '',
+              requiresApproval: true
+            })
           } else {
             setOpen(true)
-            toast.error('Error Occured', {
+            toast.error('Error Occurred', {
               position: 'top-right',
               duration: 3000
             })
           }
         })
-      reset({
-        requestType: '',
-        requestReason: '',
-        approver: '',
-        createdDate: new Date(),
-        fromDate: new Date(),
-        toDate: new Date()
-      })
     } catch (error) {
       errorToast(error)
     }
   }
 
   return (
-    <Dialog fullWidth open={isOpen} maxWidth='md' scroll='body' onClose={() => setOpen(false)}>
+    <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={() => setOpen(false)}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent
           sx={{
@@ -167,7 +178,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
             <Typography variant='body2'>Update your un-availability by filling form</Typography>
           </Box>
           <Grid container spacing={6}>
-            <Grid item xs={12} sm={6} md={6} lg={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth>
                 <Controller
                   name='requestType'
@@ -186,7 +197,6 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                           {...params}
                           error={Boolean(errors.requestType)}
                           label='Request Type'
-                          placeholder='Approver'
                         />
                       )}
                     />
@@ -200,35 +210,26 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={6} lg={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth>
                 <Controller
-                  name='approver'
+                  name='requestReason'
                   control={control}
                   rules={{ required: true }}
-                  render={({ field }) => (
-                    <Autocomplete
-                      {...register('approver')}
-                      options={store.users}
-                      id='autocomplete-limit-tags'
-                      getOptionLabel={option => option.fullName || ''}
-                      onChange={(event, value) => {
-                        field.onChange(event.target.innerText)
-                      }}
-                      renderInput={params => (
-                        <TextField
-                          {...params}
-                          error={Boolean(errors.approver)}
-                          label='Approver'
-                          placeholder='Approver'
-                        />
-                      )}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      minRows={2}
+                      multiline
+                      label='Request Reason'
+                      onChange={onChange}
+                      error={Boolean(errors.requestReason)}
                     />
                   )}
                 />
-                {errors.approver && (
+                {errors.requestReason && (
                   <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.approver.message}
+                    {errors.requestReason.message}
                   </FormHelperText>
                 )}
               </FormControl>
@@ -262,6 +263,29 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
             </Grid>
 
             <Grid item xs={12} sm={6} md={6} lg={6}>
+              <FormControl fullWidth>
+                <Controller
+                  name='fromSession'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <RadioGroup
+                      row
+                      value={value}
+                      name='simple-radio'
+                      defaultValue={''}
+                      onChange={onChange}
+                      aria-label='simple-radio'
+                    >
+                      <FormControlLabel value='F.N' control={<Radio />} label='F.N' />
+                      <FormControlLabel value='A.N' control={<Radio />} label='A.N' />
+                    </RadioGroup>
+                  )}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={6} lg={6}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <Controller
@@ -288,26 +312,53 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={6} lg={6}>
               <FormControl fullWidth>
                 <Controller
-                  name='requestReason'
+                  name='toSession'
                   control={control}
-                  rules={{ required: true }}
+                  rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <TextField
+                    <RadioGroup
+                      row
                       value={value}
-                      minRows={3}
-                      multiline
-                      label='Request Reason'
+                      name='simple-radio'
+                      defaultValue={''}
                       onChange={onChange}
-                      error={Boolean(errors.requestReason)}
+                      aria-label='simple-radio'
+                    >
+                      <FormControlLabel value='F.N' control={<Radio />} label='F.N' />
+                      <FormControlLabel value='A.N' control={<Radio />} label='A.N' />
+                    </RadioGroup>
+                  )}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item>
+              <FormControl fullWidth>
+                <Controller
+                  name='requiresApproval'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <FormControlLabel
+                      label='Requires Approval'
+                      control={
+                        <Checkbox
+                          checked={value}
+                          value={value}
+                          defaultChecked={value}
+                          onChange={onChange}
+                          name='Requires Approval'
+                        />
+                      }
                     />
                   )}
                 />
-                {errors.requestReason && (
+                {errors.requiresApproval && (
                   <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.requestReason.message}
+                    {errors.requiresApproval.message}
                   </FormHelperText>
                 )}
               </FormControl>
@@ -321,7 +372,22 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
             pb: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
           }}
         >
-          <Button variant='outlined' color='secondary' onClick={() => setOpen(false)}>
+          <Button
+            variant='outlined'
+            color='secondary'
+            onClick={() => {
+              reset({
+                requestType: '',
+                requestReason: '',
+                fromDate: new Date(),
+                toDate: new Date(),
+                fromSession: '',
+                toSession: '',
+                requiresApproval: true
+              })
+              setOpen(false)
+            }}
+          >
             Discard
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>

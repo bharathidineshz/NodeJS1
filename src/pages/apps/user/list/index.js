@@ -36,7 +36,7 @@ import CardStatisticsHorizontal from 'src/@core/components/card-statistics/card-
 import { getInitials } from 'src/@core/utils/get-initials'
 
 // ** Actions Imports
-import { fetchData, deleteUser, fetchUsers } from 'src/store/apps/user'
+import { fetchData, deleteUser, fetchUsers, setUserId } from 'src/store/apps/user'
 
 // ** Third Party Components
 import axios from 'axios'
@@ -45,6 +45,7 @@ import axios from 'axios'
 import TableHeader from 'src/views/apps/user/list/TableHeader'
 import AddUserDrawer from 'src/views/apps/user/list/AddUserDrawer'
 import { roles } from 'src/helpers/constants'
+import { useRouter } from 'next/router'
 
 // ** Vars
 
@@ -82,82 +83,6 @@ const renderClient = row => {
   )
 
   // }
-}
-
-const RowOptions = ({ id }) => {
-  // ** Hooks
-  const dispatch = useDispatch()
-
-  // ** State
-  const [anchorEl, setAnchorEl] = useState(null)
-  const rowOptionsOpen = Boolean(anchorEl)
-
-  const handleRowOptionsClick = event => {
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handleRowOptionsClose = () => {
-    setAnchorEl(null)
-  }
-
-  const handleDelete = () => {
-    console.log(id)
-    dispatch(deleteUser(id))
-    handleRowOptionsClose()
-  }
-
-  const [editUserOpen, setEditUserOpen] = useState(false)
-  const [addUserOpen, setAddUserOpen] = useState(false)
-
-  const tongleEditDrawer = () => {
-    return <AddUserDrawer open={addUserOpen} toggle={toggleAddUserDrawer} />
-  }
-
-  return (
-    <>
-      <IconButton size='small' onClick={handleRowOptionsClick}>
-        <Icon icon='mdi:dots-vertical' />
-      </IconButton>
-      <Menu
-        keepMounted
-        anchorEl={anchorEl}
-        open={rowOptionsOpen}
-        onClose={handleRowOptionsClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right'
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right'
-        }}
-        PaperProps={{ style: { minWidth: '8rem' } }}
-      >
-        <MenuItem
-          component={Link}
-          sx={{ '& svg': { mr: 2 } }}
-          onClick={handleRowOptionsClose}
-          href='/apps/user/view/overview/'
-        >
-          <Icon icon='mdi:eye-outline' fontSize={20} />
-          View
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            console.log({ addUserOpen }), setAddUserOpen(!addUserOpen)
-          }}
-          sx={{ '& svg': { mr: 2 } }}
-        >
-          <Icon icon='mdi:pencil-outline' fontSize={20} />
-          Edit
-        </MenuItem>
-        <MenuItem onClick={handleDelete} sx={{ '& svg': { mr: 2 } }}>
-          <Icon icon='mdi:delete-outline' fontSize={20} />
-          Delete
-        </MenuItem>
-      </Menu>
-    </>
-  )
 }
 
 const columns = [
@@ -225,14 +150,6 @@ const columns = [
         </Typography>
       )
     }
-  },
-  {
-    flex: 0.1,
-    minWidth: 90,
-    sortable: false,
-    field: 'actions',
-    headerName: 'Actions',
-    renderCell: ({ row }) => <RowOptions id={row.email} />
   }
 ]
 
@@ -247,7 +164,7 @@ const UserList = ({ apiData }) => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
 
   // ** Hooks
-
+  const router = useRouter()
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
   useEffect(() => {
@@ -300,6 +217,13 @@ const UserList = ({ apiData }) => {
   }, [])
   const toggleAddUserDrawer = () => setAddUserOpen(!addUserOpen)
 
+  const onViewUser = data => {
+    dispatch(setUserId(data?.row.id))
+    router.push({
+      pathname: '/apps/user/view/overview'
+    })
+  }
+
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
@@ -311,6 +235,7 @@ const UserList = ({ apiData }) => {
             rows={store.users}
             columns={columns}
             disableRowSelectionOnClick
+            onRowClick={onViewUser}
             pageSizeOptions={[10, 25, 50]}
             paginationModel={paginationModel}
             onPaginationModelChange={setPaginationModel}

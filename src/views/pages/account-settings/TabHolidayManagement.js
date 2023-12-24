@@ -51,6 +51,7 @@ const TabHolidayManagement = ({ popperPlacement }) => {
 
   useEffect(() => {
     getHolidays()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

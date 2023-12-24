@@ -23,7 +23,14 @@ import Select from '@mui/material/Select'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
-import { FormControlLabel, FormHelperText, Radio, RadioGroup, Switch } from '@mui/material'
+import {
+  Autocomplete,
+  FormControlLabel,
+  FormHelperText,
+  Radio,
+  RadioGroup,
+  Switch
+} from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
 import DatePicker from 'react-datepicker'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
@@ -31,15 +38,59 @@ import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInpu
 import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
 import { ORG_UNITS, SKILLS } from 'src/helpers/constants'
 import { fetchSkills } from 'src/store/apps/user'
+import CustomDepartmentPicker from 'src/views/components/autocomplete/CustomDepartmentPicker'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { Controller, useForm } from 'react-hook-form'
+import * as yup from 'yup'
+import {
+  fetchClients,
+  fetchProjectAssignees,
+  putProject,
+  setAssignees,
+  fetchUsers
+} from 'src/store/apps/projects'
+import { unwrapResult } from '@reduxjs/toolkit'
+import UserTable from '../../edit/UserTable'
+import { Box, Stack } from '@mui/system'
+import toast from 'react-hot-toast'
+
+const defaultValues = {
+  client: 0,
+  type: 2,
+  name: '',
+  plannedBudget: 0,
+  plannedHours: 0,
+  startDate: new Date(),
+  endDate: new Date(),
+  isBillable: true,
+  allowUsersToChangeEstHours: false,
+  allowUsersToCreateNewTask: false
+}
+
+const schema = yup.object().shape({
+  client: yup.number().required(),
+  type: yup.number().required('Type required'),
+  name: yup.string().required('Project name required'),
+  plannedBudget: yup.number().positive().integer(),
+  plannedHours: yup.number().positive().integer(),
+  startDate: yup.date().notRequired(),
+  endDate: yup.date().notRequired(),
+  isBillable: yup.boolean().notRequired(),
+  allowUsersToChangeEstHours: yup.boolean().notRequired(),
+  allowUsersToCreateNewTask: yup.boolean().notRequired()
+})
 
 const Settings = () => {
   // ** States
-  const [date, setDate] = useState(null)
-  const [language, setLanguage] = useState([])
+  const [clients, setClients] = useState([])
+  const [skills, setSkills] = useState([])
+  const [departments, setDepartments] = useState([])
 
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
-  const leaveStore = useSelector(state => state.leaveManagement)
+  const userStore = useSelector(state => state.user)
+  const [users, setUsers] = useState([])
+  const [managerAssignments, setManagerAssignments] = useState([])
 
   const [values, setValues] = useState({
     password: '',
@@ -49,286 +100,122 @@ const Settings = () => {
   })
 
   useEffect(() => {
-    dispatch(fetchSkills())
+    const _project = localStorage.getItem('project')
+    const project = JSON.parse(_project)
+    const {
+      clientId,
+      name,
+      type,
+      budget,
+      departmentId,
+      startDate,
+      endDate,
+      estimatedHours,
+      isBillable,
+      allowUsersToChangeEstHours,
+      allowUsersToCreateNewTask
+    } = project
+    dispatch(fetchClients())
+      .then(unwrapResult)
+      .then(res => {
+        reset({
+          client: clientId,
+          plannedBudget: budget,
+          plannedHours: estimatedHours,
+          endDate: endDate ? new Date(endDate) : new Date(),
+          startDate: startDate ? new Date(startDate) : new Date(),
+          allowUsersToChangeEstHours: allowUsersToChangeEstHours,
+          allowUsersToCreateNewTask: allowUsersToCreateNewTask,
+          isBillable: isBillable,
+          name: name,
+          type: type
+        })
+        setClients(res)
+      })
   }, [])
 
-  const handleProjectType = e => {
-    dispatch(setProject({ projectType: e.target.value }))
-  }
+  useEffect(() => {
+    dispatch(fetchUsers())
+    dispatch(fetchSkills())
 
-  const onSaveProject = async e => {
-    e.preventDefault()
-
-    const { uniqueId, name, budget, hours, isBillable, projectTypeId, clientId } = store.editProject
-    const clientUId = store.allClients.find(o => o.id === clientId).uniqueId
-
-    const request = {
-      id: uniqueId,
-      name: name,
-      budget: budget,
-      projectType: projectTypeId,
-      hours: hours,
-      clientUid: clientUId,
-      isBillable: isBillable,
-      isUndifinedTasksAllowed: false
+    if (store.assignees && store.assignees.length > 0) {
+      setManagerAssignments(store.assignees)
     }
-    dispatch(putProject({ request: request, afterSubmit: onSubmit }))
-  }
+  }, [dispatch, store.assignees])
 
-  const onSaveCategory = e => {
-    e.preventDefault()
-
-    const { uniqueId, name, budget, hours, isBillable, projectTypeId, clientId, taskCategory } =
-      store.editProject
-
-    const request = {
-      projectUId: uniqueId,
-      taskCategory: taskCategory.map(category => ({
-        name: category.name,
-        taskCategoryUid: category.uniqueId,
-        isBillable: category.isBillable
-      }))
-    }
-
-    dispatch(putCategory({ request: request, afterSubmit: onSubmit }))
-  }
-
-  const onSaveTasks = e => {
-    e.preventDefault()
-
-    const { uniqueId, name, budget, hours, isBillable, projectTypeId, clientId, taskCategory } =
-      store.editProject
-
-    const request = {
-      projectUid: uniqueId,
-      taskResponse: taskCategory
-        .flatMap(o => o.tasks)
-        .map(t => ({
-          taskUid: t.uniqueId,
-          taskCategoryUid: t.taskCategoryId,
-          description: t.description,
-          hours: t.hours,
-          dateTime: new Date().toISOString()
-        }))
-    }
-
-    dispatch(putTask({ request: request, afterSubmit: onSubmit }))
-  }
-
-  const onSaveAssignee = async e => {
-    e.preventDefault()
-
-    const { uniqueId } = store.editProject
-
-    const request = {
-      project_id: uniqueId,
-      mapping: managerAssignments.map(user => ({
-        email: user.email,
-        cost: user.allocatedProjectCost,
-        projectRoleId: user.projectRoleId
-      }))
-    }
-    dispatch(setEditProject({ ...store.editProject, assignee: managerAssignments }))
-    dispatch(putProjectMap(request))
-      .then(unwrapResult)
-      .then(response => {
-        toast.success('Assignees Updated', { duration: 3000, position: 'top-right' })
-        setAssignees([])
-        router.replace('/projects/list')
-      })
-      .catch(e => toast.error(error, { duration: 3000, position: 'top-right' }))
-  }
-
-  const onChangeCategoryOrTaskName = (e, index, name) => {
-    var project = store.editProject
-    var category = [...store.editProject.taskCategory]
-    var tasks = [...store.editProject.taskCategory.flatMap(o => o.tasks)]
-
-    switch (name?.toLowerCase()) {
-      case 'category':
-        category[index] = { ...category[index], name: e.target.value }
-        dispatch(setEditProject({ ...store.editProject, taskCategory: category }))
-        break
-      case 'task':
-        tasks[index] = {
-          index: index,
-          name: e.target.value,
-          hours: tasks[index].hours,
-          category: tasks[index].taskCategoryId
+  useEffect(() => {
+    if (store.users?.length > 0 && store.users?.length > 0) {
+      const _users = []
+      store.users.forEach(user => {
+        const isUserAssigned = store.assignees.find(o => o.userId === user.id)
+        if (!isUserAssigned) {
+          _users.push(user)
         }
-
-        dispatch(setTasks(tasks))
-        project = { ...project, taskCategory: category }
-        dispatch(setEditProject(project))
-        break
-
-      default:
-        break
+      })
+      setUsers(_users)
     }
-  }
+  }, [store.users, store.assignees])
 
-  const onChangeTasks = (index, e, name) => {
-    var project = store.editProject
-    var categories = [...project.taskCategory]
-    var tasks = [...categories.flatMap(o => o.tasks)]
-    switch (name?.toLowerCase()) {
-      case 'category':
-        const category = categories.find(o => o.taskCategotyId === e.target.value)
-        tasks[index] = { ...tasks, taskCategoryId: category.uniqueId }
-        break
-      case 'hours':
-        tasks[index] = { ...tasks, hours: e.target.value.toString().trim() }
+  const {
+    reset,
+    register,
+    control,
+    setValue,
+    watch,
+    setError,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    defaultValues,
+    mode: 'onChange',
+    resolver: yupResolver(schema)
+  })
 
-        break
-      default:
-        break
-    }
-    project = { ...project, taskCategory: categories }
-    dispatch(setEditProject(project))
-  }
-  const [managerAssignments, setManagerAssignments] = useState([])
-
-  const onChangeAssignees = (params, assignees) => {
-    debugger
-    console.log('assignees', assignees)
+  const onChangeAssignees = (params, users) => {
+    console.log('assignees', users)
+    var assignees = users?.length == 0 ? [...store.assignees] : [...store.assignees, ...users]
+    assignees = [...new Set(assignees)]
     dispatch(setAssignees(assignees))
   }
 
-  const addCategoryOrTask = name => {
-    switch (name?.toLowerCase()) {
-      case 'category':
-        const categories = [
-          ...store.editProject.taskCategory,
-          { index: store.editProject.taskCategory?.length + 1, name: '', isBillable: false }
-        ]
+  const handleSkills = values => {
+    setSkills(values)
+  }
 
-        dispatch(setEditProject({ ...store.editProject, taskCategory: categories }))
-        break
-      case 'task':
-        const tasks = [
-          ...store.tasks,
-          {
-            index: store.tasks?.length + 1,
-            name: '',
-            category: '',
-            hours: ''
-          }
-        ]
-        dispatch(setTasks(tasks))
-        break
+  const handleDepartments = value => {
+    setDepartments(value)
+  }
 
-      default:
-        break
+  //submit
+
+  const onSubmit = data => {
+    const request = {
+      id: localStorage.getItem('projectId'),
+      name: data.name,
+      budget: data.plannedBudget,
+      startDate: data.startDate.toISOString(),
+      endDate: data.endDate.toISOString(),
+      estimatedHours: data.plannedHours,
+      skillId: skills.length > 0 ? skills.map(o => o.id) : [],
+      isActive: true,
+      projectTypeId: data.type,
+      clientId: data.client,
+      departmentId: 1,
+      isBillable: data.isBillable,
+      allowUsersToChangeEstHours: data.allowUsersToChangeEstHours,
+      allowUsersToCreateNewTask: data.allowUsersToCreateNewTask
     }
-  }
 
-  const onRemoveCategoryorTask = (index, name) => {
-    switch (name?.toLowerCase()) {
-      case 'category':
-        const categories = [...store.editProject.taskCategory]
-        var _category = []
-        categories.forEach((element, i) => {
-          if (i !== index)
-            _category.push({
-              ...element,
-              index: i,
-              name: element.name,
-              isBillable: element.isBillable
-            })
-        })
-        dispatch(setEditProject({ ...store.editProject, taskCategory: _category }))
-        break
-      case 'task':
-        const tasks = [...store.tasks]
-        var _tasks = []
-        tasks.forEach((element, i) => {
-          if (i !== index)
-            _tasks.push({
-              index: i,
-              name: element.name,
-              category: element.category,
-              hours: element.hours
-            })
-        })
-        dispatch(setTasks(_tasks))
-        break
-
-      default:
-        break
-    }
-  }
-
-  const handleIsBillable = (e, index, name) => {
-    switch (name?.toLowerCase()) {
-      case 'category':
-        var c = [...store.editProject.taskCategory]
-        c[index] = { index: index, name: c[index].name, isBillable: e.target.checked }
-        dispatch(setEditProject({ ...store.editProject, taskCategory: c }))
-        break
-      case 'task':
-        var task = [...store.tasks]
-        task[index] = { index: index, name: task[index].name, isBillable: e.target.checked }
-        dispatch(setTasks(task))
-        break
-
-      default:
-        break
-    }
-  }
-
-  const handleSkip = () => {
-    onSubmit()
-  }
-
-  const onClearCategoryOrTask = name => {
-    switch (name?.toLowerCase()) {
-      case 'category':
-        dispatch(setCategory([]))
-        break
-      case 'task':
-        dispatch(setTasks([{ index: 0, name: '', category: '', hours: '' }]))
-        break
-
-      default:
-        break
-    }
-  }
-
-  const onChnageClient = e => {
-    var project = store.editProject
-    const client = store.allClients.find(o => o.id === e.target.value)
-    const editProject = { ...project, clientId: client.id, clientName: client.name }
-    dispatch(setEditProject(editProject))
-  }
-
-  const onChangeProject = (name, value) => {
-    var project = store.editProject
-    switch (name) {
-      case 'name':
-        dispatch(setEditProject({ ...store.editProject, name: value }))
-        break
-      case 'budget':
-        dispatch(setEditProject({ ...store.editProject, budget: isNaN(value) ? 0 : Number(value) }))
-        break
-      case 'hours':
-        dispatch(setEditProject({ ...store.editProject, hours: isNaN(value) ? 0 : Number(value) }))
-        break
-      case 'isBillable':
-        dispatch(setEditProject({ ...store.editProject, isBillable: value }))
-        break
-      case 'projectType':
-        dispatch(setEditProject({ ...store.editProject, projectTypeId: value }))
-        break
-
-      default:
-        break
-    }
-  }
-
-  const [requiredskill, setRequiredskill] = useState([])
-
-  const handleChange = event => {
-    setRequiredskill(event.target.value)
+    dispatch(putProject(request))
+      .then(unwrapResult)
+      .then(res => {
+        if (res.status === 200) {
+          toast.success(res.data)
+          reset()
+        } else {
+          toast.error(res.data)
+        }
+      })
   }
 
   return (
@@ -342,7 +229,7 @@ const Settings = () => {
         }
       />
       <Divider sx={{ m: '0 !important' }} />
-      <form onSubmit={e => e.preventDefault()}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent>
           <Grid container spacing={5}>
             <Grid item xs={12}>
@@ -353,22 +240,33 @@ const Settings = () => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel id='stepper-linear-client'>Client</InputLabel>
-                <Select
-                  fullWidth
-                  value='Telerad'
-                  label='Client'
-                  labelId='stepper-linear-client'
-                  aria-describedby='stepper-linear-client'
-                >
-                  {[
-                    { uniqueId: '1', name: 'Telerad' },
-                    { uniqueId: '2', name: 'Sipa Systems' }
-                  ].map(client => (
-                    <MenuItem key={client.uniqueId} value={client.uniqueId}>
-                      {client.name}
-                    </MenuItem>
-                  ))}
-                </Select>
+                <Controller
+                  name='client'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      fullWidth
+                      label='Client'
+                      labelId='stepper-linear-client'
+                      aria-describedby='stepper-linear-client'
+                      onChange={onChange}
+                      value={value}
+                      error={Boolean(errors.client)}
+                    >
+                      {clients.map(client => (
+                        <MenuItem key={client.id} value={client.id}>
+                          {client.companyName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.client && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.client.message}
+                  </FormHelperText>
+                )}
               </FormControl>
             </Grid>
 
@@ -381,75 +279,118 @@ const Settings = () => {
               </Typography>
             </Grid>
             <Grid item xs={12} className='d-flex'>
-              <RadioGroup
-                row
-                aria-label='controlled'
-                name='controlled'
-                value={store.editProject?.projectTypeId}
-                onChange={e => onChangeProject('projectTypeId', e.target.value)}
-              >
-                <FormControlLabel
-                  disabled
-                  value={2}
-                  defaultChecked
-                  control={<Radio />}
-                  label='Fixed Price'
+              <FormControl fullWidth>
+                <Controller
+                  name='type'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <RadioGroup
+                      row
+                      aria-label='controlled'
+                      name='controlled'
+                      value={value}
+                      onChange={onChange}
+                    >
+                      <FormControlLabel
+                        disabled
+                        value={2}
+                        defaultChecked={value === 2}
+                        control={<Radio />}
+                        label='Fixed Price'
+                      />
+                      <FormControlLabel
+                        disabled
+                        value={1}
+                        defaultChecked={value === 1}
+                        control={<Radio />}
+                        label='T & M'
+                      />
+                    </RadioGroup>
+                  )}
                 />
-                <FormControlLabel disabled value={1} control={<Radio />} label='T & M' />
-              </RadioGroup>
+                {errors.type && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.type.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <TextField
-                  value={store.editProject?.name ?? ''}
-                  label='Project Name'
-                  onChange={e => onChangeProject('name', e.target.value)}
-                  placeholder='Enter Project Name'
-                  error={Boolean(!store.editProject?.name)}
-                  aria-describedby='stepper-linear-project-name'
+                <Controller
+                  name='name'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      label='Project Name'
+                      onChange={onChange}
+                      placeholder='Enter Project Name'
+                      error={Boolean(errors.name)}
+                      aria-describedby='stepper-linear-project-name'
+                    />
+                  )}
                 />
-                {store.editProject?.name == '' && (
-                  <FormHelperText sx={{ color: 'error.main' }} id='stepper-linear-project-name'>
-                    This field is required
+                {errors.name && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.name.message}
                   </FormHelperText>
                 )}
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <TextField
-                  value={store.editProject?.budget ?? ''}
-                  label='Planned Budget'
-                  type='number'
-                  onChange={e => onChangeProject('budget', e.target.value)}
-                  placeholder='Enter Budget'
-                  error={Boolean(!store.editProject?.budget)}
-                  aria-describedby='stepper-linear-project-budget'
+                <Controller
+                  name='plannedBudget'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      label='Planned Budget'
+                      type='number'
+                      onChange={onChange}
+                      placeholder='Enter Budget'
+                      error={Boolean(errors.plannedBudget)}
+                      aria-describedby='stepper-linear-project-budget'
+                    />
+                  )}
                 />
-                {store.editProject?.budget == '' && (
-                  <FormHelperText sx={{ color: 'error.main' }} id='stepper-linear-project-budget'>
-                    This field is required
+                {errors.plannedBudget && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.plannedBudget.message}
                   </FormHelperText>
                 )}
               </FormControl>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <TextField
-                  value={store.editProject?.hours}
-                  label='Planned Hours'
-                  onChange={e => onChangeProject('hours', e.target.value)}
-                  placeholder='Enter Hours'
-                  error={Boolean(!store.editProject?.hours)}
-                  aria-describedby='stepper-linear-project-hours'
+                <Controller
+                  name='plannedHours'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      label='Planned Hours'
+                      type='number'
+                      onChange={onChange}
+                      placeholder='Enter Hours'
+                      error={Boolean(errors.plannedHours)}
+                      aria-describedby='stepper-linear-project-hours'
+                    />
+                  )}
                 />
-                {store.editProject?.hours == '' && (
-                  <FormHelperText sx={{ color: 'error.main' }} id='stepper-linear-project-hours'>
-                    This field is required
-                  </FormHelperText>
-                )}
               </FormControl>
+              {errors.plannedHours && (
+                <FormHelperText sx={{ color: 'error.main' }}>
+                  {errors.plannedHours.message}
+                </FormHelperText>
+              )}
             </Grid>
 
             <Grid item xs={12} sm={6}>
@@ -470,79 +411,227 @@ const Settings = () => {
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <DatePickerWrapper>
-                  <DatePicker
-                    id='picker-filter-to-date'
-                    selected={new Date()}
-                    popperPlacement='auto'
-                    onChange={e => onChangeProject('hours', e.target.value)}
-                    customInput={
-                      <CustomInput
-                        label='Start Date'
-                        fullWidth
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position='start'>
-                              <Icon icon='mdi:calendar-outline' />
-                            </InputAdornment>
-                          )
-                        }}
+                <Controller
+                  name='startDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <DatePickerWrapper>
+                      <DatePicker
+                        id='picker-filter-to-date'
+                        selected={value}
+                        popperPlacement='auto'
+                        onChange={onChange}
+                        customInput={
+                          <CustomInput
+                            label='Start Date'
+                            fullWidth
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position='start'>
+                                  <Icon icon='mdi:calendar-outline' />
+                                </InputAdornment>
+                              )
+                            }}
+                          />
+                        }
                       />
-                    }
-                  />
-                </DatePickerWrapper>
+                    </DatePickerWrapper>
+                  )}
+                />
+                {errors.startDate && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.startDate.message}
+                  </FormHelperText>
+                )}
               </FormControl>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <DatePickerWrapper>
-                  <DatePicker
-                    id='picker-filter-to-date'
-                    selected={new Date()}
-                    popperPlacement='auto'
-                    onChange={e => onChangeProject('hours', e.target.value)}
-                    customInput={
-                      <CustomInput
-                        label='Due Date'
-                        fullWidth
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position='start'>
-                              <Icon icon='mdi:calendar-outline' />
-                            </InputAdornment>
-                          )
-                        }}
+                <Controller
+                  name='endDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <DatePickerWrapper>
+                      <DatePicker
+                        id='picker-filter-to-date'
+                        selected={value}
+                        popperPlacement='auto'
+                        onChange={onChange}
+                        customInput={
+                          <CustomInput
+                            label='End Date'
+                            fullWidth
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position='start'>
+                                  <Icon icon='mdi:calendar-outline' />
+                                </InputAdornment>
+                              )
+                            }}
+                          />
+                        }
                       />
-                    }
-                  />
-                </DatePickerWrapper>
+                    </DatePickerWrapper>
+                  )}
+                />
+                {errors.endDate && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.endDate.message}
+                  </FormHelperText>
+                )}
               </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <CustomSkillPicker values={[]} items={[]} label='Skills' />
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <CustomSkillPicker items={ORG_UNITS} label='Department' />
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl>
-                <FormControlLabel
-                  control={<Switch defaultChecked />}
-                  value={store.project.isBillable}
-                  onChange={event => {
-                    handleIsBillable(event, 0, 'project')
-                  }}
-                  label='Billable'
-                  id='stepper-linear-project-isBillable'
+                <CustomSkillPicker
+                  values={skills}
+                  items={userStore.skills || []}
+                  label='Skills'
+                  setSkills={handleSkills}
                 />
               </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <CustomDepartmentPicker
+                  values={departments}
+                  items={userStore.skills || []}
+                  label='Department'
+                  setDepartments={handleDepartments}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={4} lg={4} md={4}>
+              <FormControl>
+                <Controller
+                  name='isBillable'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <FormControlLabel
+                      control={<Switch defaultChecked={value} />}
+                      value={value}
+                      onChange={onChange}
+                      label='IsBillable'
+                      id='stepper-linear-project-isBillable'
+                    />
+                  )}
+                />
+                {errors.isBillable && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.isBillable.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4} lg={4} md={4}>
+              <FormControl>
+                <Controller
+                  name='allowUsersToCreateNewTask'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <FormControlLabel
+                      control={<Switch defaultChecked={value} />}
+                      value={value}
+                      onChange={onChange}
+                      label='Allow Users To Create NewTask'
+                      id='stepper-linear-project-isBillable'
+                    />
+                  )}
+                />
+                {errors.allowUsersToCreateNewTask && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.allowUsersToCreateNewTask.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4} lg={4} md={4}>
+              <FormControl>
+                <Controller
+                  name='allowUsersToChangeEstHours'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <FormControlLabel
+                      control={<Switch defaultChecked={value} />}
+                      value={value}
+                      onChange={onChange}
+                      label='Allow Users To Change Est.Hours'
+                      id='stepper-linear-project-isBillable'
+                    />
+                  )}
+                />
+                {errors.allowUsersToChangeEstHours && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.allowUsersToChangeEstHours.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Divider sx={{ mb: '20px !important' }} />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant='body2' sx={{ fontWeight: 600 }}>
+              3. Assignee Details
+            </Typography>
+          </Grid>
+          <Grid container spacing={5}>
+            <Grid
+              item
+              xs={12}
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            ></Grid>
+            <Grid
+              item
+              xs={12}
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <Stack direction={'column'} spacing={5} sx={{ minWidth: 500 }}>
+                <Autocomplete
+                  multiple
+                  fullWidth
+                  limitTags={3}
+                  options={
+                    users?.map(item => ({
+                      email: item.email,
+                      userName: `${item.firstName} ${item.lastName}`,
+                      allocatedProjectCost: '',
+                      projectRoleId: 0
+                    })) ?? []
+                  }
+                  id='autocomplete-limit-tags'
+                  filterSelectedOptions
+                  getOptionLabel={option => option.userName || o}
+                  defaultValue={[] || null}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      label='Users'
+                      placeholder='Assignees'
+                      sx={{ width: '40%' }}
+                    />
+                  )}
+                  onChange={onChangeAssignees}
+                />
+                <UserTable
+                  selectedUsers={store.assignees || []}
+                  setManagerAssignments={setManagerAssignments}
+                  managerAssignments={managerAssignments}
+                />
+              </Stack>
+              {/* Render the UserTable component passing the selected users */}
             </Grid>
           </Grid>
         </CardContent>
@@ -552,7 +641,7 @@ const Settings = () => {
             Reset
           </Button>
           <Button size='large' type='submit' sx={{ mr: 2 }} variant='contained'>
-            Submit
+            Update Project
           </Button>
         </CardActions>
       </form>

@@ -14,6 +14,9 @@ import LinearProgress from '@mui/material/LinearProgress'
 
 // ** Third Party Imports
 import axios from 'axios'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchProjectsByUser } from 'src/store/apps/projects'
+import { unwrapResult } from '@reduxjs/toolkit'
 
 const Img = styled('img')(({ theme }) => ({
   width: 34,
@@ -26,7 +29,14 @@ const columns = [
   {
     flex: 0.3,
     minWidth: 230,
-    field: 'projectTitle',
+    field: 'projectId',
+    headerName: 'Id',
+  },
+ 
+  {
+    flex: 0.3,
+    minWidth: 230,
+    field: 'projectName',
     headerName: 'Project',
     renderCell: ({ row }) => (
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -40,47 +50,7 @@ const columns = [
       </Box>
     )
   },
-  {
-    flex: 0.15,
-    minWidth: 100,
-    field: 'totalTask',
-    headerName: 'Total Tasks',
-    renderCell: ({ row }) => (
-      <Typography variant='body2' sx={{ color: 'text.primary' }}>
-        {row.totalTask}
-      </Typography>
-    )
-  },
-  {
-    flex: 0.15,
-    minWidth: 200,
-    headerName: 'Progress',
-    field: 'progressValue',
-    renderCell: ({ row }) => (
-      <Box sx={{ width: '100%' }}>
-        <Typography variant='body2' sx={{ color: 'text.primary' }}>
-          {row.progressValue}%
-        </Typography>
-        <LinearProgress
-          variant='determinate'
-          value={row.progressValue}
-          color={row.progressColor}
-          sx={{ height: 6, borderRadius: '5px' }}
-        />
-      </Box>
-    )
-  },
-  {
-    flex: 0.15,
-    minWidth: 100,
-    field: 'hours',
-    headerName: 'Hours',
-    renderCell: ({ row }) => (
-      <Typography variant='body2' sx={{ color: 'text.primary' }}>
-        {row.hours}
-      </Typography>
-    )
-  }
+ 
 ]
 
 const InvoiceListTable = () => {
@@ -88,13 +58,11 @@ const InvoiceListTable = () => {
   const [value, setValue] = useState('')
   const [data, setData] = useState([])
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
+  const dispatch = useDispatch()
+  const store = useSelector(state => state.projects)
   useEffect(() => {
-    axios
-      .get('/apps/users/project-list', {
-        params: {
-          q: value
-        }
-      })
+    dispatch(fetchProjectsByUser())
+      .then(unwrapResult)
       .then(res => setData(res.data))
   }, [value])
 
@@ -106,7 +74,12 @@ const InvoiceListTable = () => {
           <Typography variant='body2' sx={{ mr: 2 }}>
             Search:
           </Typography>
-          <TextField size='small' placeholder='Search Project' value={value} onChange={e => setValue(e.target.value)} />
+          <TextField
+            size='small'
+            placeholder='Search Project'
+            value={value}
+            onChange={e => setValue(e.target.value)}
+          />
         </Box>
       </CardContent>
       <DataGrid

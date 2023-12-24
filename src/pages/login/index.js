@@ -144,12 +144,11 @@ const LoginPage = () => {
       window.localStorage.setItem('userData', JSON.stringify(userData))
       JSON.parse(userData.org)
         ? router.replace({
-          pathname: '/apps/timesheets',
-        })
+            pathname: '/apps/timesheets'
+          })
         : router.replace({
-          pathname: '/organizational-setup',
-        })
-
+            pathname: '/organizational-setup'
+          })
     } else {
       toast.error('Login Failed')
     }
@@ -205,7 +204,15 @@ const LoginPage = () => {
                 justifyContent: 'center'
               }}
             >
-              <img src='/images/leanprofit-white.png' alt='Leanprofit' height={40} />
+              <img
+                src={
+                  themeConfig.mode === 'dark'
+                    ? '/images/leanprofit-white.png'
+                    : '/images/leanprofit-purple.png'
+                }
+                alt='Leanprofit'
+                height={40}
+              />
             </Box>
             <Box sx={{ mb: 6 }}>
               <TypographyStyled variant='h5'>

@@ -1,5 +1,5 @@
 // ** React Imports
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ** Next Import
 import Link from 'next/link'
@@ -37,10 +37,17 @@ import { useSettings } from 'src/@core/hooks/useSettings'
 import FooterIllustrationsV2 from 'src/views/pages/auth/FooterIllustrationsV2'
 
 import * as yup from 'yup'
-import { FormHelperText } from '@mui/material'
+import { FormHelperText, Grid } from '@mui/material'
 
 // import { error } from '@babel/eslint-parser/lib/convert/index.cjs'
 import { signUpUser } from 'src/store/authentication/register'
+import { Controller, useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { signupRequest } from 'src/helpers/requests'
+import { unwrapResult } from '@reduxjs/toolkit'
+import toast from 'react-hot-toast'
+import { setDate } from 'date-fns'
+import { useRouter } from 'next/router'
 
 // ** Styled Components
 const EmployeeSignupIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -94,73 +101,93 @@ const LinkStyled = styled(Link)(({ theme }) => ({
   color: theme.palette.primary.main
 }))
 
+const defaultValues = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  passowrd: '',
+  confirmPassword: '',
+  isAgree: false
+}
+
+const validationSchema = yup.object().shape({
+  firstName: yup.string().required('First name is required'),
+  lastName: yup.string(),
+  email: yup.string().email('Invalid email').required('Email is required'),
+  password: yup
+    .string()
+    .required('Password is required')
+    .min(8, 'Password must be at least 8 characters')
+    .matches(/[a-z]+/, 'Must contain at least one lowercase letter')
+    .matches(/[A-Z]+/, 'Must contain at least one uppercase letter')
+    .matches(/\d+/, 'Must contain at least one digit'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password'), null], 'Passwords must match')
+    .required('Please confirm your password'),
+  isAgree: yup.boolean().required()
+})
+
 const EmployeeSignup = ({ data }) => {
-  const [showPassword, setShowPassword] = useState(false)
-  const [Password, setPassword] = useState(false)
-
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: data?.email || '',
-    password: '',
-    confirmPassword: ''
-  })
-
-  const [errors, setErrors] = useState({})
-
-  const validationSchema = yup.object().shape({
-    first_name: yup.string().required('First name is required'),
-    last_name: yup.string().required('Last name is required'),
-    email: yup.string().email('Invalid email').required('Email is required'),
-    password: yup.string().required('Password is required'),
-    confirmPassword: yup
-      .string()
-      .oneOf([yup.ref('password'), null], 'Passwords must match')
-      .required('Please confirm your password')
-  })
-
-  const dispatch = useDispatch()
-
-  const handleSubmit = async e => {
-    e.preventDefault()
-    try {
-      const body = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        password: formData.password
-      }
-
-      await validationSchema.validate(formData, { abortEarly: false })
-      dispatch(signUpUser(body))
-
-      // Validation successful, continue with form submission or API call
-      console.log('Form is valid:', formData)
-      setErrors({}) // Reset errors on successful validation
-    } catch (error) {
-      // Validation failed, handle errors
-      console.error('Validation Error:', error.message)
-      setErrors(error.message)
-    }
-  }
-
-  const handleChange = e => {
-    const { name, value } = e.target
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }))
-  }
-
   // ** Hooks
   const theme = useTheme()
   const { settings } = useSettings()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [user, setData] = useState({})
+  const dispatch = useDispatch()
+  const router = useRouter()
+
+  const {
+    reset,
+    register,
+    control,
+    setValue,
+    watch,
+    setError,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    defaultValues,
+    mode: 'onChange',
+    resolver: yupResolver(validationSchema)
+  })
+
+  useEffect(() => {
+    if (data) {
+      setData(JSON.parse(data))
+      const { firstName, lastName, email } = JSON.parse(data)
+      Object.keys(JSON.parse(data)).length > 0 &&
+        reset({
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          password: '',
+          confirmPassword: '',
+          isAgree: false
+        })
+    }
+  }, [data, reset])
 
   // ** Vars
   const { skin } = settings
+
   const imageSource =
     skin === 'bordered' ? 'auth-v2-register-illustration-bordered' : 'auth-v2-register-illustration'
+
+  const onSubmit = () => {
+    const req = { tenantId: user?.tenantId, ...watch() }
+    const request = signupRequest(req)
+    dispatch(signUpUser(request)).then(res => {
+      if (res.status === 200) {
+        toast.success('Sign Up Completed')
+        router.replace({ pathname: '/apps/timesheets' })
+      } else {
+        toast.error('Error Occurred')
+      }
+    })
+  }
 
   return (
     <Box className='content-right'>
@@ -211,108 +238,160 @@ const EmployeeSignup = ({ data }) => {
                 justifyContent: 'center'
               }}
             >
-              <img src='/images/leanprofit-white.png' alt='' height={40} />
+              <img
+                src={
+                  themeConfig.mode === 'dark'
+                    ? '/images/leanprofit-white.png'
+                    : '/images/leanprofit-purple.png'
+                }
+                alt='Leanprofit'
+                height={40}
+              />
             </Box>
             <Box sx={{ mb: 6 }}>
               <Typography variant='h5'>Welcome to LeanProfit!</Typography>
             </Box>
             {/* <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()}> */}
-            <form noValidate autoComplete='off' onSubmit={handleSubmit}>
-              <TextField
-                fullWidth
-                sx={{ mb: 4 }}
-                label='First name'
-                name='first_name'
-                value={formData.first_name}
-                onChange={handleChange}
-                error={Boolean(errors.first_name)}
-                helperText={errors.first_name}
-              />
-
-              <TextField
-                fullWidth
-                sx={{ mb: 4 }}
-                label='Last name'
-                name='last_name'
-                value={formData.last_name}
-                onChange={handleChange}
-                error={Boolean(errors.last_name)}
-                helperText={errors.last_name}
-              />
-
-              <TextField
-                fullWidth
-                sx={{ mb: 4 }}
-                label='Email'
-                name='email'
-                value={formData.email}
-                onChange={handleChange}
-                error={Boolean(errors.email)}
-                helperText={errors.email}
-              />
-              <FormControl fullWidth sx={{ mb: 4 }}>
-                <InputLabel htmlFor='auth-login-v2-password' error={Boolean(errors.password)}>
-                  Password
-                </InputLabel>
-                <OutlinedInput
-                  label='Password'
-                  id='auth-login-v2-password'
-                  name='password'
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={handleChange}
-                  endAdornment={
-                    <InputAdornment position='end'>
-                      <IconButton
-                        edge='end'
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        <Icon icon={showPassword ? 'mdi:eye-outline' : 'mdi:eye-off-outline'} />
-                      </IconButton>
-                    </InputAdornment>
-                  }
-                  error={Boolean(errors.password)}
-                />
-                {errors.password && (
-                  <FormHelperText sx={{ color: 'error.main' }}>{errors.password}</FormHelperText>
-                )}
-              </FormControl>
-
-              <FormControl fullWidth sx={{ mb: 4 }}>
-                <InputLabel
-                  htmlFor='auth-login-v2-confirm-password'
-                  error={Boolean(errors.confirmPassword)}
-                >
-                  Confirm Password
-                </InputLabel>
-                <OutlinedInput
-                  label='Confirm Password'
-                  id='auth-login-v2-confirm-password'
-                  name='confirmPassword'
-                  type={Password ? 'text' : 'password'}
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  endAdornment={
-                    <InputAdornment position='end'>
-                      <IconButton
-                        edge='end'
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={() => setPassword(!Password)}
-                      >
-                        <Icon icon={Password ? 'mdi:eye-outline' : 'mdi:eye-off-outline'} />
-                      </IconButton>
-                    </InputAdornment>
-                  }
-                  error={Boolean(errors.confirmPassword)}
-                  helperText={errors.confirmPassword}
-                />
-                {errors.confirmPassword && (
-                  <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.confirmPassword}
-                  </FormHelperText>
-                )}
-              </FormControl>
+            <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
+              <Grid container spacing={6}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <Controller
+                      name='firstName'
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field: { value, onChange } }) => (
+                        <TextField disabled value={value} onChange={onChange} label='First name' />
+                      )}
+                    />
+                    {errors.firstName && (
+                      <FormHelperText sx={{ color: 'error.main' }}>
+                        {errors.firstName.message}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <Controller
+                      name='lastName'
+                      control={control}
+                      rules={{ required: false }}
+                      render={({ field: { value, onChange } }) => (
+                        <TextField
+                          disabled
+                          value={value}
+                          onChange={onChange}
+                          label='Last name'
+                          placeholder='(Optional)'
+                        />
+                      )}
+                    />
+                    {errors.lastName && (
+                      <FormHelperText sx={{ color: 'error.main' }}>
+                        {errors.lastName.message}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <Controller
+                      name='email'
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field: { value, onChange } }) => (
+                        <TextField disabled value={value} onChange={onChange} label='Email' />
+                      )}
+                    />
+                    {errors.email && (
+                      <FormHelperText sx={{ color: 'error.main' }}>
+                        {errors.email.message}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <Controller
+                      name='password'
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field: { value, onChange } }) => (
+                        <TextField
+                          autoFocus
+                          type={showPassword ? 'text' : 'password'}
+                          value={value}
+                          onChange={onChange}
+                          label='Password'
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position='end'>
+                                <IconButton
+                                  edge='end'
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  onMouseDown={e => e.preventDefault()}
+                                  aria-label='toggle password visibility'
+                                >
+                                  <Icon
+                                    fontSize={20}
+                                    icon={showPassword ? 'mdi:eye-outline' : 'mdi:eye-off-outline'}
+                                  />
+                                </IconButton>
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      )}
+                    />
+                    {errors.password && (
+                      <FormHelperText sx={{ color: 'error.main' }}>
+                        {errors.password.message}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <Controller
+                      name='confirmPassword'
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field: { value, onChange } }) => (
+                        <TextField
+                          autoFocus
+                          type={showConfirm ? 'text' : 'password'}
+                          value={value}
+                          onChange={onChange}
+                          label='Confirm Password'
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position='end'>
+                                <IconButton
+                                  edge='end'
+                                  onClick={() => setShowConfirm(!showConfirm)}
+                                  onMouseDown={e => e.preventDefault()}
+                                  aria-label='toggle password visibility'
+                                >
+                                  <Icon
+                                    fontSize={20}
+                                    icon={showConfirm ? 'mdi:eye-outline' : 'mdi:eye-off-outline'}
+                                  />
+                                </IconButton>
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      )}
+                    />
+                    {errors.confirmPassword && (
+                      <FormHelperText sx={{ color: 'error.main' }}>
+                        {errors.confirmPassword.message}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+              </Grid>
 
               <FormControlLabel
                 control={<Checkbox />}
@@ -331,23 +410,9 @@ const EmployeeSignup = ({ data }) => {
               <Button fullWidth size='large' type='submit' variant='contained' sx={{ mb: 7 }}>
                 Sign up
               </Button>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center'
-                }}
-              >
-                <Typography variant='body2' sx={{ mr: 2 }}>
-                  Already have an account?
-                </Typography>
-                <Typography variant='body2'>
-                  <LinkStyled href='/login'>Sign in instead</LinkStyled>
-                </Typography>
-              </Box>
-              <Divider sx={{ my: theme => `${theme.spacing(5)} !important` }}>or</Divider>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+              {/* <Divider sx={{ my: theme => `${theme.spacing(5)} !important` }}>or</Divider> */}
+              {/* <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconButton
                   href='/'
                   component={Link}
@@ -380,7 +445,7 @@ const EmployeeSignup = ({ data }) => {
                 >
                   <Icon icon='mdi:google' />
                 </IconButton>
-              </Box>
+              </Box> */}
             </form>
           </BoxWrapper>
         </Box>

@@ -41,59 +41,58 @@ const navigation = () => {
     {
       title: 'Timesheets',
       icon: 'mdi:clock-time-four-outline',
-      path: '/apps/timesheets'
+      path: '/apps/timesheets',
 
-      // auth: false
+      auth: false
     },
     {
       title: 'Clients',
       icon: 'mdi:account-group-outline',
-      path: '/clients'
+      path: '/clients',
 
-      // auth: false
+      auth: false
     },
     {
       title: 'Projects',
       icon: 'mdi:clipboard-text',
-
-      // auth: false,
+      auth: false,
       path: '/projects/list'
     },
     {
       title: 'Reports',
       icon: 'mdi:chart-line',
 
-      // auth: false,
+      auth: false,
       children: [
         {
           title: 'Utilization',
           path: '/apps/reports',
-          icon: 'solar:chart-linear'
+          icon: 'solar:chart-linear',
 
-          // auth: false
+          auth: false
         },
         {
           title: 'Revenue',
           path: '/apps/financialReports',
-          icon: 'material-symbols:finance-mode'
+          icon: 'material-symbols:finance-mode',
 
-          // auth: false
+          auth: false
         },
         {
           title: 'Time',
           path: '/apps/reports/time',
-          icon: 'mdi:clock-time-seven-outline'
+          icon: 'mdi:clock-time-seven-outline',
 
-          // auth: false
+          auth: false
         }
       ]
     },
     {
       title: 'Invoice',
       icon: 'mdi:file-document-outline',
-      path: '/apps/invoice/list'
+      path: '/apps/invoice/list',
 
-      // auth: false
+      auth: false
     },
     {
       title: 'User',

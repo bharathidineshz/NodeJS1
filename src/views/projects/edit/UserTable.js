@@ -24,7 +24,7 @@ const UserTable = ({ selectedUsers, managerAssignments, setManagerAssignments })
     }
 
     useEffect(() => {
-        setManagerAssignments(selectedUsers ?? [])
+        setManagerAssignments(selectedUsers && [])
     }, [selectedUsers])
 
     const columns = [
@@ -59,7 +59,7 @@ const UserTable = ({ selectedUsers, managerAssignments, setManagerAssignments })
     return (
         <div style={{ height: 400, width: '100%' }}>
             <DataGrid
-                rows={managerAssignments}
+                rows={managerAssignments ||[]}
                 columns={columns}
                 pageSize={5}
                 getRowId={(row) => row?.email}

@@ -39,7 +39,7 @@ const UserViewOverview = ({ invoiceData }) => {
       <Grid item xs={12}>
         <UsersProjectListTable />
       </Grid>
-      <Grid item xs={12}>
+      {/* <Grid item xs={12}>
         <Card>
           <CardHeader title='User Activity Timeline' />
           <CardContent>
@@ -161,11 +161,11 @@ const UserViewOverview = ({ invoiceData }) => {
             </Timeline>
           </CardContent>
         </Card>
-      </Grid>
+      </Grid> */}
 
-      <Grid item xs={12}>
+      {/* <Grid item xs={12}>
         <UsersInvoiceListTable invoiceData={invoiceData} />
-      </Grid>
+      </Grid> */}
     </Grid>
   )
 }

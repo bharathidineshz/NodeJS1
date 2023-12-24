@@ -2,15 +2,14 @@
 import Card from '@mui/material/Card'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
-import InputAdornment from '@mui/material/InputAdornment'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 import {
   Autocomplete,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -26,6 +25,7 @@ import {
   RadioGroup,
   Select,
   Switch,
+  TextField,
   Typography
 } from '@mui/material'
 
@@ -45,12 +45,13 @@ import { useTheme } from '@emotion/react'
 import { LOGGEDUSER, myLeaveRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
+import PickersComponent from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 
 const schema = yup.object().shape({
   requestType: yup.string().required('Request Type is Required'),
   requestReason: yup.string().required('Reason is required'),
   fromDate: yup.date().required(),
-  toDate: yup.date().required(),
+  toDate: yup.date().required()
 })
 
 const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
@@ -70,12 +71,16 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
   })
 
   useEffect(() => {
-    reset({
-      requestType: row?.requestType,
-      requestReason: row?.requestReason,
-      fromDate: new Date(row?.fromDate),
-      toDate: new Date(row?.toDate),
-    })
+    row &&
+      reset({
+        requestType: row?.requestType,
+        requestReason: row?.requestReason,
+        fromDate: new Date(row?.fromDate),
+        toDate: new Date(row?.toDate),
+        fromSession: row?.isFromDateHalfDay,
+        toSession: row?.isToDateHalfDay,
+        requiresApproval: row?.isApprovalRequired
+      })
   }, [reset, row])
 
   const isWeekday = date => {
@@ -90,24 +95,33 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
     try {
       const currentUser = JSON.parse(localStorage.getItem('userData'))
       const user = store.users.find(o => currentUser.user === o.email)
-      const req = store.policies.find(o => o.typeOfLeave === watch("requestType"))
-      const request = await myLeaveRequest({ id: row?.id, submittedUserId: 1, requestTypeId: req.id, ...watch() })
-      dispatch(putRequest(request)).then(unwrapResult).then((res) => {
-        if (res?.status === 200) {
-          setOpen(false)
-          toast.success('Leave Request Updated', {
-            position: 'top-right',
-            duration: 3000
-          })
-          dispatch(fetchMyLeaves())
-        } else {
-          setOpen(true)
-          toast.error('Error Occured', {
-            position: 'top-right',
-            duration: 3000
-          })
-        }
+      const req = store.policies.find(o => o.typeOfLeave === watch('requestType'))
+      const request = await myLeaveRequest({
+        id: row?.id,
+        submittedUserId: 1,
+        requestTypeId: req.id,
+        isFromDateHalfDay: watch('fromSession') ? true : false,
+        isToDateHalfDay: watch('toSession') ? true : false,
+        ...watch()
       })
+      dispatch(putRequest(request))
+        .then(unwrapResult)
+        .then(res => {
+          if (res?.status === 200) {
+            setOpen(false)
+            toast.success('Leave Request Updated', {
+              position: 'top-right',
+              duration: 3000
+            })
+            dispatch(fetchMyLeaves())
+          } else {
+            setOpen(true)
+            toast.error('Error Occured', {
+              position: 'top-right',
+              duration: 3000
+            })
+          }
+        })
     } catch (error) {
       errorToast(error)
     }
@@ -116,6 +130,9 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
       requestReason: '',
       fromDate: new Date(),
       toDate: new Date(),
+      fromSession: '',
+      toSession: '',
+      requiresApproval: true
     })
   }
 
@@ -154,7 +171,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                       id='autocomplete-limit-tags'
                       getOptionLabel={option => option.typeOfLeave || ''}
                       onChange={(event, value) => {
-                        field.onChange(event.target.innerText);
+                        field.onChange(event.target.innerText)
                       }}
                       renderInput={params => (
                         <TextField
@@ -200,7 +217,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={6} md={6} lg={6}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <Controller
@@ -209,13 +226,12 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                     rules={{ required: true }}
                     render={({ field: { value, onChange } }) => (
                       <DatePicker
+                        id='event-start-date'
                         selected={value}
-                        id='date-picker'
+                        dateFormat={'yyyy-MM-dd'}
+                        customInput={<PickersComponent label='From Date' registername='fromDate' />}
                         onChange={onChange}
-                        shouldCloseOnSelect
                         popperPlacement='auto'
-                        dateFormat='dd-MMM-yy'
-                        customInput={<CustomInput label='From Date' />}
                       />
                     )}
                   />
@@ -228,7 +244,29 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={6} md={6} lg={6}>
+              <FormControl fullWidth>
+                <Controller
+                  name='fromSession'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <RadioGroup
+                      row
+                      value={value}
+                      name='simple-radio'
+                      onChange={onChange}
+                      aria-label='simple-radio'
+                    >
+                      <FormControlLabel value='F.N' control={<Radio />} label='F.N' />
+                      <FormControlLabel value='A.N' control={<Radio />} label='A.N' />
+                    </RadioGroup>
+                  )}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={6} lg={6}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <Controller
@@ -237,14 +275,12 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                     rules={{ required: true }}
                     render={({ field: { value, onChange } }) => (
                       <DatePicker
+                        id='event-end-date'
                         selected={value}
-                        id='date-picker'
+                        dateFormat={'yyyy-MM-dd'}
+                        customInput={<PickersComponent label='To Date' registername='toDate' />}
                         onChange={onChange}
-                        shouldCloseOnSelect
                         popperPlacement='auto'
-                        minDate={watch("fromDate")}
-                        dateFormat='dd-MMM-yy'
-                        customInput={<CustomInput label='To Date' />}
                       />
                     )}
                   />
@@ -257,6 +293,57 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
               </DatePickerWrapper>
             </Grid>
 
+            <Grid item xs={12} sm={6} md={6} lg={6}>
+              <FormControl fullWidth>
+                <Controller
+                  name='toSession'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <RadioGroup
+                      row
+                      value={value}
+                      name='simple-radio'
+                      defaultValue={value}
+                      onChange={onChange}
+                      aria-label='simple-radio'
+                    >
+                      <FormControlLabel value='F.N' control={<Radio />} label='F.N' />
+                      <FormControlLabel value='A.N' control={<Radio />} label='A.N' />
+                    </RadioGroup>
+                  )}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item>
+              <FormControl fullWidth>
+                <Controller
+                  name='requiresApproval'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <FormControlLabel
+                      label='Requires Approval'
+                      control={
+                        <Checkbox
+                          checked={value}
+                          value={value}
+                          defaultChecked={value}
+                          onChange={onChange}
+                          name='Requires Approval'
+                        />
+                      }
+                    />
+                  )}
+                />
+                {errors.requiresApproval && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.requiresApproval.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions

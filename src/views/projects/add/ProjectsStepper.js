@@ -64,7 +64,10 @@ import {
   postUser,
   postCategory,
   postTask,
-  fetchCategories
+  fetchCategories,
+  fetchSkills,
+  fetchRequiredSkills,
+  postAssignee
 } from 'src/store/apps/projects'
 import { Stack } from '@mui/system'
 import { unwrapResult } from '@reduxjs/toolkit'
@@ -75,6 +78,9 @@ import ReactDatePicker from 'react-datepicker'
 import Files from '../details/files'
 import clsx from 'clsx'
 import CustomPeoplePicker from 'src/views/components/autocomplete/CustomPeoplePicker'
+import { projectAssigneeRequest, projectRequest } from 'src/helpers/requests'
+import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
+import CustomChip from 'src/@core/components/mui/chip'
 
 const steps = [
   {
@@ -101,49 +107,39 @@ const steps = [
 ]
 
 const defaultClientValues = {
-  client: '',
-  clients: []
+  client: ''
 }
 
 const defaultProjectValues = {
+  type: 2,
   name: '',
   plannedBudget: '',
-  plannedHours: null
-}
-
-const defaultCategoryValues = {
-  name: '',
-  isBillable: true
-}
-
-const defaultTaskValues = {
-  name: '',
-  category: '',
-  hours: ''
+  plannedHours: null,
+  startDate: new Date(),
+  endDate: new Date(),
+  isBillable: true,
+  departmentId: 0,
+  allowUsersToChangeEstHours: false,
+  allowUsersToCreateNewTask: false
 }
 
 const defaultAssigneeValues = []
 
 const clientSchema = yup.object().shape({
-  client: yup.string().required()
+  client: yup.string().required('Client is required')
 })
 
 const projectSchema = yup.object().shape({
-  name: yup.string().required(),
+  type: yup.number().required('Type required'),
+  name: yup.string().required('Project name required'),
   plannedBudget: yup.number().positive().integer(),
-  plannedHours: yup.number().positive().integer()
-})
-
-const categorySchema = yup.object().shape({
-  name: yup.string().required(),
-  isBillable: yup.boolean()
-})
-
-const taskSchema = yup.object().shape({
-  name: yup.string().required(),
-  category: yup.string().required(),
-  hours: yup.number().required(),
-  isBillable: yup.boolean()
+  plannedHours: yup.number().positive().integer(),
+  startDate: yup.date().notRequired(),
+  endDate: yup.date().notRequired(),
+  isBillable: yup.boolean().notRequired(),
+  departmentId: yup.number().positive().required('Department required'),
+  allowUsersToChangeEstHours: yup.boolean().notRequired(),
+  allowUsersToCreateNewTask: yup.boolean().notRequired()
 })
 
 const assigneeSchema = yup.object().shape({})
@@ -164,12 +160,15 @@ const ProjectsStepper = ({ isEdit, id }) => {
 
   const [selectedUsers, setSelectedUsers] = useState([])
   const [managerAssignments, setManagerAssignments] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [requiredskills, setRequiredskill] = React.useState([])
 
   // ** Hooks
 
   useEffect(() => {
     dispatch(fetchClients())
     dispatch(fetchUsers())
+    dispatch(fetchRequiredSkills())
   }, [dispatch])
 
   const {
@@ -182,8 +181,6 @@ const ProjectsStepper = ({ isEdit, id }) => {
     defaultValues: defaultClientValues,
     resolver: yupResolver(clientSchema)
   })
-
-  const [requiredskill, setRequiredskill] = React.useState([])
 
   const handleChange = event => {
     setRequiredskill(event.target.value)
@@ -198,28 +195,6 @@ const ProjectsStepper = ({ isEdit, id }) => {
   } = useForm({
     defaultValues: defaultProjectValues,
     resolver: yupResolver(projectSchema)
-  })
-
-  const {
-    reset: categoryReset,
-    control: categoryControl,
-    watch: categoryWatch,
-    handleSubmit: handleCategorySubmit,
-    formState: { errors: categoryErrors }
-  } = useForm({
-    defaultValues: defaultCategoryValues,
-    resolver: yupResolver(categorySchema)
-  })
-
-  const {
-    reset: taskReset,
-    control: taskControl,
-    watch: taskWatch,
-    handleSubmit: handleTaskSubmit,
-    formState: { errors: taskErrors }
-  } = useForm({
-    defaultValues: defaultTaskValues,
-    resolver: yupResolver(taskSchema)
   })
 
   const {
@@ -331,112 +306,6 @@ const ProjectsStepper = ({ isEdit, id }) => {
     dispatch(setAssignees(newValue))
   }
 
-  const addCategoryOrTask = name => {
-    switch (name?.toLowerCase()) {
-      case 'category':
-        const categories = [
-          ...store.category,
-          { index: store.category?.length + 1, name: '', isBillable: false }
-        ]
-        dispatch(setCategory(categories))
-        break
-      case 'task':
-        const tasks = [
-          ...store.tasks,
-          {
-            index: store.tasks?.length + 1,
-            name: '',
-            category: '',
-            hours: ''
-          }
-        ]
-        dispatch(setTasks(tasks))
-        break
-
-      default:
-        break
-    }
-  }
-
-  const onRemoveCategoryorTask = (index, name) => {
-    switch (name?.toLowerCase()) {
-      case 'category':
-        const categories = [...store.category]
-        var _category = []
-        categories.forEach((element, i) => {
-          if (i !== index)
-            _category.push({ index: i, name: element.name, isBillable: element.isBillable })
-        })
-        dispatch(setCategory(_category))
-        break
-      case 'task':
-        const tasks = [...store.tasks]
-        var _tasks = []
-        tasks.forEach((element, i) => {
-          if (i !== index)
-            _tasks.push({
-              index: i,
-              name: element.name,
-              category: element.category,
-              hours: element.hours
-            })
-        })
-        dispatch(setTasks(_tasks))
-        break
-
-      default:
-        break
-    }
-  }
-
-  const handleIsBillable = (e, index, name) => {
-    switch (name?.toLowerCase()) {
-      case 'project':
-        const project = {
-          projectType: state.projectType,
-          projectName: projectWatch('name'),
-          plannedBudget: projectWatch('plannedBudget'),
-          plannedHours: projectWatch('plannedHours'),
-          isBillable: e.target.checked,
-          allowOpenTasks: false
-        }
-        dispatch(setProject(project))
-        break
-
-      case 'category':
-        var c = [...store.category]
-        c[index] = { index: index, name: c[index].name, isBillable: e.target.checked }
-        dispatch(setCategory(c))
-        break
-      case 'task':
-        var task = [...store.tasks]
-        task[index] = { index: index, name: task[index].name, isBillable: e.target.checked }
-        dispatch(setTasks(task))
-        break
-
-      default:
-        break
-    }
-  }
-
-  const handleSkip = () => {
-    onSubmit()
-  }
-
-  const onClearCategoryOrTask = name => {
-    switch (name?.toLowerCase()) {
-      case 'category':
-        dispatch(setCategory([]))
-        break
-      case 'task':
-        dispatch(setTasks([{ index: 0, name: '', category: '', hours: '' }]))
-        break
-
-      default:
-        break
-    }
-  }
-
   //CLIENT
   const onSaveClient = () => {
     console.log(clientWatch('client'))
@@ -446,17 +315,8 @@ const ProjectsStepper = ({ isEdit, id }) => {
 
   // PROEJCT
   const onSaveProject = values => {
-    // const project = {
-    //   projectType: state.projectType,
-    //   projectName: projectWatch('name'),
-    //   plannedBudget: projectWatch('plannedBudget'),
-    //   plannedHours: projectWatch('plannedHours'),
-    //   isBillable: store.project.isBillable,
-    //   allowOpenTasks: false
-    // }
-    // dispatch(setProject(project))
-    // createProject(project)
-    onSubmit()
+    createProject(values)
+    // dispatch(setProject(values))
   }
 
   //CATEGORY
@@ -516,27 +376,23 @@ const ProjectsStepper = ({ isEdit, id }) => {
 
   //CREATE PROJECT
   const createProject = project => {
-    const { name, plannedBudget, plannedHours } = projectWatch()
-    console.log(project)
-
-    const request = {
-      name: name,
-      budget: plannedBudget?.trim(),
-      projectType: state.projectType,
-      hours: plannedHours,
-      client: clientWatch('client'),
-      isBillable: store.project.isBillable,
-      isUndifinedTasksAllowed: false
+    const client = store.allClients.find(o => o.companyName === clientWatch('client'))
+    const req = {
+      client: client.id,
+      skills: requiredskills.map(o => o.id),
+      ...projectWatch()
     }
+    const request = projectRequest(req)
 
     dispatch(postProject(request))
       .then(unwrapResult)
       .then(response => {
-        setcreatedProjectId(
-          response.data === 'Project already exists' ? createdProjectId : response.data
-        )
-        toast.success('Project Created', { position: 'top-right', duration: 3000 })
-        onSubmit()
+        if (response.status === 200 || response.status === 201) {
+          toast.success('Project Created', { position: 'top-right', duration: 3000 })
+          handleNext()
+        } else {
+          toast.error('Error Occurred', { position: 'top-right', duration: 3000 })
+        }
       })
       .catch(error => {
         toast.error(error.message, { position: 'top-right', duration: 3000 })
@@ -544,15 +400,20 @@ const ProjectsStepper = ({ isEdit, id }) => {
   }
 
   const assignUsers = () => {
-    const request = {
-      project_id: createdProjectId,
-      mapping: managerAssignments.map(x => ({
-        email: x?.email,
-        cost: x?.allocatedProjectCost,
-        projectRoleId: x?.projectRoleId
-      }))
-    }
-    dispatch(postUser(request))
+    const request = []
+    const projectId = Number(localStorage.getItem('projectId'))
+    managerAssignments.forEach(mg => {
+      const user = store.users.find(o => o.email === mg.email)
+      request.push(
+        projectAssigneeRequest(
+          mg.allocatedProjectCost,
+          projectId,
+          user?.id,
+          mg.projectRoleId === 0 ? 4 : mg.projectRoleId
+        )
+      )
+    })
+    dispatch(postAssignee(request))
       .then(unwrapResult)
       .then(response => {
         setcreatedProjectId('')
@@ -566,6 +427,13 @@ const ProjectsStepper = ({ isEdit, id }) => {
   }
 
   console.log(store.users)
+
+  const handleDepartments = value => {
+    setDepartments(value)
+  }
+  const handleSkills = value => {
+    setRequiredskill(value)
+  }
 
   const getStepContent = step => {
     switch (step) {
@@ -581,14 +449,13 @@ const ProjectsStepper = ({ isEdit, id }) => {
                     rules={{ required: true }}
                     render={({ field: { value, onChange } }) => (
                       <Autocomplete
-                        options={[
-                          { uniqueId: '1', name: 'Telerad' },
-                          { uniqueId: '2', name: 'Sipa Systems' }
-                        ]}
+                        options={store.allClients}
                         id='autocomplete-limit-tags'
-                        getOptionLabel={option => option.name || ''}
+                        getOptionLabel={option => option.companyName || option}
+                        onChange={(e, v) => onChange(v.companyName)}
+                        value={value}
                         renderInput={params => (
-                          <TextField {...params} label='Clients' placeholder='Clients' />
+                          <TextField {...params} label='Clients *' placeholder='Clients' />
                         )}
                       />
                     )}
@@ -598,12 +465,33 @@ const ProjectsStepper = ({ isEdit, id }) => {
                       sx={{ color: 'error.main' }}
                       id='stepper-linear-personal-country-helper'
                     >
-                      This field is required
+                      {clientErrors.client.message}
                     </FormHelperText>
                   )}
                 </FormControl>
               </Grid>
             </Grid>
+            <div className='button-wrapper'>
+              <Button
+                size='small'
+                color='secondary'
+                variant='outlined'
+                onClick={handleBack}
+                disabled={activeStep === 0}
+              >
+                Back
+              </Button>
+              <Button
+                size='small'
+                variant='contained'
+                onClick={() => {
+                  clientWatch('client') && handleNext()
+                }}
+                sx={{ ml: 4 }}
+              >
+                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+              </Button>
+            </div>
           </form>
         )
       case 1:
@@ -612,17 +500,24 @@ const ProjectsStepper = ({ isEdit, id }) => {
             <Grid container spacing={5}>
               <Grid item xs={12}>
                 <Grid className='d-flex'>
-                  <RadioGroup
-                    row
-                    aria-label='controlled'
-                    name='controlled'
-                    value={store.project.projectType}
-                    onChange={handleProjectType}
-                    defaultChecked={2}
-                  >
-                    <FormControlLabel value={2} control={<Radio />} label='Fixed Price' />
-                    <FormControlLabel value={1} control={<Radio />} label='T & M' />
-                  </RadioGroup>
+                  <Controller
+                    name='type'
+                    control={projectControl}
+                    rules={{ required: true }}
+                    render={({ field: { value, onChange } }) => (
+                      <RadioGroup
+                        row
+                        aria-label='controlled'
+                        name='controlled'
+                        value={value}
+                        onChange={onChange}
+                        defaultChecked={2}
+                      >
+                        <FormControlLabel value={2} control={<Radio />} label='Fixed Price' />
+                        <FormControlLabel value={1} control={<Radio />} label='T & M' />
+                      </RadioGroup>
+                    )}
+                  />
                 </Grid>
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -634,7 +529,7 @@ const ProjectsStepper = ({ isEdit, id }) => {
                     render={({ field: { value, onChange } }) => (
                       <TextField
                         value={value}
-                        label='Project Name'
+                        label='Project Name *'
                         onChange={onChange}
                         placeholder='Enter Project Name'
                         error={Boolean(projectErrors.name)}
@@ -644,12 +539,12 @@ const ProjectsStepper = ({ isEdit, id }) => {
                   />
                   {projectErrors.name && (
                     <FormHelperText sx={{ color: 'error.main' }} id='stepper-linear-project-name'>
-                      This field is required
+                      {projectErrors.name.message}
                     </FormHelperText>
                   )}
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={3}>
                 <FormControl fullWidth>
                   <Controller
                     name='plannedBudget'
@@ -667,7 +562,7 @@ const ProjectsStepper = ({ isEdit, id }) => {
                   />
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={3}>
                 <FormControl fullWidth>
                   <Controller
                     name='plannedHours'
@@ -685,39 +580,34 @@ const ProjectsStepper = ({ isEdit, id }) => {
                   />
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <Autocomplete
-                    options={['React', 'SQL', 'Asp.Net']}
-                    id='autocomplete-limit-tags'
-                    getOptionLabel={option => option || ''}
-                    renderInput={params => (
-                      <TextField {...params} label='Department' placeholder='Department' />
-                    )}
-                  />
-                </FormControl>
-              </Grid>
+
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <DatePickerWrapper>
-                    <ReactDatePicker
-                      id='picker-filter-to-date'
-                      selected={new Date()}
-                      popperPlacement='auto'
-                      onChange={() => {}}
-                      customInput={
-                        <CustomInput
-                          label='Start Date'
-                          fullWidth
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position='start'>
-                                <Icon icon='mdi:calendar-outline' />
-                              </InputAdornment>
-                            )
-                          }}
+                    <Controller
+                      name='startDate'
+                      control={projectControl}
+                      render={({ field: { value, onChange } }) => (
+                        <ReactDatePicker
+                          id='picker-filter-to-date'
+                          selected={value}
+                          popperPlacement='auto'
+                          onChange={onChange}
+                          customInput={
+                            <CustomInput
+                              label='Start Date *'
+                              fullWidth
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position='start'>
+                                    <Icon icon='mdi:calendar-outline' />
+                                  </InputAdornment>
+                                )
+                              }}
+                            />
+                          }
                         />
-                      }
+                      )}
                     />
                   </DatePickerWrapper>
                 </FormControl>
@@ -725,24 +615,30 @@ const ProjectsStepper = ({ isEdit, id }) => {
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <DatePickerWrapper>
-                    <ReactDatePicker
-                      id='picker-filter-to-date'
-                      selected={new Date()}
-                      popperPlacement='auto'
-                      onChange={() => {}}
-                      customInput={
-                        <CustomInput
-                          label='Due Date'
-                          fullWidth
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position='start'>
-                                <Icon icon='mdi:calendar-outline' />
-                              </InputAdornment>
-                            )
-                          }}
+                    <Controller
+                      name='endDate'
+                      control={projectControl}
+                      render={({ field: { value, onChange } }) => (
+                        <ReactDatePicker
+                          id='picker-filter-to-date'
+                          selected={value}
+                          popperPlacement='auto'
+                          onChange={onChange}
+                          customInput={
+                            <CustomInput
+                              label='End Date *'
+                              fullWidth
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position='start'>
+                                    <Icon icon='mdi:calendar-outline' />
+                                  </InputAdornment>
+                                )
+                              }}
+                            />
+                          }
                         />
-                      }
+                      )}
                     />
                   </DatePickerWrapper>
                 </FormControl>
@@ -750,33 +646,124 @@ const ProjectsStepper = ({ isEdit, id }) => {
 
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <Autocomplete
-                    multiple
-                    limitTags={3}
-                    options={['React', 'SQL', 'Asp.Net', 'Flutter', 'Figma', 'Angular']}
-                    id='autocomplete-limit-tags'
-                    getOptionLabel={option => option || ''}
-                    renderInput={params => (
-                      <TextField {...params} label='Skills' placeholder='Skills' />
+                  <InputLabel id='demo-simple-select-outlined-label'>Department</InputLabel>
+                  <Controller
+                    name='departmentId'
+                    control={projectControl}
+                    rules={{ required: true }}
+                    render={({ field: { value, onChange } }) => (
+                      <Select
+                        label='Department *'
+                        id='demo-simple-select-outlined'
+                        labelId='demo-simple-select-outlined-label'
+                        required
+                        value={value}
+                        onChange={onChange}
+                        startAdornment={
+                          <InputAdornment position='start'>
+                            <Icon icon='mdi:briefcase-variant-outline' />
+                          </InputAdornment>
+                        }
+                      >
+                        {store.requiredSkills != null &&
+                          store.requiredSkills.map((dept, i) => (
+                            <MenuItem key={i} className='gap-1' value={dept.id}>
+                              <CustomChip
+                                key={dept.id}
+                                label={dept.skillName}
+                                skin='light'
+                                color='primary'
+                              />
+                            </MenuItem>
+                          ))}
+                      </Select>
                     )}
                   />
+                  {projectErrors.departmentId && (
+                    <FormHelperText sx={{ color: 'error.main' }}>
+                      {projectErrors.departmentId.message}
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
 
               <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <CustomSkillPicker
+                    values={requiredskills}
+                    items={store.requiredSkills}
+                    label='Required Skills *'
+                    setSkills={handleSkills}
+                  />
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={4} md={4} lg={4}>
                 <FormControl>
-                  <FormControlLabel
-                    control={<Switch defaultChecked />}
-                    value={store.project.isBillable}
-                    onChange={event => {
-                      handleIsBillable(event, 0, 'project')
-                    }}
-                    label='Billable'
-                    id='stepper-linear-project-isBillable'
+                  <Controller
+                    name='isBillable'
+                    control={projectControl}
+                    render={({ field: { value, onChange } }) => (
+                      <FormControlLabel
+                        control={<Switch defaultChecked={value} />}
+                        value={value}
+                        onChange={onChange}
+                        label='Billable'
+                        id='stepper-linear-project-isBillable'
+                      />
+                    )}
+                  />
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4} md={4} lg={4}>
+                <FormControl>
+                  <Controller
+                    name='allowUsersToChangeEstHours'
+                    control={projectControl}
+                    render={({ field: { value, onChange } }) => (
+                      <FormControlLabel
+                        control={<Switch defaultChecked={value} />}
+                        value={value}
+                        onChange={onChange}
+                        label='Allow Users To Change Est.Hours'
+                        id='stepper-linear-project-isBillable'
+                      />
+                    )}
+                  />
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4} md={4} lg={4}>
+                <FormControl>
+                  <Controller
+                    name='allowUsersToCreateNewTask'
+                    control={projectControl}
+                    render={({ field: { value, onChange } }) => (
+                      <FormControlLabel
+                        control={<Switch defaultChecked={value} />}
+                        value={value}
+                        onChange={onChange}
+                        label='Allow Users To Create New Task'
+                        id='stepper-linear-project-isBillable'
+                      />
+                    )}
                   />
                 </FormControl>
               </Grid>
             </Grid>
+            <div className='button-wrapper'>
+              <Button
+                size='small'
+                color='secondary'
+                variant='outlined'
+                onClick={handleBack}
+                disabled={activeStep === 0}
+              >
+                Back
+              </Button>
+              <Button size='small' variant='contained' onClick={onSaveProject} sx={{ ml: 4 }}>
+                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+              </Button>
+            </div>
           </form>
         )
 
@@ -839,6 +826,20 @@ const ProjectsStepper = ({ isEdit, id }) => {
                 {/* Render the UserTable component passing the selected users */}
               </Grid>
             </Grid>
+            <div className='button-wrapper'>
+              <Button
+                size='small'
+                color='secondary'
+                variant='outlined'
+                onClick={handleBack}
+                disabled={activeStep === 0}
+              >
+                Back
+              </Button>
+              <Button size='small' variant='contained' onClick={assignUsers} sx={{ ml: 4 }}>
+                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+              </Button>
+            </div>
           </form>
         )
       default:
@@ -883,20 +884,6 @@ const ProjectsStepper = ({ isEdit, id }) => {
                   </StepLabel>
                   <StepContent>
                     <Grid xs={12}>{renderContent()}</Grid>
-                    <div className='button-wrapper'>
-                      <Button
-                        size='small'
-                        color='secondary'
-                        variant='outlined'
-                        onClick={handleBack}
-                        disabled={activeStep === 0}
-                      >
-                        Back
-                      </Button>
-                      <Button size='small' variant='contained' onClick={handleNext} sx={{ ml: 4 }}>
-                        {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-                      </Button>
-                    </div>
                   </StepContent>
                 </Step>
               )

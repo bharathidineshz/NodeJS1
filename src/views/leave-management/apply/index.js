@@ -19,15 +19,6 @@ import CustomAvatar from 'src/@core/components/mui/avatar'
 import { getInitials } from 'src/@core/utils/get-initials'
 import { AvatarGroup, Button, Grid, IconButton, Tooltip } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-  fetchProjects,
-  fetchUsers,
-  fetchClients,
-  setProject,
-  deleteProject,
-  getProjectDetails,
-  setSelectedProject
-} from 'src/store/apps/projects'
 import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
 import FallbackSpinner from 'src/@core/components/spinner'
@@ -40,6 +31,7 @@ import {
   fetchMyLeaves,
   fetchStatus,
   fetchPolicies,
+  fetchUsers,
   fetchUserReports,
   fetchDashboard
 } from 'src/store/leave-management'
@@ -70,16 +62,17 @@ const LeaveApply = () => {
   const store = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
-    dispatch(fetchPolicies())
-    dispatch(fetchUsers())
-      .then(unwrapResult)
-      .then(res => {
-        const currentUser = JSON.parse(localStorage.getItem('userData'))
-        const user = res.find(o => currentUser.user === o.email)
-        dispatch(fetchDashboard(user.id))
-      })
-    dispatch(fetchStatus())
-    dispatch(fetchMyLeaves())
+    dispatch(fetchPolicies()).then(()=>{
+      dispatch(fetchUsers())
+        .then(unwrapResult)
+        .then(res => {
+          const currentUser = JSON.parse(localStorage.getItem('userData'))
+          const user = res.find(o => currentUser.user === o.email)
+          dispatch(fetchStatus())
+          dispatch(fetchMyLeaves())
+          dispatch(fetchDashboard(user.id))
+        })
+    })
     setLoading(false)
   }, [dispatch])
 

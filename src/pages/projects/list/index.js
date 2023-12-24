@@ -22,26 +22,29 @@ import { AvatarGroup, Button, Grid, IconButton, Tooltip } from '@mui/material'
 import Link from 'next/link'
 import ProjectHeader from 'src/views/projects/list/Header'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-  fetchProjects,
-  fetchUsers,
-  fetchClients,
-  setProject,
-  deleteProject,
-  getProjectDetails,
-  setSelectedProject
-} from 'src/store/apps/projects'
+import { fetchClients, fetchProjects, fetchUsers, setSelectedProject } from 'src/store/apps/projects'
 import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import { useRouter } from 'next/router'
+import styled from '@emotion/styled'
+
+const LinkStyled = styled(Link)(({ theme }) => ({
+  fontWeight: 800,
+  fontSize: '1rem',
+  cursor: 'pointer',
+  textDecoration: 'none',
+  color: theme.palette.text.secondary,
+  '&:hover': {
+    color: theme.palette.primary.main
+  }
+}))
 
 const TableServerSide = () => {
   // ** States
-  const [total, setTotal] = useState(0)
   const [sort, setSort] = useState('asc')
-  const [rows, setRows] = useState([])
+  const [filteredRows, setRows] = useState([])
   const [isLoading, setLoading] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [sortColumn, setSortColumn] = useState('name')
@@ -53,10 +56,9 @@ const TableServerSide = () => {
   useEffect(() => {
     dispatch(fetchUsers())
     dispatch(fetchClients())
-    dispatch(fetchProjects())
       .then(unwrapResult)
       .then(() => {
-        setLoading(false)
+        dispatch(fetchProjects()).then(res => setLoading(false))
       })
   }, [dispatch, searchValue, sort, sortColumn])
 
@@ -71,7 +73,14 @@ const TableServerSide = () => {
       flex: 0.3,
       minWidth: 200,
       field: 'name',
-      headerName: 'Name'
+      headerName: 'Name',
+      renderCell: params => {
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
+            <LinkStyled href=''>{params.value}</LinkStyled>
+          </Box>
+        )
+      }
     },
     {
       flex: 0.2,
@@ -79,23 +88,7 @@ const TableServerSide = () => {
       headerName: 'Client',
       field: 'clientName'
     },
-    {
-      flex: 0.4,
-      minWidth: 200,
-      headerName: 'Assignees',
-      field: 'assignee',
-      renderCell: params => (
-        <Grid sx={{ display: 'flex' }}>
-          {params.value.map((user, index) => (
-            <AvatarGroup key={index} className='pull-up' max={4}>
-              <Tooltip key={index} title={user.userName}>
-                {renderUsers(user)}
-              </Tooltip>
-            </AvatarGroup>
-          ))}
-        </Grid>
-      )
-    },
+
     {
       flex: 0.175,
       minWidth: 110,
@@ -104,7 +97,7 @@ const TableServerSide = () => {
     },
     {
       flex: 0.1,
-      field: 'hours',
+      field: 'estimatedHours',
       minWidth: 80,
       headerName: 'Hours'
     },
@@ -127,7 +120,25 @@ const TableServerSide = () => {
         </Grid>
       )
     },
-
+    {
+      flex: 0.08,
+      minWidth: 100,
+      field: 'isActive',
+      headerName: 'Active',
+      renderCell: params => (
+        <Grid>
+          {params.value ? (
+            <CustomAvatar skin='light' color='success'>
+              <Icon icon='mdi:checkbox-marked-circle-outline' />
+            </CustomAvatar>
+          ) : (
+            <CustomAvatar skin='light' color='error'>
+              <Icon icon='mdi:close-circle-outline' />
+            </CustomAvatar>
+          )}
+        </Grid>
+      )
+    }
   ]
 
   const handleSortModel = newModel => {
@@ -159,20 +170,27 @@ const TableServerSide = () => {
       </CustomAvatar>
     )
   }
-
+  
+//SEARCH
   const handleSearch = value => {
     setSearchValue(value)
-    fetchTableData(sort, value, sortColumn)
+    const rows = store.allProjects.filter(
+      o =>
+        o.name.toLowerCase().trim().includes(value) ||
+        o.clientName.toLowerCase().trim().includes(value) ||
+        o.budget?.toString().toLowerCase().trim().includes(value) ||
+        o.estimatedHours?.toString().toLowerCase().trim().includes(value)
+    )
+    setRows(rows)
   }
 
   const handleProjectSelection = data => {
-    // console.log('row', data)
-    // dispatch(getProjectDetails(data.row.uniqueId))
-    // dispatch(setSelectedProject(data.row))
+    dispatch(setSelectedProject(data.row))
+    localStorage.setItem("project", JSON.stringify(data.row))
+    localStorage.setItem("projectId", data.row.id)
 
     router.push({
-      pathname: '//projects/details/task',
-      query: { returnUrl: router.asPath }
+      pathname: '/projects/details/task',
     })
   }
 
@@ -186,33 +204,23 @@ const TableServerSide = () => {
           <DataGrid
             autoHeight
             pagination
-
             // rows={store.allProjects}
-            rows={[
-              {
-                id: 1,
-                name: 'ADAT',
-                clientName: 'Telerad',
-                assignee: [{ userName: 'Naveenkumar Mounasamy' }],
-                budget: 15000,
-                hours: 120,
-                isBillable: true
-              }
-            ]}
-            rowCount={store.allProjects.length}
+            rows={searchValue ? filteredRows : store.allProjects || []}
             columns={columns}
             sortingMode='server'
-            checkboxSelection
             paginationMode='server'
             rowSelection={false}
             onRowClick={handleProjectSelection}
             pageSizeOptions={[5, 10, 25, 50, 100]}
             paginationModel={paginationModel}
             onSortModelChange={handleSortModel}
-            slots={{ toolbar: Toolbar }}
+            slots={{
+              toolbar: () => {
+                return <Toolbar searchValue={searchValue} handleFilter={handleSearch} isExport />
+              }
+            }}
             onPaginationModelChange={setPaginationModel}
-
-            // loading={store.allProjects.length === 0}
+            loading={store.allProjects ? false : true}
             slotProps={{
               baseButton: {
                 variant: 'outlined'

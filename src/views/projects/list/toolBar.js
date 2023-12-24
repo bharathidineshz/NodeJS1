@@ -10,6 +10,8 @@ import { GridToolbarExport } from '@mui/x-data-grid'
 import Icon from 'src/@core/components/icon'
 
 const Toolbar = props => {
+  const {isExport, handleFilter, searchValue}= props;
+
   return (
     <Box
       sx={{
@@ -17,22 +19,26 @@ const Toolbar = props => {
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: isExport ? 'space-between' :'flex-end',
         p: theme => theme.spacing(2, 5, 4, 5)
       }}
     >
-      <GridToolbarExport
+      {
+        isExport &&  <GridToolbarExport
         color='secondary'
         size='normal'
         printOptions={{ disableToolbarButton: true }}
       />
+      }
+     
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size='small'
           sx={{ mr: 4, mb: 2 }}
           placeholder='Search Projects'
-
-          // onChange={e => handleFilter(e.target.value)}
+          value={searchValue}
+          autoFocus
+          onChange={e => handleFilter(e.target.value)}
         />
         <Button sx={{ mb: 2 }} component={Link} variant='contained' href='/projects/add'>
           Create Project

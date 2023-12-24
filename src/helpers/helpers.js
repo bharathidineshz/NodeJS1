@@ -8,7 +8,7 @@ export function getRandomColor() {
 
   for (let i = 0; i < 6; i++) {
     // Generate a color component, ensuring it's above a certain threshold (e.g., 8)
-    const component = Math.floor(Math.random() * (16 - 8)) + 4
+    const component = Math.floor(Math.random() * (18 - 8)) + 4
     color += letters[component]
   }
 

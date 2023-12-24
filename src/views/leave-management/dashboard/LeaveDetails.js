@@ -55,7 +55,7 @@ const LeaveDetails = () => {
     store.dashboards.totalLeaves?.forEach((p, i) => {
       _data.push({
         name: p.name,
-        value: p.balanceCount,
+        value: p.totalCount,
         color: getRandomColor()
       })
     })
@@ -72,7 +72,7 @@ const LeaveDetails = () => {
         }}
       />
       <CardContent>
-        <Box sx={{ height: 280 }}>
+        <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
           <ResponsiveContainer>
             <PieChart style={{ direction: 'ltr' }}>
               <Pie data={data} innerRadius={50} dataKey='value' label={data} labelLine={false}>

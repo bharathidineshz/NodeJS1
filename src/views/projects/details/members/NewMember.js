@@ -10,7 +10,24 @@ import CustomChip from 'src/@core/components/mui/chip'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
-import { Autocomplete, Avatar, Checkbox, Chip, Drawer, FormControl, FormControlLabel, FormHelperText, InputLabel, ListItemText, MenuItem, Radio, RadioGroup, Select, Switch, Typography } from '@mui/material'
+import {
+  Autocomplete,
+  Avatar,
+  Checkbox,
+  Chip,
+  Drawer,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  Switch,
+  Typography
+} from '@mui/material'
 
 //** Third Party */
 import DatePicker, { ReactDatePickerProps } from 'react-datepicker'
@@ -19,10 +36,19 @@ import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { Box } from '@mui/system'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { setCategories, setEditTask, setEmpty, setNewTask, setProjectMembers, setTaskLists } from 'src/store/apps/projects'
+import {
+  fetchUsers,
+  setCategories,
+  setEditTask,
+  setEmpty,
+  setNewTask,
+  setProjectMembers,
+  setTaskLists
+} from 'src/store/apps/projects'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import toast from 'react-hot-toast'
 import CustomPeoplePicker from 'src/views/components/autocomplete/CustomPeoplePicker'
+import { unwrapResult } from '@reduxjs/toolkit'
 
 const ITEM_HEIGHT = 48
 const ITEM_PADDING_TOP = 8
@@ -38,29 +64,34 @@ const MenuProps = {
 
 const NewMember = ({ isOpen, setOpen }) => {
   const [assignees, setAssignees] = useState()
-  const [members, setMembers] = useState([{ name: "Babysha Papanasam" }, { name: "Dhineshkumar Selvam" }, { name: "Naveenkumar Mounsamy" }, { name: "Pavithra Murugesan" }])
+  const [members, setMembers] = useState([])
   const [projectMem, setProjectMem] = useState([])
 
-  const dispatch = useDispatch();
-  const store = useSelector(state => state.projects);
+  const dispatch = useDispatch()
+  const store = useSelector(state => state.projects)
 
-  const STATUS = ["Completed", "Not Started", "Working on it", "Due"]
-  const STATUS_COLOR = ["success", "warning", "info", "error"]
+  useEffect(() => {
+    dispatch(fetchUsers())
+      .then(unwrapResult)
+      .then(res => {
+        setMembers(store.users)
+      })
+  }, [])
 
+  const STATUS = ['Completed', 'Not Started', 'Working on it', 'Due']
+  const STATUS_COLOR = ['success', 'warning', 'info', 'error']
 
-  const onSelectMember = (e) => {
-    setProjectMem(e.map(o => o.name))
+  const onSelectMember = e => {
+    setProjectMem(e.map(o => o.userName))
   }
 
   const addNewMemberToProject = () => {
-    const newMembers = projectMem.map((mem) => ({
-      fullName: mem,
-      email: '',
-      role: 'Fresher',
-      skills: ['React', "Asp.Net"],
-      feedbacks: 0,
-      tasks: 0,
-      utilization: '0%'
+    const newMembers = projectMem.map(mem => ({
+      allocatedProjectCost: 0,
+      projectId: 0,
+      userId: 0,
+      projectRoleId: 0,
+      availablePercentage: 0
     }))
     dispatch(setProjectMembers([...newMembers, ...store.projectMembers]))
     setOpen(false)
@@ -68,47 +99,46 @@ const NewMember = ({ isOpen, setOpen }) => {
   }
 
   const handleClose = () => {
-    setOpen(false);
+    setOpen(false)
     setProjectMem([])
   }
 
   return (
-    <Box >
-      <Drawer
-        anchor="right"
-        open={isOpen}
-        onClose={() => setOpen(false)}
-
-      >
+    <Box>
+      <Drawer anchor='right' open={isOpen} onClose={() => setOpen(false)}>
         <form onSubmit={e => e.preventDefault()}>
           <Grid container spacing={5} sx={{ p: 8, width: 400 }}>
-
-            <Grid item xs={12} className='gap-1' justifyContent="space-between" alignItems="center">
-              <Typography color="secondary">Add Member</Typography>
+            <Grid item xs={12} className='gap-1' justifyContent='space-between' alignItems='center'>
+              <Typography color='secondary'>Add Member</Typography>
             </Grid>
-
 
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <CustomPeoplePicker items={members} label="Project Members" onSelect={onSelectMember} />
-
+                <CustomPeoplePicker
+                  items={members || []}
+                  label='Project Members'
+                  onSelect={onSelectMember}
+                />
               </FormControl>
             </Grid>
 
             <Grid columnGap={2} item xs={12} className='flex-right' sx={{ mt: 5 }}>
-              <Button size='large' variant='outlined' color="secondary" onClick={handleClose}>
+              <Button size='large' variant='outlined' color='secondary' onClick={handleClose}>
                 Close
               </Button>
-              <Button size='large' variant='contained' type="submit" onClick={addNewMemberToProject}>
+              <Button
+                size='large'
+                variant='contained'
+                type='submit'
+                onClick={addNewMemberToProject}
+              >
                 Add Member
               </Button>
             </Grid>
           </Grid>
         </form>
       </Drawer>
-
-
-    </Box >
+    </Box>
   )
 }
 

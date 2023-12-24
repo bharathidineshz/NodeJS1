@@ -1,11 +1,15 @@
 // ** Third Party Imports
 import axios from 'axios'
+import { useSelector } from 'react-redux'
 import ProjectDetails from 'src/views/projects/ProjectDetails'
 
 // ** Demo Components Imports
 
 const ProjectDetailsTab = ({ tab, data }) => {
-  return <ProjectDetails tab={tab} data={data} />
+  const store = useSelector(state=> state.projects)
+  const project = store?.selectedProject == null ? localStorage.getItem("projectId") : store.selectedProject;
+
+  return <ProjectDetails tab={tab} project={project || []} data={[]} />
 }
 
 export const getStaticPaths = () => {

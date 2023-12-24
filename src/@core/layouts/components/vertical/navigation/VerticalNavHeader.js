@@ -78,9 +78,19 @@ const VerticalNavHeader = props => {
       ) : (
         <LinkStyled href='/'>
           {/* <img src="/images/lp-white.png" alt="" height={20} /> */}
-          <HeaderTitle variant='h6' sx={{ ...menuCollapsedStyles, ...(navCollapsed && !navHover ? {} : { ml: 3 }) }}>
-            <img src="/images/leanprofit-white.png" alt="" height={25} />
-
+          <HeaderTitle
+            variant='h6'
+            sx={{ ...menuCollapsedStyles, ...(navCollapsed && !navHover ? {} : { ml: 3 }) }}
+          >
+            <img
+              src={
+                themeConfig.mode === 'dark' || themeConfig.mode === 'semi-dark'
+                  ? '/images/leanprofit-white.png'
+                  : '/images/leanprofit-purple.png'
+              }
+              alt='Leanprofit'
+              height={25}
+            />
           </HeaderTitle>
         </LinkStyled>
       )}

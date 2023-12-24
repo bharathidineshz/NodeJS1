@@ -12,11 +12,9 @@ export const getStaticPaths = () => {
   return {
     paths: [
       { params: { tab: 'my leaves' } },
-      // { params: { tab: 'all requests' } },
       { params: { tab: 'approval' } },
       { params: { tab: 'reports' } },
-      { params: { tab: 'leave_policy' } },
-      { params: { tab: 'settings' } }
+      { params: { tab: 'leave_policy' } }
     ],
     fallback: false
   }

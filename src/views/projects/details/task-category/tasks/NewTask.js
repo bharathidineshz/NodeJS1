@@ -10,7 +10,22 @@ import CustomChip from 'src/@core/components/mui/chip'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
-import { Avatar, Chip, Drawer, FormControl, FormControlLabel, FormHelperText, InputLabel, MenuItem, Radio, RadioGroup, Select, Switch, Typography } from '@mui/material'
+import {
+  Autocomplete,
+  Avatar,
+  Chip,
+  Drawer,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  Switch,
+  Typography
+} from '@mui/material'
 
 //** Third Party */
 import DatePicker, { ReactDatePickerProps } from 'react-datepicker'
@@ -19,267 +34,417 @@ import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { Box } from '@mui/system'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { setEditTask, setNewTask, setTaskLists } from 'src/store/apps/projects'
+import {
+  fetchTasks,
+  fetchUsers,
+  postTask,
+  putTask,
+  setEditTask,
+  setNewTask,
+  setTaskLists
+} from 'src/store/apps/projects'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import toast from 'react-hot-toast'
+import { unwrapResult } from '@reduxjs/toolkit'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { Controller, useForm } from 'react-hook-form'
+import * as yup from 'yup'
+import { fetchStatus } from 'src/store/leave-management'
+import { taskRequest } from 'src/helpers/requests'
+import { STATUS, TASK_PRIORITIES } from 'src/helpers/constants'
+
+const defaultValues = {
+  description: '',
+  taskStatusId: 1,
+  taskEstimatedHours: '',
+  dueDate: new Date(),
+  taskAssignedUserId: 0,
+  taskPriorityId: 1,
+  isBillable: true
+}
+
+const schema = yup.object().shape({
+  description: yup.string().required('task is required'),
+  taskStatusId: yup.number().notRequired(),
+  taskEstimatedHours: yup.string().max(8).required('Estimated hours is required'),
+  dueDate: yup.date().required('Due Date Reaquired'),
+  taskAssignedUserId: yup.number().required('Task Owner required'),
+  taskPriorityId: yup.number().positive().required('Priority is required'),
+  isBillable: yup.boolean()
+})
 
 const NewTask = ({ isOpen, setOpen }) => {
+  const [assignees, setAssignees] = useState([])
+  const [index, setIndex] = useState(0)
 
-  const [assignees, setAssignees] = useState([{ name: "Babysha Papanasam" }, { name: "Dhineshkumar Selvam" }, { name: "Naveenkumar Mounsamy" }, { name: "Pavithra Murugesan" }, { name: "BabySha Papanasam" }])
-  const STATUS = ["Completed", "Not Started", "Working on it", "Due"]
-  const STATUS_COLOR = ["success", "warning", "info", "error"]
-
-  const dispatch = useDispatch();
-  const store = useSelector(state => state.projects);
-
-  const [localNewTask, setLocalNewtask] =
-    useState({
-      task: '',
-      owner: '',
-      status: '',
-      dueDate: new Date(),
-      estimatedHours: '',
-      file: '',
-      isBillable: true
-    })
-
-  const EMPTY_TASK = {
-    task: '',
-    owner: {},
-    status: '',
-    dueDate: '',
-    EstimatedHours: '',
-    file: '',
-    isBillable: true
-  }
+  const dispatch = useDispatch()
+  const store = useSelector(state => state.projects)
+  const _leaveStore = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
-    Object.keys(store.editTask).length > 0 && setLocalNewtask(store.editTask)
+    dispatch(fetchStatus())
+    dispatch(fetchUsers())
+      .then(unwrapResult)
+      .then(res => {
+        setAssignees(store.users)
+        reset({
+          taskPriorityId: 1,
+          taskStatusId: 1
+        })
+      })
+  }, [])
+  useEffect(() => {
+    if (store.editTask !== null && Object.keys(store.editTask).length > 0) {
+      const {
+        description,
+        taskStatusId,
+        taskPriorityId,
+        taskEstimatedHours,
+        dueDate,
+        taskAssignedUserId,
+        isBillable
+      } = store.editTask
+      reset({
+        description: description,
+        dueDate: dueDate,
+        isBillable: isBillable,
+        taskAssignedUserId: taskAssignedUserId,
+        taskEstimatedHours: taskEstimatedHours,
+        taskPriorityId: taskPriorityId,
+        taskStatusId: taskStatusId
+      })
+      const _index =
+        store.users?.length > 0 && store.users.findIndex(o => o.id === taskAssignedUserId)
+      setIndex(_index)
+    }
   }, [store.editTask])
 
-  // const isWeekday = (date) => {
-  //   const day = new Date(date).getDay()
-
-  //   return day !== 0 && day !== 6
-  // }
-
-  //CREATE
-  const createNewTask = () => {
-
-    try {
-      const newtask = {
-        id: store.taskLists.length + 1,
-        ...localNewTask,
-        dueDate: formatLocalDate(localNewTask.dueDate),
-      }
-      dispatch(setTaskLists([...store.taskLists, newtask]))
-      setOpen(false)
-      toast.success("Task Created", { duration: 3000, position: "top-right" })
-      setLocalNewtask(EMPTY_TASK)
-    } catch (error) {
-      toast.error(error, { duration: 3000, position: "top-right" })
-    }
-  }
+  const {
+    register,
+    reset,
+    handleSubmit,
+    control,
+    watch,
+    formState: { errors }
+  } = useForm({
+    defaultValues,
+    mode: 'onChange',
+    resolver: yupResolver(schema)
+  })
 
   //UPDATE
-  const updateTask = () => {
-    try {
-      const tasks = [...store.taskLists];
-      let index = tasks.findIndex(o => o.id === localNewTask.id)
-      if (index != -1) tasks[index] = { ...localNewTask, dueDate: formatLocalDate(localNewTask.dueDate), }
-      dispatch(setTaskLists(tasks))
-      dispatch(setEditTask({}))
-      setOpen(false)
-      toast.success("Task Updated", { duration: 3000, position: "top-right" })
-      setLocalNewtask(EMPTY_TASK)
-    } catch (error) {
-      toast.error(error, { duration: 3000, position: "top-right" })
-    }
+
+  const onSubmit = data => {
+    console.log(data)
+    const projId = Number(localStorage.getItem('projectId'))
+    const _category = JSON.parse(localStorage.getItem('category'))
+    const request = taskRequest({
+      id: store.editTask ? store.editTask.id : 0,
+      taskCategoryId: _category?.taskCategoryId,
+      projectId: projId,
+      ...data
+    })
+    dispatch(store.editTask ? putTask(request) : postTask(request))
+      .then(unwrapResult)
+      .then(res => {
+        if (res.status === 200) {
+          dispatch(fetchTasks(projId)).then(() => {
+            toast.success(res.data)
+            setOpen(false)
+            reset({
+              taskPriorityId: 1,
+              taskStatusId: 1
+            })
+          })
+        } else {
+          toast.error(res.data)
+        }
+      })
   }
-
-  //NEW task
-  const handleNewTaskDetails = (e, name) => {
-    switch (name?.toLowerCase()) {
-      case 'task':
-        setLocalNewtask({ ...localNewTask, task: e.target.value })
-        break;
-      case 'assignee':
-        setLocalNewtask({ ...localNewTask, owner: e.target.value })
-        break;
-      case 'status':
-        setLocalNewtask({ ...localNewTask, status: e.target.value })
-        break;
-      case 'duedate':
-        setLocalNewtask({ ...localNewTask, dueDate: e })
-        break;
-      case 'estimatedhours':
-        setLocalNewtask({ ...localNewTask, estimatedHours: e.target.value })
-        break;
-      case 'isbillable':
-        setLocalNewtask({ ...localNewTask, isBillable: e.target.checked })
-        break;
-      default:
-        break;
-    }
-
-  }
-
 
   return (
-    <Box >
-
-      <Drawer
-        anchor="right"
-        open={isOpen}
-        onClose={() => setOpen(false)}
-
-      >
-        <form onSubmit={e => e.preventDefault()}>
-          <Grid container spacing={5} sx={{ p: 8, width: 420 }}>
-
-            <Grid item xs={12} className='gap-1' justifyContent="space-between" alignItems="center">
-              <Typography color="secondary">Add New task</Typography>
+    <Box>
+      <Drawer anchor='right' open={isOpen} onClose={() => setOpen(false)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Grid container spacing={6} sx={{ p: 8, width: 500 }}>
+            <Grid item xs={12} className='gap-1' justifyContent='space-between' alignItems='center'>
+              <Typography color='secondary'>Add New task</Typography>
               <CustomChip label={store.selectedCategory} skin='light' color='primary' />
             </Grid>
 
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label='Task'
-                value={localNewTask.task}
-                placeholder='Task Name'
-                onChange={(e) => handleNewTaskDetails(e, 'task')}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Icon icon='mdi:checkbox-marked-circle-auto-outline' />
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel id='demo-simple-select-outlined-label'>Assignees</InputLabel>
-                <Select
-                  label='Assignees'
-                  id='demo-simple-select-outlined'
-                  labelId='demo-simple-select-outlined-label'
-                  required
-                  value={localNewTask.owner}
-                  onChange={(e) => handleNewTaskDetails(e, 'assignee')}
-                  startAdornment={<InputAdornment position='start'>
-                    <Icon icon='mdi:account-alert-outline' />
-                  </InputAdornment>}
-                >
-                  {
-                    assignees.map((assignee, i) => (
-                      <MenuItem key={i} className="gap-1" value={assignee.name}>{assignee.name}</MenuItem>
-                    ))
-                  }
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel id='demo-simple-select-outlined-label'>Status</InputLabel>
-                <Select
-                  label='Status'
-                  id='demo-simple-select-outlined'
-                  labelId='demo-simple-select-outlined-label'
-                  required
-                  value={localNewTask.status}
-                  onChange={(e) => handleNewTaskDetails(e, 'status')}
-                  startAdornment={<InputAdornment position='start'>
-                    <Icon icon='mdi:list-status' />
-                  </InputAdornment>}
-                >
-                  {
-                    STATUS.map((status, i) => (
-                      <MenuItem key={i} className="gap-1" value={status}>   <CustomChip size='small' skin='light' color={STATUS_COLOR[i]} label={status} /></MenuItem>
-                    ))
-                  }
-                </Select>
-              </FormControl>
-            </Grid>
-
-
-
-            <Grid item xs={12}>
-              <DatePickerWrapper>
-                <DatePicker
-                  id='picker-filter-from-date'
-                  selected={localNewTask.dueDate}
-                  popperPlacement="bottom"
-                  onChange={(e) => handleNewTaskDetails(e, 'dueDate')}
-                  customInput={<CustomInput label='Due Date' fullWidth InputProps={{
-                    startAdornment: (
-                      <InputAdornment position='start'>
-                        <Icon icon='mdi:calendar-outline' />
-                      </InputAdornment>
-                    )
-                  }} />}
+                <Controller
+                  name='description'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      fullWidth
+                      label='Task *'
+                      value={value}
+                      placeholder='Task Name'
+                      onChange={onChange}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Icon icon='mdi:checkbox-marked-circle-auto-outline' />
+                          </InputAdornment>
+                        )
+                      }}
+                    />
+                  )}
                 />
-              </DatePickerWrapper>
+                {errors.description && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.description.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
             </Grid>
 
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                type='number'
-                value={localNewTask.estimatedHours}
-                onChange={(e) => handleNewTaskDetails(e, 'estimatedHours')}
-                label='Estimated Hours'
-                placeholder='Estimated Hours'
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Icon icon='mdi:clock-outline' />
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                type='file'
-                label='Files'
-                placeholder='Add Files'
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Icon icon='mdi:file-outline' />
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel control={<Switch checked={localNewTask.isBillable} onChange={(e) => handleNewTaskDetails(e, 'isBillable')} />} label='Billable' />
+              <FormControl fullWidth>
+                <InputLabel id='demo-simple-select-outlined-label' required>
+                  Status
+                </InputLabel>
+                <Controller
+                  name='taskStatusId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      required
+                      label='Status'
+                      id='demo-simple-select-outlined'
+                      labelId='demo-simple-select-outlined-label'
+                      value={value}
+                      defaultValue={1}
+                      onChange={onChange}
+                      startAdornment={
+                        <InputAdornment position='start'>
+                          <Icon icon='mdi:list-status' />
+                        </InputAdornment>
+                      }
+                    >
+                      {STATUS.map((status, i) => (
+                        <MenuItem key={i} className='gap-1' value={status.id}>
+                          <CustomChip
+                            key={i}
+                            label={status.name}
+                            skin='light'
+                            color={status.color}
+                          />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.taskStatusId && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.taskStatusId.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
             </Grid>
 
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id='demo-simple-select-outlined' required>
+                  Priority
+                </InputLabel>
+                <Controller
+                  name='taskPriorityId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      required
+                      label='Priority'
+                      id='demo-simple-outlined'
+                      labelId='demo-simple-select-outlined'
+                      value={value}
+                      defaultValue={1}
+                      onChange={onChange}
+                      startAdornment={
+                        <InputAdornment position='start'>
+                          <Icon icon='mdi:priority-high' />
+                        </InputAdornment>
+                      }
+                    >
+                      {TASK_PRIORITIES.map((prior, i) => (
+                        <MenuItem key={i} className='gap-1' value={prior.id}>
+                          <CustomChip key={i} label={prior.name} skin='light' color={prior.color} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.taskPriorityId && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.taskPriorityId.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='dueDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <DatePickerWrapper>
+                      <DatePicker
+                        id='picker-filter-from-date'
+                        selected={value}
+                        popperPlacement='auto'
+                        onChange={onChange}
+                        autoComplete='off'
+                        customInput={
+                          <CustomInput
+                            label='Due Date *'
+                            fullWidth
+                            autocom
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position='start'>
+                                  <Icon icon='mdi:calendar-outline' />
+                                </InputAdornment>
+                              )
+                            }}
+                          />
+                        }
+                      />
+                    </DatePickerWrapper>
+                  )}
+                />
+                {errors.dueDate && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.dueDate.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='taskEstimatedHours'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      fullWidth
+                      value={value}
+                      onChange={onChange}
+                      label='Estimated Hours *'
+                      placeholder='Estimated Hours'
+                      helperText='eg: 08:00'
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Icon icon='mdi:clock-outline' />
+                          </InputAdornment>
+                        )
+                      }}
+                    />
+                  )}
+                />
+                {errors.taskEstimatedHours && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.taskEstimatedHours.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='taskAssignedUserId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <Autocomplete
+                      options={assignees}
+                      id='autocomplete-limit-tags'
+                      getOptionLabel={option => option.userName || ''}
+                      value={ store.editTask ? assignees[index]: value}
+                      onChange={(event, value) => {
+                        field.onChange(value.id)
+                      }}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          error={Boolean(errors.taskAssignedUserId)}
+                          label='Task owner *'
+                          placeholder='Owner'
+                        />
+                      )}
+                    />
+                  )}
+                />
+                {errors.taskAssignedUserId && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.taskAssignedUserId.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControl sx={{ mb: 6 }}>
+                <Controller
+                  name='isBillable'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <FormControlLabel
+                      control={
+                        <Switch checked={value} defaultChecked={value} onChange={onChange} />
+                      }
+                      label='Billable'
+                    />
+                  )}
+                />
+                {errors.isBillable && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.isBillable.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
 
             <Grid columnGap={2} item xs={12} className='flex-right' sx={{ mt: 5 }}>
-              <Button size='large' variant='outlined' color="secondary" onClick={() => setOpen(false)}>
+              <Button
+                size='large'
+                variant='outlined'
+                color='secondary'
+                onClick={() => {
+                  setOpen(false),
+                    reset({
+                      taskPriorityId: 1,
+                      taskStatusId: 1
+                    })
+                }}
+              >
                 Close
               </Button>
-              {
-                Object.keys(store.editTask).length > 0 ? <Button size='large' variant='contained' type="submit" onClick={updateTask}>
+              {Object.keys(store.editTask).length > 0 ? (
+                <Button size='large' variant='contained' type='submit'>
                   Update Task
-                </Button> : <Button size='large' variant='contained' type="submit" onClick={createNewTask}>
+                </Button>
+              ) : (
+                <Button size='large' variant='contained' type='submit'>
                   Add Task
                 </Button>
-              }
-
+              )}
             </Grid>
           </Grid>
         </form>
       </Drawer>
-
-
     </Box>
   )
 }

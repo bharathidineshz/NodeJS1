@@ -20,6 +20,7 @@ import Icon from 'src/@core/components/icon'
 // ** Context
 import { useDispatch, useSelector } from 'react-redux'
 import { setUser } from 'src/store/authentication/register'
+import { resetLeaves } from 'src/store/leave-management'
 
 // ** Styled Components
 const BadgeContentSpan = styled('span')(({ theme }) => ({
@@ -42,6 +43,7 @@ const UserDropdown = props => {
 
   //** Redux store */
   const store = useSelector(state => state.user)
+  const _leaveStore = useSelector(state => state.leaveManagement)
   const dispatch = useDispatch()
 
   // ** Vars
@@ -76,24 +78,23 @@ const UserDropdown = props => {
   const handleLogout = () => {
     handleDropdownClose()
     setUser(null)
-    window.localStorage.clear();
+    window.localStorage.clear()
+    dispatch(resetLeaves())
     router.push('/login')
   }
 
   let userRef = useRef(null)
   let userData = userRef?.current
   useEffect(() => {
-    const Data = localStorage?.getItem("userData")
+    const Data = localStorage?.getItem('userData')
     userRef.current = JSON.parse(Data)
-
   }, [])
 
-  const getroleName = (id) => {
-    if (id === '1') return "Admin"
-    if (id === '2') return "Management"
-    if (id === '3') return "Project Manager"
-    if (id === '4') return "User"
-
+  const getroleName = id => {
+    if (id === '1') return 'Admin'
+    if (id === '2') return 'Management'
+    if (id === '3') return 'Project Manager'
+    if (id === '4') return 'User'
   }
 
   return (
@@ -113,8 +114,10 @@ const UserDropdown = props => {
           onClick={handleDropdownOpen}
           sx={{ width: 40, height: 40 }}
 
-        // src='/images/avatars/1.png'
-        >{userData?.first_name?.charAt(0)}</Avatar>
+          // src='/images/avatars/1.png'
+        >
+          {userData?.first_name?.charAt(0)}
+        </Avatar>
       </Badge>
       <Menu
         anchorEl={anchorEl}
@@ -134,7 +137,9 @@ const UserDropdown = props => {
                 horizontal: 'right'
               }}
             >
-              <Avatar sx={{ width: '2.5rem', height: '2.5rem' }} >{userData?.first_name?.charAt(0)}</Avatar>
+              <Avatar sx={{ width: '2.5rem', height: '2.5rem' }}>
+                {userData?.first_name?.charAt(0)}
+              </Avatar>
             </Badge>
             <Box sx={{ display: 'flex', ml: 3, alignItems: 'flex-start', flexDirection: 'column' }}>
               <Typography sx={{ fontWeight: 600 }}>{userData?.first_name}</Typography>
@@ -165,7 +170,10 @@ const UserDropdown = props => {
           </Box>
         </MenuItem>
         <Divider />
-        <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose('/pages/account-settings/account')}>
+        <MenuItem
+          sx={{ p: 0 }}
+          onClick={() => handleDropdownClose('/pages/account-settings/account')}
+        >
           <Box sx={styles}>
             <Icon icon='mdi:cog-outline' />
             Settings
