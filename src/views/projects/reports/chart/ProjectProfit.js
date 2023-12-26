@@ -16,11 +16,13 @@ const Img = styled('img')({
   position: 'absolute'
 })
 
-const ProjectProfit = () => {
+const ProjectProfit = ({ details }) => {
+  const { projectProfit, projectProfitRate } = details
+
   const data = {
-    stats: '$23.5k',
+    stats: `${Math.trunc(projectProfit)} rs`,
     title: 'Project Profit',
-    trendNumber: '+38%',
+    trendNumber: `${Math.trunc(projectProfitRate)}%`,
     chipColor: 'primary',
     chipText: 'Year of 2023',
     src: '/images/cards/pose_f9.png'

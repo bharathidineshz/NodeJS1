@@ -16,11 +16,12 @@ const Img = styled('img')({
   position: 'absolute'
 })
 
-const TaskCompletionRate = () => {
+const TaskCompletionRate = ({ details }) => {
+  const { taskCompletionRate } = details
+
   const data = {
-    stats: '81%',
+    stats: `${taskCompletionRate}%`,
     title: 'Task Completion Rate',
-    trendNumber: '+38%',
     chipColor: 'primary',
     chipText: 'Year of 2023',
     src: '/images/cards/pose_m18.png'

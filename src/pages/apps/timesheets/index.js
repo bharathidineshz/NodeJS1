@@ -22,12 +22,15 @@ const AppTimeSheets = () => {
           <Typography variant='h6'>Time Sheets</Typography>
 
           <ButtonGroup variant='outlined'>
-            <Button onClick={() => handleViewChange('day')} variant={view === 'day' ? 'contained' : 'outlined'}>
+            <Button
+              onClick={() => handleViewChange('day')}
+              variant={view === 'day' ? 'contained' : 'outlined'}
+            >
               Day
             </Button>
-            <Button onClick={() => handleViewChange('week')} variant={view === 'week' ? 'contained' : 'outlined'}>
+            {/* <Button onClick={() => handleViewChange('week')} variant={view === 'week' ? 'contained' : 'outlined'}>
               Week
-            </Button>
+            </Button> */}
           </ButtonGroup>
         </Grid>
 

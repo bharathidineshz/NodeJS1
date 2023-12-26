@@ -51,7 +51,7 @@ import * as yup from 'yup'
 import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
 import { userRequest } from 'src/helpers/requests'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUser } from 'src/store/apps/user'
+import { activateUser, updateUser } from 'src/store/apps/user'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 
@@ -118,6 +118,11 @@ const UserViewLeft = ({ user }) => {
   const [openPlans, setOpenPlans] = useState(false)
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false)
+  const [activateDialog, setActivateDialog] = useState(false)
+  const [isActivated, setisActivated] = useState(false)
+
+  const [alertDialog, setalertDialog] = useState(false)
+
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
   const {
@@ -163,6 +168,29 @@ const UserViewLeft = ({ user }) => {
         } else {
           toast.error('Error Occurred')
         }
+      })
+  }
+
+  const handleUser = () => {
+    if (user.isActive) {
+      setSuspendDialogOpen(true)
+    } else {
+      setActivateDialog(true)
+    }
+  }
+
+  const handleActivate = () => {
+    dispatch(activateUser(store.userId))
+      .then(unwrapResult)
+      .then(res => {
+        setisActivated(true)
+        setalertDialog(true)
+        setActivateDialog(false)
+      })
+      .catch(err => {
+        toast.error('Error while activating user')
+        setActivateDialog(false)
+        setalertDialog(true)
       })
   }
 
@@ -294,8 +322,8 @@ const UserViewLeft = ({ user }) => {
             </CardContent>
 
             <CardActions sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button color='error' variant='outlined' onClick={() => setSuspendDialogOpen(true)}>
-                Suspend
+              <Button color='error' variant='outlined' onClick={handleUser}>
+                {user.isActive ? 'Suspend' : 'Activate'}
               </Button>
               <Button variant='contained' sx={{ mr: 2 }} onClick={handleEditClickOpen}>
                 Edit
@@ -493,11 +521,111 @@ const UserViewLeft = ({ user }) => {
               </form>
             </Dialog>
 
+            <Dialog
+              fullWidth
+              open={activateDialog}
+              onClose={() => setActivateDialog(false)}
+              sx={{ '& .MuiPaper-root': { width: '100%', maxWidth: 512 } }}
+            >
+              <DialogContent
+                sx={{
+                  px: theme => [
+                    `${theme.spacing(5)} !important`,
+                    `${theme.spacing(15)} !important`
+                  ],
+                  pt: theme => [
+                    `${theme.spacing(8)} !important`,
+                    `${theme.spacing(12.5)} !important`
+                  ]
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    textAlign: 'center',
+                    alignItems: 'center',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    '& svg': { mb: 8, color: 'warning.main' }
+                  }}
+                >
+                  <Icon icon='mdi:alert-circle-outline' fontSize='5.5rem' />
+                  <Typography variant='h4' sx={{ mb: 5, color: 'text.secondary' }}>
+                    Are you sure?
+                  </Typography>
+                  {/* <Typography>You won't be able to revert </Typography> */}
+                </Box>
+              </DialogContent>
+              <DialogActions
+                sx={{
+                  justifyContent: 'center',
+                  px: theme => [
+                    `${theme.spacing(5)} !important`,
+                    `${theme.spacing(15)} !important`
+                  ],
+                  pb: theme => [
+                    `${theme.spacing(8)} !important`,
+                    `${theme.spacing(12.5)} !important`
+                  ]
+                }}
+              >
+                <Button variant='contained' sx={{ mr: 2 }} onClick={handleActivate}>
+                  Yes, Activate user!
+                </Button>
+                <Button
+                  variant='outlined'
+                  color='secondary'
+                  onClick={() => {
+                    setActivateDialog(false)
+                  }}
+                >
+                  Cancel
+                </Button>
+              </DialogActions>
+            </Dialog>
+
             <UserSuspendDialog open={suspendDialogOpen} setOpen={setSuspendDialogOpen} />
             <UserSubscriptionDialog
               open={subscriptionDialogOpen}
               setOpen={setSubscriptionDialogOpen}
             />
+
+            <Dialog
+              fullWidth
+              open={alertDialog}
+              onClose={() => setalertDialog(false)}
+              sx={{ '& .MuiPaper-root': { width: '100%', maxWidth: 512 } }}
+            >
+              <DialogContent>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexDirection: 'column',
+                    '& svg': {
+                      mb: 14,
+                      color: isActivated ? 'success.main' : 'error.main'
+                    }
+                  }}
+                >
+                  <Icon
+                    fontSize='5.5rem'
+                    icon={isActivated ? 'mdi:check-circle-outline' : 'mdi:close-circle-outline'}
+                  />
+                  <Typography variant='h4' sx={{ mb: 8 }}>
+                    {isActivated ? 'Activated!' : 'Cancelled'}
+                  </Typography>
+                  <Typography>
+                    {isActivated ? 'User has been Activated.' : 'Cancelled Activation :)'}
+                  </Typography>
+                </Box>
+              </DialogContent>
+              <DialogActions sx={{ justifyContent: 'center' }}>
+                <Button variant='contained' color='success' onClick={() => setalertDialog(false)}>
+                  OK
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Card>
         </Grid>
 

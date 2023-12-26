@@ -88,7 +88,7 @@ const TaskEfficiency = () => {
         >
           <Grid xs={12} display='flex'>
             <Grid item xs={7}>
-              <ReactApexcharts type='radialBar' height={150} options={options} series={[68]} />
+              {/* <ReactApexcharts type='radialBar' height={150} options={options} series={[68]} /> */}
             </Grid>
             <Grid container xs={5} display='flex' sx={{ m: 'auto' }} flexDirection='column'>
               <Grid item>

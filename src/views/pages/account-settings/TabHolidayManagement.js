@@ -36,6 +36,7 @@ import SidebarAddHoliday from './holiday/AddHolidayDrawer'
 import { endpointURL, endpoints } from 'src/store/endpoints/endpoints'
 
 import { fetchHolidays, deleteHoliday, updateHoliday } from 'src/store/apps/accountSetting/index'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 const TabHolidayManagement = ({ popperPlacement }) => {
   // ** State
@@ -46,11 +47,15 @@ const TabHolidayManagement = ({ popperPlacement }) => {
   const [renderDatagrid, setRenderDatagrid] = useState(false)
   const [selectedDate, setSelectedDate] = useState(null)
   const [leaveDescription, setLeaveDescription] = useState(null)
+  const [isLoading, setLoading] = useState(false)
+
 
   const dispatch = useDispatch()
 
   useEffect(() => {
-    getHolidays()
+    setLoading(true);
+    dispatch(fetchHolidays()).then(res => setLoading(false))
+    setLeaveDescription(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -177,6 +182,9 @@ const TabHolidayManagement = ({ popperPlacement }) => {
 
   return (
     <div onMouseUp={() => renderTable()}>
+       {isLoading ? (
+        <SimpleBackdrop />
+      ) : (
       <Card>
         <DatePickerWrapper>
           <Box
@@ -220,6 +228,7 @@ const TabHolidayManagement = ({ popperPlacement }) => {
           </Grid>
         </DatePickerWrapper>
       </Card>
+      )}
     </div>
   )
 }

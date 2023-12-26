@@ -49,7 +49,7 @@ const TabList = styled(MuiTabList)(({ theme }) => ({
 const UserViewRight = ({ tab, invoiceData }) => {
   // ** State
   const [activeTab, setActiveTab] = useState(tab)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   // ** Hooks
   const router = useRouter()
@@ -69,11 +69,6 @@ const UserViewRight = ({ tab, invoiceData }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
-  useEffect(() => {
-    if (invoiceData) {
-      setIsLoading(false)
-    }
-  }, [invoiceData])
 
   return (
     <TabContext value={activeTab}>
@@ -138,7 +133,7 @@ const UserViewRight = ({ tab, invoiceData }) => {
         ) : (
           <>
             <TabPanel sx={{ p: 0 }} value='overview'>
-              <UserViewOverview invoiceData={invoiceData} />
+              <UserViewOverview />
             </TabPanel>
             <TabPanel sx={{ p: 0 }} value='security'>
               <UserViewSecurity />

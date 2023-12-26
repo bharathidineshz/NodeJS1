@@ -50,15 +50,10 @@ export const fetchProjectAssignees = createAsyncThunk(
   }
 )
 
-//** post assignees */
-export const postAssignee = createAsyncThunk('projects/postAssignee', async params => {
-  const response = await instance.post(endpoints.projectAssignees, params)
-
-  return response
-})
-
 export const postTask = createAsyncThunk('projects/postTask', async params => {
-  const response = await instance.post(endpoints.postTask, params, {headers:{'Content-Type': 'multipart/form-data'}})
+  const response = await instance.post(endpoints.postTask, params, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
 
   return response
 })
@@ -93,14 +88,11 @@ export const fetchRequiredSkills = createAsyncThunk(
 )
 
 //** fetch tasks */
-export const fetchProjectsReport = createAsyncThunk(
-  'projects/fetchProjectsReport',
-  async params => {
-    const response = await instance.get(endpoints.getGetProjectReports(params))
+export const fetchProjectsReport = createAsyncThunk('projects/fetchProjectsReport', async id => {
+  const response = await instance.get(endpoints.getProjectReportsDetails(id))
 
-    return response.data
-  }
-)
+  return response.data
+})
 
 export const fetchProjectMembers = createAsyncThunk(
   'projects/fetchProjectMembers',
@@ -130,6 +122,12 @@ export const postMileStone = createAsyncThunk('projects/postMileStone', async pa
   return response
 })
 
+export const postAssignee = createAsyncThunk('projects/postAssignee', async params => {
+  const response = await instance.post(endpoints.projectAssignees, params)
+
+  return response
+})
+
 //PUT
 export const putProject = createAsyncThunk('projects/putProject', async params => {
   try {
@@ -145,7 +143,9 @@ export const putProject = createAsyncThunk('projects/putProject', async params =
 
 export const putTask = createAsyncThunk('projects/putTask', async params => {
   try {
-    const response = await instance.put(endpoints.putTask, params,{headers:{'Content-Type': 'multipart/form-data'}})
+    const response = await instance.put(endpoints.putTask, params, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
 
     return response
   } catch (error) {
@@ -181,8 +181,6 @@ export const putCategory = createAsyncThunk('projects/putCategory', async params
     return error
   }
 })
-
-
 
 export const putProjectMap = createAsyncThunk('projects/putProjectMap', async params => {
   const response = await instance.put(endpoints.updateProjectMap, params)
@@ -305,19 +303,19 @@ export const appProjects = createSlice({
     builder.addCase(fetchClients.fulfilled, (state, action) => {
       state.allClients = action.payload
     })
-    builder.addCase(fetchProjectsReport.fulfilled, (state, action) => {
-      const userMap = {}
-      state.users.forEach(user => {
-        userMap[user.email] = user.userName
-      })
+    // builder.addCase(fetchProjectsReport.fulfilled, (state, action) => {
+    //   const userMap = {}
+    //   state.users.forEach(user => {
+    //     userMap[user.email] = user.userName
+    //   })
 
-      const tasksWithUsernames = action.payload.tasks.map((task, i) => ({
-        ...task,
-        id: i,
-        userName: userMap[task.userId]
-      }))
-      state.projectReport = tasksWithUsernames
-    })
+    //   const tasksWithUsernames = action.payload.tasks.map((task, i) => ({
+    //     ...task,
+    //     id: i,
+    //     userName: userMap[task.userId]
+    //   }))
+    //   state.projectReport = tasksWithUsernames
+    // })
     builder.addCase(postProject.fulfilled, (state, action) => {
       const { data } = action.payload
       if (action.payload.isSuccess) state.project.uniqueId = data
@@ -337,7 +335,9 @@ export const appProjects = createSlice({
       state.users = users
     })
     builder.addCase(fetchCategories.fulfilled, (state, action) => {
-      const categories = action.payload?.filter(o => o.projectId === state.selectedProject?.id)
+      const categories = action.payload?.filter(
+        o => o.projectId === localStorage.getItem('projectId')
+      )
       state.categories = categories || []
     })
     builder.addCase(fetchTasks.fulfilled, (state, action) => {
@@ -347,7 +347,10 @@ export const appProjects = createSlice({
       state.projectDetails = action.payload
     })
     builder.addCase(fetchMileStones.fulfilled, (state, action) => {
-      const mileStones = action.payload.filter(o => o.projectId === state.selectedProject?.id)
+      var mileStones = action.payload.filter(o => o.projectId === state.selectedProject?.id)
+      mileStones = mileStones.sort((start, end) => {
+        return new Date(start.startDate) - new Date(end.endDate)
+      })
       state.mileStones = mileStones || []
     })
     builder.addCase(fetchRequiredSkills.fulfilled, (state, action) => {
@@ -359,10 +362,10 @@ export const appProjects = createSlice({
     builder.addCase(fetchProjectsByUser.fulfilled, (state, action) => {
       state.userProjects = action.payload || []
     })
-    builder.addCase(fetchProjectAssignees.fulfilled,  (state, action) => {
+    builder.addCase(fetchProjectAssignees.fulfilled, (state, action) => {
       const assignees = action.payload.filter(o => o.projectId == localStorage.getItem('projectId'))
       const tempUsers = []
-       assignees.forEach(user => {
+      assignees.forEach(user => {
         const _user = state.users?.find(o => o.id === user.userId)
         tempUsers.push({
           email: _user?.email,
@@ -371,6 +374,9 @@ export const appProjects = createSlice({
         })
       })
       state.assignees = tempUsers
+    })
+    builder.addCase(fetchProjectsReport.fulfilled, (state, action) => {
+      state.projectReport = action.payload
     })
   }
 })

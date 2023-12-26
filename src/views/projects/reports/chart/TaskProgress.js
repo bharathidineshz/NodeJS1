@@ -10,9 +10,11 @@ import CustomChip from 'src/@core/components/mui/chip'
 import OptionsMenu from 'src/@core/components/option-menu'
 import ReactApexcharts from 'src/@core/components/react-apexcharts'
 
-const TaskProgressPie = () => {
+const TaskProgressPie = ({ details }) => {
   // ** Hook
   const theme = useTheme()
+
+  const { progressPer } = details
 
   const options = {
     chart: {
@@ -94,9 +96,14 @@ const TaskProgressPie = () => {
         }}
       />
       <CardContent sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-        <ReactApexcharts type='radialBar' height={216} series={[90]} options={options} />
+        <ReactApexcharts
+          type='radialBar'
+          height={216}
+          series={[Math.trunc(progressPer)]}
+          options={options}
+        />
         <Typography sx={{ mb: 2.5 }} variant='caption'>
-          $16k Spent Till Date
+          {Math.trunc(progressPer)}% Tasks completed Till Date
         </Typography>
       </CardContent>
     </Card>

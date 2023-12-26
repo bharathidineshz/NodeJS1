@@ -214,7 +214,7 @@ const Register = () => {
             >
               <img
                 src={
-                  themeConfig.mode === 'dark'
+                  theme.palette.mode === 'dark'
                     ? '/images/leanprofit-white.png'
                     : '/images/leanprofit-purple.png'
                 }

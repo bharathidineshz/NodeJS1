@@ -66,8 +66,6 @@ const LinkStyled = styled(Link)(({ theme }) => ({
   }
 }))
 
-
-
 const ClientList = ({ apiData }) => {
   // ** State
   const [role, setRole] = useState('')
@@ -97,7 +95,7 @@ const ClientList = ({ apiData }) => {
       headerName: 'Client',
       renderCell: ({ row }) => {
         const { companyName } = row
-  
+
         return (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
@@ -110,12 +108,15 @@ const ClientList = ({ apiData }) => {
     {
       flex: 0.175,
       field: 'email',
-      headerName: 'Email'
+      headerName: 'Email',
+      wrap: true,
+      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
       flex: 0.16,
       field: 'primaryContatctName',
-      headerName: 'Contact'
+      headerName: 'Contact',
+      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
       flex: 0.15,
@@ -138,16 +139,17 @@ const ClientList = ({ apiData }) => {
     },
     {
       flex: 0.15,
-      minWidth: 120,
+      width: 120,
       headerName: 'Address',
       field: 'address',
+      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
       flex: 0.15,
       minWidth: 120,
       headerName: 'Active',
       field: 'isActive',
-      renderCell: (params) => (
+      renderCell: params => (
         <Grid>
           {params.value ? (
             <CustomAvatar skin='light' color='success'>
@@ -159,7 +161,7 @@ const ClientList = ({ apiData }) => {
             </CustomAvatar>
           )}
         </Grid>
-      ),
+      )
     },
     {
       flex: 0.1,
@@ -168,16 +170,12 @@ const ClientList = ({ apiData }) => {
       headerName: 'Actions',
       renderCell: params => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconButton
-              color='info'
-              size='small'
-              onClick={handleEdit(params.row)}
-            >
-              <Icon icon='mdi:edit-outline' fontSize={20} />
-            </IconButton>
-            <IconButton color='error' size='small' onClick={handleDelete(params.row.id)}>
-              <Icon icon='mdi:trash-outline' fontSize={20} />
-            </IconButton>
+          <IconButton color='info' size='small' onClick={handleEdit(params.row)}>
+            <Icon icon='mdi:edit-outline' fontSize={20} />
+          </IconButton>
+          <IconButton color='error' size='small' onClick={handleDelete(params.row.id)}>
+            <Icon icon='mdi:trash-outline' fontSize={20} />
+          </IconButton>
         </Box>
       )
     }
@@ -202,12 +200,14 @@ const ClientList = ({ apiData }) => {
   }
 
   const handleDelete = id => e => {
-    dispatch(deleteClient(id)).then(unwrapResult).then((res)=>{
-      if(res.status === 200){
-        toast.success("Client Deleted")
-        dispatch(fetchClients())
-      }
-    })// Open the drawer
+    dispatch(deleteClient(id))
+      .then(unwrapResult)
+      .then(res => {
+        if (res.status === 200) {
+          toast.success('Client Deleted')
+          dispatch(fetchClients())
+        }
+      }) // Open the drawer
   }
 
   return (
@@ -217,10 +217,14 @@ const ClientList = ({ apiData }) => {
           <CardHeader />
 
           {/* <Divider /> */}
-          <ClientTableHeader setOpen={toggleAddUserDrawer} value={value} handleFilter={handleFilter} />
+          <ClientTableHeader
+            setOpen={toggleAddUserDrawer}
+            value={value}
+            handleFilter={handleFilter}
+          />
           <DataGrid
             autoHeight
-            rows={store.clients ||[]}
+            rows={store.clients || []}
             columns={columns}
             disableRowSelectionOnClick
             pageSizeOptions={[10, 25, 50]}

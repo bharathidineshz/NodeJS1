@@ -1,5 +1,5 @@
 // ** React Imports
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // ** MUI Imports
 import Box from '@mui/material/Box'
@@ -30,27 +30,28 @@ const columns = [
     flex: 0.3,
     minWidth: 230,
     field: 'projectId',
-    headerName: 'Id',
+    headerName: 'Id'
   },
- 
+
   {
     flex: 0.3,
     minWidth: 230,
     field: 'projectName',
     headerName: 'Project',
     renderCell: ({ row }) => (
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Img src={row.img} alt={`project-${row.projectTitle}`} />
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant='subtitle2' sx={{ color: 'text.primary' }}>
-            {row.projectTitle}
-          </Typography>
-          <Typography variant='caption'>{row.projectType}</Typography>
-        </Box>
-      </Box>
+      // <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      // <Img src={row.img} alt={`project-${row.projectTitle}`} />
+      // <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+
+      <Typography variant='subtitle2' sx={{ color: 'text.primary' }}>
+        {row.projectName}
+      </Typography>
+
+      // <Typography variant='caption'>{row.projectType}</Typography>
+      // </Box>
+      // </Box>
     )
-  },
- 
+  }
 ]
 
 const InvoiceListTable = () => {
@@ -60,11 +61,28 @@ const InvoiceListTable = () => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
+
   useEffect(() => {
     dispatch(fetchProjectsByUser())
       .then(unwrapResult)
-      .then(res => setData(res.data))
-  }, [value])
+      .then(res => {
+        setData(res)
+      })
+  }, [])
+
+  const filteredData = useMemo(() => {
+    let filtered = data // Assuming store.data contains the user data
+
+    // Filter by search text
+    if (value) {
+      filtered = filtered.filter(
+        item => item.projectName && item.projectName.toLowerCase().includes(value.toLowerCase())
+        // Add more fields to search if needed
+      )
+    }
+
+    return filtered
+  }, [data, value])
 
   return (
     <Card>
@@ -84,12 +102,13 @@ const InvoiceListTable = () => {
       </CardContent>
       <DataGrid
         autoHeight
-        rows={data}
+        rows={filteredData || []}
         columns={columns}
         disableRowSelectionOnClick
         pageSizeOptions={[7, 10, 25, 50]}
         paginationModel={paginationModel}
         onPaginationModelChange={setPaginationModel}
+        getRowId={row => row.projectId}
       />
     </Card>
   )

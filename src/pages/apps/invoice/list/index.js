@@ -47,6 +47,8 @@ import TableHeader from 'src/views/apps/invoice/list/TableHeader'
 // ** Styled Components
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import dayjs from 'dayjs'
+import Toolbar from 'src/views/apps/invoice/list/toolBar'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 // ** Styled component for the link in the dataTable
 const LinkStyled = styled(Link)(({ theme }) => ({
@@ -167,12 +169,18 @@ const InvoiceList = () => {
   const [selectedRows, setSelectedRows] = useState([])
   const [startDateRange, setStartDateRange] = useState(null)
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
+  const [filteredRows, setRows] = useState([])
+  const [searchValue, setSearchValue] = useState('')
+  const [isLoading, setLoading] = useState(false)
+
+
 
   // ** Hooks
   const dispatch = useDispatch()
   const store = useSelector(state => state.invoice)
   useEffect(() => {
-    dispatch(fetchData())
+    setLoading(true);
+    dispatch(fetchData()).then(res => setLoading(false))
   }, [dispatch])
 
   const handleFilter = val => {
@@ -190,6 +198,17 @@ const InvoiceList = () => {
     }
     setStartDateRange(start)
     setEndDateRange(end)
+  }
+
+  const handleSearch = value => {
+    setSearchValue(value)
+    const rows =  store.data.filter(
+      o =>    
+        o.clientName?.toLowerCase().trim().includes(value) ||
+        o.projectName?.toLowerCase().trim().includes(value) ||
+        o.uniqueId?.toLocaleLowerCase().trim().includes(value)
+    )
+    setRows(rows)
   }
 
   const columns = [
@@ -220,22 +239,44 @@ const InvoiceList = () => {
     <DatePickerWrapper>
       <Grid container spacing={6}>
         <Grid item xs={12}>
+
+        {isLoading ? (
+        <SimpleBackdrop />
+      ) : (
           <Card>
-            <TableHeader value={value} selectedRows={selectedRows} handleFilter={handleFilter} />
             <DataGrid
               autoHeight
               pagination
-              rows={store.data ?? []}
-              columns={columns}
-              // checkboxSelection
+              rows={searchValue ? filteredRows :store.data||[] }
+            //
+               columns={columns}
+               checkboxSelection
               disableRowSelectionOnClick
               pageSizeOptions={[10, 25, 50]}
               paginationModel={paginationModel}
               onPaginationModelChange={setPaginationModel}
               onRowSelectionModelChange={rows => setSelectedRows(rows)}
               getRowId={row => row?.uniqueId}
+              slots={{
+                toolbar: () => {
+                  return <Toolbar searchValue={searchValue} handleFilter={handleSearch} isExport />
+                }
+              }}     
+              loading={store.data ? false : true}
+  
+              slotProps={{
+                baseButton: {
+                  variant: 'outlined'
+                },
+                toolbar: {
+                  value: searchValue,
+                  clearSearch: () => handleSearch(''),
+                  onChange: event => handleSearch(event.target.value)
+                }
+              }}
             />
           </Card>
+      )}
         </Grid>
       </Grid>
     </DatePickerWrapper>

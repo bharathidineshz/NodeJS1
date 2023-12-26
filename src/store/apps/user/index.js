@@ -41,9 +41,18 @@ export const updateUser = createAsyncThunk(
 export const deleteUser = createAsyncThunk(
   'appUsers/deleteUser',
   async (id, { getState, dispatch }) => {
-    console.log(id)
-    const response = await instance.delete(endpointURL(endpoints.Deleteuser(id)))
-    dispatch(fetchData(getState().user.params))
+    const response = await instance.delete(endpoints.Deleteuser(id))
+    dispatch(fetchUsers(getState().user.params))
+
+    return response.data
+  }
+)
+
+export const activateUser = createAsyncThunk(
+  'appUsers/deleteUser',
+  async (id, { getState, dispatch }) => {
+    const response = await instance.patch(endpoints.Activateuser(id))
+    dispatch(fetchUsers(getState().user.params))
 
     return response.data
   }

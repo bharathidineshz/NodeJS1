@@ -135,7 +135,13 @@ const NewTask = ({ isOpen, setOpen }) => {
   //UPDATE
 
   const onSubmit = data => {
-    console.log(data)
+    const category = JSON.parse(localStorage.getItem('category'))
+    const tasks = category.tasks.flatMap(o => o.description?.trim()?.toLowerCase())
+
+    if (tasks.includes(data.description?.trim().toLowerCase())) {
+      return toast.error('Task Already exist in this category')
+    }
+
     const projId = Number(localStorage.getItem('projectId'))
     const _category = JSON.parse(localStorage.getItem('category'))
     const request = taskRequest({
@@ -144,7 +150,7 @@ const NewTask = ({ isOpen, setOpen }) => {
       projectId: projId,
       ...data
     })
-    dispatch(store.editTask ? putTask(request) : postTask(request))
+    dispatch((store.editTask || Object.keys(store.editTask).length > 0) ? putTask(request) : postTask(request))
       .then(unwrapResult)
       .then(res => {
         if (res.status === 200) {
@@ -371,7 +377,7 @@ const NewTask = ({ isOpen, setOpen }) => {
                       options={assignees}
                       id='autocomplete-limit-tags'
                       getOptionLabel={option => option.userName || ''}
-                      value={ store.editTask ? assignees[index]: value}
+                      value={store.editTask ? assignees[index] : value}
                       onChange={(event, value) => {
                         field.onChange(value.id)
                       }}

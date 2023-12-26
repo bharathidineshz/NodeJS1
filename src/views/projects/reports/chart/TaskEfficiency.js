@@ -22,12 +22,14 @@ const Img = styled('img')({
   position: 'absolute'
 })
 
-const TaskEfficiency = () => {
+const TaskEfficiency = ({ details }) => {
+  const { efficiency, estimatedTime, actualTime } = details
+
   const theme = useTheme()
 
   const data = {
-    actual: '87',
-    estimated: '92',
+    actual: actualTime,
+    estimated: estimatedTime,
     title: 'Task Efficiency Index',
     trendNumber: '+38%',
     chipColor: 'primary',
@@ -88,7 +90,12 @@ const TaskEfficiency = () => {
         >
           <Grid xs={12} display='flex'>
             <Grid item xs={7}>
-              <ReactApexcharts type='radialBar' height={150} options={options} series={[81]} />
+              <ReactApexcharts
+                type='radialBar'
+                height={150}
+                options={options}
+                series={[Math.trunc(efficiency)]}
+              />
             </Grid>
             <Grid container xs={5} display='flex' sx={{ m: 'auto' }} flexDirection='column'>
               <Grid item>

@@ -62,28 +62,28 @@ const navigation = () => {
       title: 'Reports',
       icon: 'mdi:chart-line',
 
-      auth: false,
+      // auth: false,
       children: [
         {
           title: 'Utilization',
           path: '/apps/reports',
-          icon: 'solar:chart-linear',
+          icon: 'solar:chart-linear'
 
-          auth: false
+          // auth: false
         },
         {
           title: 'Revenue',
           path: '/apps/financialReports',
-          icon: 'material-symbols:finance-mode',
+          icon: 'material-symbols:finance-mode'
 
-          auth: false
+          // auth: false
         },
         {
           title: 'Time',
           path: '/apps/reports/time',
-          icon: 'mdi:clock-time-seven-outline',
+          icon: 'mdi:clock-time-seven-outline'
 
-          auth: false
+          // auth: false
         }
       ]
     },

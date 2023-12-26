@@ -126,15 +126,14 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
       flex: 0.25,
       minWidth: 200,
       field: 'projectName',
-      headerName: 'Project',
-      editable: false
+      headerName: 'Project'
     },
     {
       flex: 0.15,
       minWidth: 300,
       editable: true,
       field: 'taskId',
-      headerName: 'Description',
+      headerName: ' Task Description',
       renderCell: params => params.row.taskDescription,
       renderEditCell: params => {
         return (
@@ -175,9 +174,8 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
       )
     },
     {
-      flex: 0.15,
+      flex: 0.2,
       type: 'time',
-      minWidth: 130,
       editable: true,
       headerName: 'Hours',
       field: 'burnedHours',
@@ -199,7 +197,7 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
       headerName: 'Actions',
       renderCell: params => (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Tooltip title='Delete Project'>
+          <Tooltip title='Delete Timesheet'>
             <IconButton
               size='small'
               onClick={() => dispatch(DeleteData(params?.row?.id))}
@@ -215,7 +213,13 @@ const TimeSheetTable = ({ popperPlacement, loading }) => {
 
   return (
     <Box sx={{ height: 500 }}>
-      <DataGrid rows={data} loading={loading} columns={columns} pageSize={10} />
+      <DataGrid
+        rows={data}
+        loading={loading}
+        columns={columns}
+        pageSize={15}
+        localeText={{ noRowsLabel: 'No Tasks' }}
+      />
     </Box>
   )
 }

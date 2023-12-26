@@ -46,6 +46,7 @@ import TableHeader from 'src/views/apps/user/list/TableHeader'
 import AddUserDrawer from 'src/views/apps/user/list/AddUserDrawer'
 import { roles } from 'src/helpers/constants'
 import { useRouter } from 'next/router'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 // ** Vars
 
@@ -160,6 +161,7 @@ const UserList = ({ apiData }) => {
   const [value, setValue] = useState('')
   const [status, setStatus] = useState('')
   const [addUserOpen, setAddUserOpen] = useState(false)
+  const [isLoading, setLoading] = useState(false)
 
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
 
@@ -168,7 +170,8 @@ const UserList = ({ apiData }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
   useEffect(() => {
-    dispatch(fetchUsers())
+    setLoading(true);
+    dispatch(fetchUsers()).then(res => setLoading(false))
   }, [dispatch, addUserOpen])
 
   const handleFilter = useCallback(val => {
@@ -177,8 +180,9 @@ const UserList = ({ apiData }) => {
   }, [])
 
   const filteredData = useMemo(() => {
-    let filtered = store.data // Assuming store.data contains the user data
+    let filtered = store.users // Assuming store.data contains the user data
 
+    console.log(filtered)
     // Filter by search text
     if (value) {
       filtered = filtered.filter(
@@ -190,19 +194,8 @@ const UserList = ({ apiData }) => {
       )
     }
 
-    // Filter by Role, Plan, and Status
-    if (role) {
-      filtered = filtered.filter(user => user.roleId === parseInt(role))
-    }
-    if (plan) {
-      filtered = filtered.filter(user => user.currentPlan === plan)
-    }
-    if (status) {
-      filtered = filtered.filter(user => user.status === status)
-    }
-
     return filtered
-  }, [store.data, value, role, plan, status])
+  }, [store.users, value])
 
   const handleRoleChange = useCallback(e => {
     setRole(e.target.value)
@@ -227,12 +220,15 @@ const UserList = ({ apiData }) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
+      {isLoading ? (
+        <SimpleBackdrop />
+      ) : (
         <Card>
           <CardHeader />
           <TableHeader value={value} handleFilter={handleFilter} toggle={toggleAddUserDrawer} />
           <DataGrid
             autoHeight
-            rows={store.users}
+            rows={filteredData ?? []}
             columns={columns}
             disableRowSelectionOnClick
             onRowClick={onViewUser}
@@ -241,6 +237,7 @@ const UserList = ({ apiData }) => {
             onPaginationModelChange={setPaginationModel}
           />
         </Card>
+      )}
       </Grid>
 
       <AddUserDrawer open={addUserOpen} toggle={toggleAddUserDrawer} />

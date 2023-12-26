@@ -19,7 +19,7 @@ import ReactApexcharts from 'src/@core/components/react-apexcharts'
 // ** Util Import
 import { hexToRGBA } from 'src/@core/utils/hex-to-rgba'
 
-const TaskStatus = () => {
+const TaskStatus = ({ details }) => {
   // ** Hook
   const theme = useTheme()
 
@@ -36,7 +36,7 @@ const TaskStatus = () => {
     stroke: { width: 0 },
     legend: { show: false },
     dataLabels: { enabled: false },
-    labels: ['Completed', 'Inprogress', 'Pending'],
+    labels: details?.map(x => x.taskStatus),
     states: {
       hover: {
         filter: { type: 'none' }
@@ -94,13 +94,20 @@ const TaskStatus = () => {
       <CardContent>
         <Grid container>
           <Grid item xs={12}>
-            <ReactApexcharts type='donut' height={215} series={[12, 25, 13]} options={options} />
+            <ReactApexcharts
+              type='donut'
+              height={215}
+              series={details?.map(x => x.count)}
+              options={options}
+            />
           </Grid>
           <Box
             item
             sx={{ m: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
           >
-            <Typography variant='body2'>Delayed Tasks : 52</Typography>
+            <Typography variant='body2'>
+              Completed Tasks : {details?.find(x => x.taskStatus === 'Completed')?.count || 0}
+            </Typography>
           </Box>
         </Grid>
       </CardContent>

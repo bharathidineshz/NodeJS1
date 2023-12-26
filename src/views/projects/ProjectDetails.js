@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // ** React Imports
 import { useState, useEffect } from 'react'
 
@@ -26,7 +27,7 @@ import TaskCategory from 'src/views/projects/details/task-category'
 import MileStone from 'src/views/projects/details/milestone'
 import Feedback from 'src/views/projects/details/feedback'
 import ProjectHeader from 'src/views/projects/details/ProjectHeader'
-import { Button } from '@mui/material'
+import { Alert, Button, Snackbar } from '@mui/material'
 import NewTaskCategory from 'src/views/projects/details/task-category/tasks/NewCategory'
 import NewMileStone from './details/milestone/NewMileStone'
 import { useDispatch, useSelector } from 'react-redux'
@@ -35,6 +36,7 @@ import NewFeedback from './details/feedback/NewFeedback'
 import Files from './details/files'
 import Link from 'next/link'
 import { fetchProjectAssignees } from 'src/store/apps/projects'
+import toast from 'react-hot-toast'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
   '& .MuiTabs-indicator': {
@@ -62,9 +64,20 @@ const ProjectDetails = ({ tab, data }) => {
   const [activeTab, setActiveTab] = useState(tab)
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
+  const [open, setOpenSnack] = useState(false)
+  const [snackPack, setSnackPack] = useState([])
+  const [messageInfo, setMessageInfo] = useState('')
+  const [state, setState] = useState({
+    openAlert: false,
+    vertical: 'top',
+    horizontal: 'center'
+  })
+  const { vertical, horizontal, openAlert } = state
+
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
 
+  console.log(store)
   // ** Hooks
   const router = useRouter()
   const hideText = useMediaQuery(theme => theme.breakpoints.down('sm'))
@@ -90,6 +103,16 @@ const ProjectDetails = ({ tab, data }) => {
     dispatch(fetchProjectAssignees())
   }, [tab])
 
+  useEffect(() => {
+    if (snackPack.length && !messageInfo) {
+      setOpenSnack(true)
+      setMessageInfo(snackPack[0].message)
+      setSnackPack(prev => prev.slice(1))
+    } else if (snackPack.length && open) {
+      setOpenSnack(false)
+    }
+  }, [snackPack, open])
+
   const tabContentList = {
     task: <TaskCategory />,
     milestone: <MileStone />,
@@ -97,6 +120,18 @@ const ProjectDetails = ({ tab, data }) => {
     members: <Members data={store.projectMembers} />,
     settings: <Settings />,
     files: <Files />
+  }
+
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return
+    }
+    setOpenSnack(false)
+    setState(newState => ({ ...newState, openAlert: false }))
+  }
+
+  const handleExited = () => {
+    setMessageInfo(undefined)
   }
 
   //SHOW DRAWER
@@ -118,6 +153,19 @@ const ProjectDetails = ({ tab, data }) => {
 
       default:
         break
+    }
+  }
+
+  //handle reports
+
+  const handleReports = newState => () => {
+    const message = 'No tasks found in report'
+    const tasks = store.taskLists?.flatMap(o => o.tasks)
+    if (tasks.length > 0 && tasks != null) {
+      router.push(`/projects/reports/${store.selectedProject.id}`)
+    } else {
+      setSnackPack(prev => [...prev, { message, key: new Date().getTime() }])
+      setState({ ...newState, openAlert: true })
     }
   }
 
@@ -235,9 +283,8 @@ const ProjectDetails = ({ tab, data }) => {
                   <Button
                     variant='contained'
                     color='secondary'
-                    component={Link}
-                    href='/projects/reports/0'
                     startIcon={<Icon icon='mdi:chart-box' fontSize={20} />}
+                    onClick={handleReports({ vertical: 'top', horizontal: 'center' })}
                   >
                     Reports
                   </Button>
@@ -288,6 +335,26 @@ const ProjectDetails = ({ tab, data }) => {
       ) : (
         <></>
       )}
+
+      <Snackbar
+        open={openAlert}
+        onClose={handleClose}
+        autoHideDuration={3000}
+        TransitionProps={{ onExited: handleExited }}
+        key={messageInfo ? messageInfo.key : undefined}
+        message={messageInfo ? messageInfo.message : undefined}
+        anchorOrigin={{ vertical, horizontal }}
+      >
+        <Alert
+          elevation={3}
+          variant='filled'
+          onClose={handleClose}
+          sx={{ width: '100%' }}
+          severity={messageInfo?.message === 'success' ? 'success' : 'error'}
+        >
+          {messageInfo}
+        </Alert>
+      </Snackbar>
     </Grid>
   )
 }

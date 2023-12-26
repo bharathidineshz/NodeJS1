@@ -28,7 +28,7 @@ const RevenueIndex = () => {
   const data = {
     estimated: '$25k',
     generated: '$27.1k',
-    title: 'Revenue Index',
+    title: 'Resource Utilization Cost',
     trendNumber: '+38%',
     chipColor: 'primary',
     chipText: 'Year of 2023',
@@ -88,7 +88,7 @@ const RevenueIndex = () => {
         >
           <Grid xs={12} display='flex'>
             <Grid item xs={7}>
-              <ReactApexcharts type='radialBar' height={150} options={options} series={[50]} />
+              {/* <ReactApexcharts type='radialBar' height={150} options={options} series={[50]} /> */}
             </Grid>
             <Grid container xs={5} display='flex' sx={{ m: 'auto' }} flexDirection='column'>
               <Grid item>

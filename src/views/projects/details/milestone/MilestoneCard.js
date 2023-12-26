@@ -12,24 +12,37 @@ import { formatLocalDate } from 'src/helpers/dateFormats'
 
 const MileStoneCard = ({ data }) => {
   return (
-    <Card sx={{ border: '1px solid #8039df', background: "#f5f5f5" }}>
+    <Card sx={{ border: '1px solid #8039df', background: '#f5f5f5' }}>
       <CardContent sx={{ p: theme => `${theme.spacing(3.25, 5, 4.5)} !important` }}>
-        <Box display="flex" justifyContent="space-between">
+        <Box display='flex' justifyContent='space-between'>
           <Box>
-          <Typography
-            variant='h6'
-            sx={{ display: 'flex', mb: 2.75, alignItems: 'center', color: '#8039df', '& svg': { mr: 2.5 } }}
-          >
-            <Icon icon='mdi:flag-triangle' />
-            {data.name}
-          </Typography>
+            <Typography
+              variant='h6'
+              sx={{
+                display: 'flex',
+                mb: 2.75,
+                alignItems: 'center',
+                color: '#8039df',
+                '& svg': { mr: 2.5 }
+              }}
+            >
+              <Icon icon='mdi:flag-triangle' />
+              {data.name}
+            </Typography>
           </Box>
-          <Box display="flex">
-            <Typography variant='body2' sx={{ color: 'text.primary' }}>
+          <Box display='flex'>
+            <Icon icon='mdi:calendar-outline' fontSize={20} color='grey' />
+            <Typography
+              variant='body2'
+              sx={{ color: theme => (theme.palette.mode == 'light' ? 'text.primary' : 'grey') }}
+            >
               {data.startDate}
             </Typography>
-            <Icon icon='mdi:arrow-right' fontSize={20} color="grey" />
-            <Typography variant='body2' sx={{ color: 'text.primary' }}>
+            <Icon icon='mdi:arrow-right' fontSize={20} color='grey' />
+            <Typography
+              variant='body2'
+              sx={{ color: theme => (theme.palette.mode == 'light' ? 'text.primary' : 'grey') }}
+            >
               {data.endDate}
             </Typography>
           </Box>
@@ -37,11 +50,17 @@ const MileStoneCard = ({ data }) => {
         <Box>
           <Typography
             variant='caption'
-            sx={{ display: 'flex', mb: 2.75, alignItems: 'center', color: '#8039df', '& svg': { mr: 2.5 } }}
+            sx={{
+              display: 'flex',
+              mb: 2.75,
+              alignItems: 'center',
+              color: '#8039df',
+              '& svg': { mr: 2.5 }
+            }}
           >
             {data.description}
           </Typography>
-          </Box>
+        </Box>
         <CategoriesTreeView categories={data.taskCategories} />
       </CardContent>
     </Card>

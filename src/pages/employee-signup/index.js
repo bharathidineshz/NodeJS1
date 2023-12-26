@@ -48,6 +48,10 @@ import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { setDate } from 'date-fns'
 import { useRouter } from 'next/router'
+import { base } from 'src/store/endpoints/interceptor'
+import axios from 'axios'
+import { endpoints } from 'src/store/endpoints/endpoints'
+import jwt from 'jsonwebtoken'
 
 // ** Styled Components
 const EmployeeSignupIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -117,10 +121,7 @@ const validationSchema = yup.object().shape({
   password: yup
     .string()
     .required('Password is required')
-    .min(8, 'Password must be at least 8 characters')
-    .matches(/[a-z]+/, 'Must contain at least one lowercase letter')
-    .matches(/[A-Z]+/, 'Must contain at least one uppercase letter')
-    .matches(/\d+/, 'Must contain at least one digit'),
+    .min(5, 'Password must be at least 8 characters'),
   confirmPassword: yup
     .string()
     .oneOf([yup.ref('password'), null], 'Passwords must match')
@@ -176,17 +177,45 @@ const EmployeeSignup = ({ data }) => {
   const imageSource =
     skin === 'bordered' ? 'auth-v2-register-illustration-bordered' : 'auth-v2-register-illustration'
 
+  console.log(watch())
+
   const onSubmit = () => {
     const req = { tenantId: user?.tenantId, ...watch() }
-    const request = signupRequest(req)
-    dispatch(signUpUser(request)).then(res => {
-      if (res.status === 200) {
-        toast.success('Sign Up Completed')
-        router.replace({ pathname: '/apps/timesheets' })
-      } else {
-        toast.error('Error Occurred')
-      }
-    })
+    const payload = {
+      firstName: req.firstName,
+      lastName: req.lastName,
+      email: req.email,
+      tenantId: user?.tenantId,
+      password: req.password
+    }
+
+    dispatch(signUpUser(payload))
+      .then(unwrapResult)
+      .then(res => {
+        if (res.status === 200) {
+          console.log(res)
+          toast.success('Sign Up Completed')
+          Login({ email: req.email, password: req.password })
+        } else {
+          toast.error('Error Occurred')
+        }
+      })
+  }
+
+  const Login = async data => {
+    const response = await axios.post(base.url + endpoints.login, data)
+
+    if (response.data.accessToken) {
+      window.localStorage.setItem('accessToken', response.data.accessToken)
+      const userData = jwt.decode(response.data.accessToken, { complete: true }).payload
+      window.localStorage.setItem('userData', JSON.stringify(userData))
+
+      router.replace({
+        pathname: '/apps/timesheets'
+      })
+    } else {
+      toast.error('Login Failed')
+    }
   }
 
   return (
@@ -240,7 +269,7 @@ const EmployeeSignup = ({ data }) => {
             >
               <img
                 src={
-                  themeConfig.mode === 'dark'
+                  theme.palette.mode === 'dark'
                     ? '/images/leanprofit-white.png'
                     : '/images/leanprofit-purple.png'
                 }

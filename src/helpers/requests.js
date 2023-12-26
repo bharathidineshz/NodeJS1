@@ -105,14 +105,17 @@ export const projectRequest = req => {
   return request
 }
 
-export const projectAssigneeRequest = (cost, projectId, userId, roleId) => {
-  const request = {
-    allocatedProjectCost: cost,
-    projectId: projectId,
-    userId: userId,
-    projectRoleId: roleId,
-    availablePercentage: 0
-  }
+export const projectAssigneeRequest = req => {
+  const { allocatedProjectCost, projectId, userId, projectRoleId, availablePercentage } = req
+  const request = [
+    {
+      allocatedProjectCost: cost,
+      projectI: projectId,
+      userId: userId,
+      projectRoleId: roleId,
+      availablePercentage: availablePercentage
+    }
+  ]
 
   return request
 }

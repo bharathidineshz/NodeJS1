@@ -5,11 +5,11 @@ import { useSelector } from 'react-redux'
 // ** Demo Components Imports
 import UserViewPage from 'src/views/apps/user/view/UserViewPage'
 
-const UserView = ({ tab, invoiceData }) => {
+const UserView = ({ tab }) => {
   const store = useSelector(state => state.user)
   const user = store.users.find(o => o.id === store?.userId)
 
-  return <UserViewPage tab={tab} id={store?.userId} user={user} invoiceData={invoiceData} />
+  return <UserViewPage tab={tab} id={store?.userId} user={user} />
 }
 
 export const getStaticPaths = () => {
@@ -26,12 +26,8 @@ export const getStaticPaths = () => {
 }
 
 export const getStaticProps = async ({ params }) => {
-  const res = await axios.get('/apps/invoice/invoices')
-  const invoiceData = res.data.allData
-
   return {
     props: {
-      invoiceData,
       tab: params?.tab
     }
   }

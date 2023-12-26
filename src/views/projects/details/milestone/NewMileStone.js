@@ -52,6 +52,7 @@ import { Controller, useForm } from 'react-hook-form'
 import * as yup from 'yup'
 import { mileStoneRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
+import CustomCategoryPicker from 'src/views/components/autocomplete/CustomCategoryPicker'
 
 const ITEM_HEIGHT = 48
 const ITEM_PADDING_TOP = 8
@@ -87,8 +88,13 @@ const NewMileStone = ({ isOpen, setOpen }) => {
     milestoneName: '',
     startDate: new Date(),
     endDate: new Date(),
-    categories: []
+    categories: [],
+    categoryList: []
   })
+
+  useEffect(() => {
+    setMilestone({ ...milestone, categoryList: store.categories })
+  }, [store.categories])
 
   const {
     register,
@@ -110,15 +116,15 @@ const NewMileStone = ({ isOpen, setOpen }) => {
   const onSubmit = data => {
     try {
       const req = {
-        projectId: localStorage.getItem("projectId"),
-        taskCategories: milestone.categories,
+        projectId: localStorage.getItem('projectId'),
+        taskCategories: milestone.categories.map(o => o.id),
         ...data
       }
       const request = mileStoneRequest(req)
       dispatch(postMileStone(request))
         .then(unwrapResult)
         .then(res => {
-          if (res.status === 200 || res.statu === 201) {
+          if (res.status === 200 || res.status === 201) {
             setOpen(false)
             reset()
             dispatch(fetchMileStones())
@@ -154,29 +160,17 @@ const NewMileStone = ({ isOpen, setOpen }) => {
 
   const handleClose = () => {
     setOpen(false)
+    setMilestone(ms => ({ ...ms, categories: [], categoryList: [] }))
     reset()
   }
 
   // SET FIELDS
 
-  const handleChange = (e, name) => {
-    switch (name?.toLowerCase()) {
-      case 'name':
-        setMilestone({ ...milestone, milestoneName: e.target.value })
-        break
-      case 'startdate':
-        setMilestone({ ...milestone, startDate: e })
-        break
-      case 'enddate':
-        setMilestone({ ...milestone, endDate: e })
-        break
-      case 'categories':
-        setMilestone({ ...milestone, categories: e.target.value })
-        break
-
-      default:
-        break
-    }
+  const handleChangeCategory = categories => {
+    setMilestone(ms => ({ ...ms, categories: categories }))
+  }
+  const handleItems = items => {
+    setMilestone(ms => ({ ...ms, categoryList: items }))
   }
 
   return (
@@ -265,6 +259,7 @@ const NewMileStone = ({ isOpen, setOpen }) => {
                         selected={value}
                         popperPlacement='bottom'
                         onChange={onChange}
+                        minDate={new Date()}
                         customInput={
                           <CustomInput
                             label='Start Date'
@@ -303,6 +298,7 @@ const NewMileStone = ({ isOpen, setOpen }) => {
                         selected={value}
                         popperPlacement='bottom'
                         onChange={onChange}
+                        minDate={new Date()}
                         customInput={
                           <CustomInput
                             label='End Date'
@@ -330,29 +326,16 @@ const NewMileStone = ({ isOpen, setOpen }) => {
 
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel id='demo-multiple-checkbox-label'>Categories</InputLabel>
-                <Select
-                  multiple
+                <CustomCategoryPicker
                   label='Categories'
-                  value={milestone.categories}
-                  MenuProps={MenuProps}
-                  onChange={e => handleChange(e, 'categories')}
-                  id='demo-multiple-checkbox'
-                  labelId='demo-multiple-checkbox-label'
-                  renderValue={selected =>
-                    milestone.categories.length > 0 &&
-                    selected
-                      .map(value => store.categories.find(obj => obj.id === value)?.name)
-                      .join(', ')
+                  items={
+                    milestone.categoryList.length === 0 ? store.categories : milestone.categoryList
                   }
-                >
-                  {store.categories.map(category => (
-                    <MenuItem key={category.id} value={category.id}>
-                      <Checkbox checked={milestone.categories.indexOf(category.id) > -1} />
-                      <ListItemText primary={category.name} />
-                    </MenuItem>
-                  ))}
-                </Select>
+                  values={milestone.categories}
+                  setCategories={handleChangeCategory}
+                  originalItems={store.categories}
+                  setItems={handleItems}
+                />
               </FormControl>
             </Grid>
 

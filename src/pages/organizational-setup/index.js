@@ -44,9 +44,9 @@ import { signUpUser } from 'src/store/authentication/register'
 import { useRouter } from 'next/router'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Controller, useForm } from 'react-hook-form'
-import countries from "src/helpers/countries.json"
-import states from "src/helpers/states.json"
-import currencies from "src/helpers/currencies.json"
+import countries from 'src/helpers/countries.json'
+import states from 'src/helpers/states.json'
+import currencies from 'src/helpers/currencies.json'
 import { addOrgs } from 'src/store/apps/organization'
 import { organizationRequest } from 'src/helpers/requests'
 import toast from 'react-hot-toast'
@@ -135,7 +135,6 @@ const schema = yup.object().shape({
   zipcode: yup.string().max(6, 'Invalid Zipcode').required('ZIP code is required'),
   currency: yup.string().required('Currency required')
 })
-
 
 const OrganizationalSetup = () => {
   // ** Hooks
@@ -233,7 +232,7 @@ const OrganizationalSetup = () => {
             >
               <img
                 src={
-                  themeConfig.mode === 'dark'
+                  theme.palette.mode === 'dark'
                     ? '/images/leanprofit-white.png'
                     : '/images/leanprofit-purple.png'
                 }
@@ -412,7 +411,11 @@ const OrganizationalSetup = () => {
                         control={control}
                         render={({ field: { value, onChange } }) => (
                           <Autocomplete
-                            options={ watch("country") != null ? states.filter(o => o.country_code === watch("country").code): []}
+                            options={
+                              watch('country') != null
+                                ? states.filter(o => o.country_code === watch('country').code)
+                                : []
+                            }
                             getOptionLabel={o => o.name || o}
                             id='autocomplete-limit-tags'
                             onChange={(e, data) => onChange(data)}
@@ -537,7 +540,6 @@ const OrganizationalSetup = () => {
                   </Grid>
                 </Grid>
               </form>
-
             </Grid>
           </BoxWrapper>
         </Box>

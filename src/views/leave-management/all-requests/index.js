@@ -82,14 +82,13 @@ const AllRequests = () => {
       approvalDate: new Date().toDateString()
     }
   ])
-  const [isLoading, setLoading] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
   const [sortColumn, setSortColumn] = useState('name')
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
 
-  useEffect(() => {}, [])
 
   const columns = [
     {
@@ -190,10 +189,11 @@ const AllRequests = () => {
   return (
     <>
       {isLoading ? (
-        <FallbackSpinner />
+        <SimpleBackdrop />
       ) : (
         <Grid container spacing={6}>
           <Grid item xs={12}>
+            
             <Card>
               <DataGrid
                 autoHeight

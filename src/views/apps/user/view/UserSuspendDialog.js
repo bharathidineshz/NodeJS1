@@ -11,26 +11,58 @@ import DialogActions from '@mui/material/DialogActions'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
+import { deleteUser } from 'src/store/apps/user'
+import { unwrapResult } from '@reduxjs/toolkit'
+import { useDispatch, useSelector } from 'react-redux'
+import toast from 'react-hot-toast'
+import { Router, useRouter } from 'next/router'
 
 const UserSuspendDialog = props => {
   // ** Props
   const { open, setOpen } = props
+  const dispatch = useDispatch()
+  const router = useRouter()
 
   // ** States
+  const { userId } = useSelector(state => state.user)
+
   const [userInput, setUserInput] = useState('yes')
   const [secondDialogOpen, setSecondDialogOpen] = useState(false)
   const handleClose = () => setOpen(false)
-  const handleSecondDialogClose = () => setSecondDialogOpen(false)
+  const handleSecondDialogClose = () => {
+    setSecondDialogOpen(false)
+  }
 
   const handleConfirmation = value => {
+    dispatch(deleteUser(userId))
+      .then(unwrapResult)
+      .then(res => {
+        handleClose()
+        setUserInput('yes')
+        setSecondDialogOpen(true)
+      })
+      .catch(err => {
+        toast.error(err.message, 'Error while Suspend user')
+        handleClose()
+        setUserInput('cancel')
+        setSecondDialogOpen(true)
+      })
+  }
+
+  const handleCancel = () => {
     handleClose()
-    setUserInput(value)
+    setUserInput('cancel')
     setSecondDialogOpen(true)
   }
 
   return (
     <>
-      <Dialog fullWidth open={open} onClose={handleClose} sx={{ '& .MuiPaper-root': { width: '100%', maxWidth: 512 } }}>
+      <Dialog
+        fullWidth
+        open={open}
+        onClose={handleClose}
+        sx={{ '& .MuiPaper-root': { width: '100%', maxWidth: 512 } }}
+      >
         <DialogContent
           sx={{
             px: theme => [`${theme.spacing(5)} !important`, `${theme.spacing(15)} !important`],
@@ -64,7 +96,7 @@ const UserSuspendDialog = props => {
           <Button variant='contained' sx={{ mr: 2 }} onClick={() => handleConfirmation('yes')}>
             Yes, Suspend user!
           </Button>
-          <Button variant='outlined' color='secondary' onClick={() => handleConfirmation('cancel')}>
+          <Button variant='outlined' color='secondary' onClick={() => handleCancel('cancel')}>
             Cancel
           </Button>
         </DialogActions>
@@ -94,7 +126,9 @@ const UserSuspendDialog = props => {
             <Typography variant='h4' sx={{ mb: 8 }}>
               {userInput === 'yes' ? 'Suspended!' : 'Cancelled'}
             </Typography>
-            <Typography>{userInput === 'yes' ? 'User has been suspended.' : 'Cancelled Suspension :)'}</Typography>
+            <Typography>
+              {userInput === 'yes' ? 'User has been suspended.' : 'Cancelled Suspension :)'}
+            </Typography>
           </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center' }}>

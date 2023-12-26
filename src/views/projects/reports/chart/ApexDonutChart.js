@@ -10,8 +10,11 @@ import CustomChip from 'src/@core/components/mui/chip'
 import OptionsMenu from 'src/@core/components/option-menu'
 import ReactApexcharts from 'src/@core/components/react-apexcharts'
 
-const CardWidgetsTotalVisits = () => {
+const CardWidgetsTotalVisits = ({ details }) => {
   // ** Hook
+
+  const { burnedCostPercentage } = details
+
   const theme = useTheme()
 
   const options = {
@@ -94,9 +97,14 @@ const CardWidgetsTotalVisits = () => {
         }}
       />
       <CardContent sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-        <ReactApexcharts type='radialBar' height={216} series={[78]} options={options} />
+        <ReactApexcharts
+          type='radialBar'
+          height={216}
+          series={[Math.trunc(burnedCostPercentage)]}
+          options={options}
+        />
         <Typography sx={{ mb: 2.5 }} variant='caption'>
-          $16k Spent Till Date
+          {Math.trunc(burnedCostPercentage)}% Cost Burned Till Date
         </Typography>
       </CardContent>
     </Card>

@@ -18,6 +18,7 @@ import Icon from 'src/@core/components/icon'
 
 // ** Component Import
 import ReactApexcharts from 'src/@core/components/react-apexcharts'
+import { Box } from '@mui/material'
 
 const areaColors = {
   series1: '#ab7efd',
@@ -160,7 +161,8 @@ const TaskProgressArea = () => {
         }}
       />
       <CardContent>
-        <ReactApexcharts type='area' height={200} options={options} series={series} />
+        <Box sx={{ height: 200 }}></Box>
+        {/* <ReactApexcharts type='area' height={200} options={options} series={series} /> */}
       </CardContent>
     </Card>
   )

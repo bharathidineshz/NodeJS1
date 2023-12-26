@@ -659,11 +659,6 @@ const ProjectsStepper = ({ isEdit, id }) => {
                         required
                         value={value}
                         onChange={onChange}
-                        startAdornment={
-                          <InputAdornment position='start'>
-                            <Icon icon='mdi:briefcase-variant-outline' />
-                          </InputAdornment>
-                        }
                       >
                         {store.requiredSkills != null &&
                           store.requiredSkills.map((dept, i) => (

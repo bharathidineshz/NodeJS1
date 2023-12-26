@@ -19,7 +19,7 @@ import ReactApexcharts from 'src/@core/components/react-apexcharts'
 // ** Util Import
 import { hexToRGBA } from 'src/@core/utils/hex-to-rgba'
 
-const PendingTaskPriority = () => {
+const PendingTaskPriority = ({ details }) => {
   // ** Hook
   const theme = useTheme()
 
@@ -36,7 +36,7 @@ const PendingTaskPriority = () => {
     stroke: { width: 0 },
     legend: { show: false },
     dataLabels: { enabled: false },
-    labels: ['High', 'Medium', 'Low'],
+    labels: details?.map(x => x.priority) ?? [],
     states: {
       hover: {
         filter: { type: 'none' }
@@ -94,7 +94,12 @@ const PendingTaskPriority = () => {
       <CardContent>
         <Grid container sx={{ my: [0, 4, 1.625] }}>
           <Grid item xs={12} sm={6} sx={{ mb: [3, 0] }}>
-            <ReactApexcharts type='donut' height={200} series={[12, 25, 13]} options={options} />
+            <ReactApexcharts
+              type='donut'
+              height={200}
+              series={details?.map(x => x.count) ?? []}
+              options={options}
+            />
           </Grid>
           <Grid item xs={12} sm={4} sx={{ m: 'auto' }}>
             <Grid container>
@@ -111,7 +116,7 @@ const PendingTaskPriority = () => {
                   <Typography variant='body2'>High</Typography>
                 </Box>
                 <Typography color={theme.palette.success.main} sx={{ fontWeight: 600 }}>
-                  12
+                  {details?.find(x => x.priority === 'High')?.count || 0}
                 </Typography>
               </Grid>
               <Grid item xs={6} sx={{ mb: 4 }}>
@@ -131,7 +136,7 @@ const PendingTaskPriority = () => {
                   <Typography variant='body2'>Medium</Typography>
                 </Box>
                 <Typography color={theme.palette.warning.main} sx={{ fontWeight: 600 }}>
-                  25
+                  {details?.find(x => x.priority === 'Medium')?.count || 0}
                 </Typography>
               </Grid>
               <Grid item xs={6}>
@@ -147,7 +152,7 @@ const PendingTaskPriority = () => {
                   <Typography variant='body2'>Low</Typography>
                 </Box>
                 <Typography color={theme.palette.error.main} sx={{ fontWeight: 600 }}>
-                  50
+                  {details?.find(x => x.priority === 'Low')?.count || 0}
                 </Typography>
               </Grid>
             </Grid>

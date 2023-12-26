@@ -21,17 +21,17 @@ export const endpoints = {
   edituserdetails: 'api/user/manage/',
   tenant: 'api/Tenant',
 
+  userInvite: 'api/User/UserInvite',
   adduser: 'api/User/CreateUser/',
   Updateuser: 'api/User/UpdateUser/',
 
-  Deleteuser: mail => `api/User/DeleteUser?email=${mail}`,
- 
+  Deleteuser: id => `api/User/DeleteUser/${id}`,
+  Activateuser: id => `api/User/ActivateUser/${id}`,
 
   createCategory: 'api/TaskCategory/CreateTaskCategory',
   taskCategories: 'api/TaskCategory',
   getTaskCategoriesbyProjectID: id => `api/TaskCategory?projectId=${id}`,
   deleteTaskCategory: 'api/project/task-category/',
-
 
   // timesheet
   getTimesheetList: 'api/TimeSheet/GetTimeSheet',
@@ -56,6 +56,8 @@ export const endpoints = {
   allAssignedUsers: 'api/ProjectMap/ProjectMappingAll',
 
   //REPORTS
+
+  getProjectReportsDetails: id => `/api/Report/GetProjectReports?ProjectId=${id}`,
   getReportsByProjectId: projectId => `api/Report/Reports?projectId=${projectId}`,
   getTimeReportsByProjectUId: projectUId => `api/Report/TimeReports?projectUId=${projectUId}`,
   getGetPercentageByProjectUId: projectUId => `api/Report/getPercentage?projectUId=${projectUId}`,
@@ -112,8 +114,8 @@ export const endpoints = {
   addClient: 'api/Client/CreateClient',
   updateClient: 'api/Client/UpdateClient',
   getAllClient: 'api/Client/GetClients',
-  deleteClient:(id)=>  `api/Client/DeleteClient/${id}`,
-  clientById :(id)=>  `/api/Client/GetClientById/${id}`,
+  deleteClient: id => `api/Client/DeleteClient/${id}`,
+  clientById: id => `/api/Client/GetClientById/${id}`,
   editClient: 'api/Client/Update',
 
   getProjectReport: id => `api/Report?projectUid=${id}`,
@@ -129,25 +131,22 @@ export const endpoints = {
   projects: 'api/Project',
   getProjects: 'api/Project/GetProject',
   deleteProject: id => `api/Project?id=${id}`,
-  projectMembers:(id)=> `api/ProjectAssignee/GetProjectAssigneesByID?projectId=${id}`,
+  projectMembers: id => `api/ProjectAssignee/GetProjectAssigneesByID?projectId=${id}`,
   projectAssignees: 'api/ProjectAssignee',
-  projectsByUser : '/api/Project/GetProjectsByUser',
+  projectsByUser: '/api/Project/GetProjectsByUser',
 
   // tasks
   postTask: 'api/Task/CreateTask',
   putTask: 'api/Task/UpdateTask',
-  getTaskList: (projectId)=> `api/Task/GetTasksByProject?ProjectId=${projectId}`,
-  deleteTask :(id)=> `api/Task/DeleteTask?id=${id}`,
-
+  getTaskList: projectId => `api/Task/GetTasksByProject?ProjectId=${projectId}`,
+  deleteTask: id => `api/Task/DeleteTask?id=${id}`,
 
   //milestone
 
   mileStones: 'api/Milestone',
 
-
   //skills
   skills: 'api/MasterSkill',
-
 
   //leave Management
 

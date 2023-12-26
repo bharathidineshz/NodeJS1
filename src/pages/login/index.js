@@ -206,7 +206,7 @@ const LoginPage = () => {
             >
               <img
                 src={
-                  themeConfig.mode === 'dark'
+                  theme.palette.mode === 'dark' || theme.palette.mode == 'semi-dark'
                     ? '/images/leanprofit-white.png'
                     : '/images/leanprofit-purple.png'
                 }

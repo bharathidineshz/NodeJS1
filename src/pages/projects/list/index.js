@@ -54,6 +54,7 @@ const TableServerSide = () => {
   const router = useRouter()
 
   useEffect(() => {
+    setLoading(true);
     dispatch(fetchUsers())
     dispatch(fetchClients())
       .then(unwrapResult)
@@ -220,7 +221,6 @@ const TableServerSide = () => {
               }
             }}
             onPaginationModelChange={setPaginationModel}
-            loading={store.allProjects ? false : true}
             slotProps={{
               baseButton: {
                 variant: 'outlined'

@@ -255,6 +255,30 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
+            <Grid item xs={12} sm={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='allowanceTime'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={watch('isPermission') ? value : 0}
+                      type='number'
+                      label='Hours'
+                      disabled={!watch('isPermission')}
+                      onChange={onChange}
+                    />
+                  )}
+                />
+                {(watch('isPermission') ? errors.hours : errors.days) && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {watch('isPermission') ? errors.hours.message : errors.days.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormControl>
                 <Controller
@@ -277,26 +301,30 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                 />
               </FormControl>
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <Controller
-                  name='allowanceTime'
+                  name='requiresApproval'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <TextField
-                      value={watch('isPermission') ? value : 0}
-                      type='number'
-                      label='Hours'
-                      disabled={!watch('isPermission')}
-                      onChange={onChange}
+                    <FormControlLabel
+                      label='Requires Approval'
+                      control={
+                        <Checkbox
+                          checked={value}
+                          value={value}
+                          defaultChecked={value}
+                          onChange={onChange}
+                          name='Requires Approval'
+                        />
+                      }
                     />
                   )}
                 />
-                {(watch('isPermission') ? errors.hours : errors.days) && (
+                {errors.requiresApproval && (
                   <FormHelperText sx={{ color: 'error.main' }}>
-                    {watch('isPermission') ? errors.hours.message : errors.days.message}
+                    {errors.requiresApproval.message}
                   </FormHelperText>
                 )}
               </FormControl>

@@ -23,10 +23,14 @@ import { fetchTasks, postCategory, setCategories, setEditTask, setEmpty, setNewT
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import toast from 'react-hot-toast'
 import { categoryRequest } from 'src/helpers/requests'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import { useForm } from 'react-hook-form'
+
+
 
 const NewTaskCategory = ({ isOpen, setOpen }) => {
 
-  const [assignees, setAssignees] = useState([{ name: "Babysha Papanasam" }, { name: "Dhineshkumar Selvam" }, { name: "Naveenkumar Mounsamy" }, { name: "Pavithra Murugesan" }, { name: "BabySha Papanasam" }])
   const [categoryName, setCategoryName] = useState('')
   const [isBillable, setBillable] = useState(true)
   const dispatch = useDispatch();
@@ -35,28 +39,28 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
   const STATUS = ["Completed", "Not Started", "Working on it", "Due"]
   const STATUS_COLOR = ["success", "warning", "info", "error"]
 
-  // const isWeekday = (date) => {
-  //   const day = new Date(date).getDay()
 
-  //   return day !== 0 && day !== 6
-  // }
 
   //CREATE
   const createNewCategory = () => {
     try {
-      const request  = categoryRequest(categoryName,isBillable, localStorage.getItem("projectId"))
-      dispatch(postCategory(request)).then(({payload})=>{
-        if(payload.status === 200 || payload.status === 201){
-          dispatch(fetchTasks())
-          dispatch(setEmpty(false))
-          setOpen(false)
-          toast.success("Task Category Created", { duration: 3000, position: "top-right" })
-          setCategoryName('')
-        }else{
-          toast.error('Error Occurred', { duration: 3000, position: "top-right" })
-        }
-      })
-     
+
+      if (categoryName || categoryName?.length > 0) {
+        const projectId = Number(localStorage.getItem("projectId"));
+        const request = categoryRequest(categoryName, isBillable,projectId )
+        dispatch(postCategory(request)).then(({ payload }) => {
+          if (payload.status === 200 || payload.status === 201) {
+            dispatch(fetchTasks(projectId))
+            dispatch(setEmpty(false))
+            setOpen(false)
+            toast.success("Task Category Created", { duration: 3000, position: "top-right" })
+            setCategoryName('')
+          } else {
+            toast.error('Error Occurred', { duration: 3000, position: "top-right" })
+          }
+        })
+      }
+
     } catch (error) {
       toast.error(error, { duration: 3000, position: "top-right" })
     }
@@ -111,17 +115,22 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
                   )
                 }}
               />
+              {(!categoryName || categoryName?.length == 0) && (
+                <FormHelperText sx={{ color: 'error.main' }}>
+                  Category is required
+                </FormHelperText>
+              )}
             </Grid>
 
             <Grid item xs={12}>
-              <FormControlLabel label='Billable' control={<Checkbox  defaultChecked={isBillable} value={isBillable} onChange={()=> setBillable(!isBillable)} name='color-primary' />} />
+              <FormControlLabel label='Billable' control={<Checkbox defaultChecked={isBillable} value={isBillable} onChange={() => setBillable(!isBillable)} name='color-primary' />} />
             </Grid>
 
             <Grid columnGap={2} item xs={12} className='flex-right' sx={{ mt: 5 }}>
               <Button size='large' variant='outlined' color="secondary" onClick={() => setOpen(false)}>
                 Close
               </Button>
-              <Button size='large' variant='contained' type="submit" onClick={createNewCategory}>
+              <Button size='large' variant='contained' onClick={createNewCategory}>
                 Add category
               </Button>
             </Grid>

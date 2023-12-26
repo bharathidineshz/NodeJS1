@@ -114,12 +114,12 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
       const user = store.users.find(o => currentUser.user === o.email)
       const req = store.policies.find(o => o.typeOfLeave === watch('requestType'))
 
-      const request =  myLeaveRequest({
+      const request = myLeaveRequest({
         submittedUserId: user.id,
         requestTypeId: req.id,
         isFromDateHalfDay: watch('fromSession') ? true : false,
         isToDateHalfDay: watch('toSession') ? true : false,
-        fromDateSession:watch('fromSession'),
+        fromDateSession: watch('fromSession'),
         toDateSession: watch('toSession'),
         ...watch()
       })
@@ -332,35 +332,6 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                     </RadioGroup>
                   )}
                 />
-              </FormControl>
-            </Grid>
-
-            <Grid item>
-              <FormControl fullWidth>
-                <Controller
-                  name='requiresApproval'
-                  control={control}
-                  rules={{ required: false }}
-                  render={({ field: { value, onChange } }) => (
-                    <FormControlLabel
-                      label='Requires Approval'
-                      control={
-                        <Checkbox
-                          checked={value}
-                          value={value}
-                          defaultChecked={value}
-                          onChange={onChange}
-                          name='Requires Approval'
-                        />
-                      }
-                    />
-                  )}
-                />
-                {errors.requiresApproval && (
-                  <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.requiresApproval.message}
-                  </FormHelperText>
-                )}
               </FormControl>
             </Grid>
           </Grid>

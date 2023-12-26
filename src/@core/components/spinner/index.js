@@ -1,27 +1,33 @@
-// ** MUI Imports
-import { useTheme } from '@mui/material/styles'
-import Box from '@mui/material/Box'
+import * as React from 'react'
+import Backdrop from '@mui/material/Backdrop'
 import CircularProgress from '@mui/material/CircularProgress'
+import Button from '@mui/material/Button'
 
-const FallbackSpinner = ({ sx }) => {
-  // ** Hook
-  const theme = useTheme()
+export default function SimpleBackdrop() {
+  const [open, setOpen] = React.useState(true)
+  const handleClose = () => {
+    setOpen(false)
+  }
+  const handleOpen = () => {
+    setOpen(true)
+  }
 
   return (
-    <Box
-      sx={{
-        height: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        ...sx
-      }}
-    >
-      <img src="/images/leanprofit.svg" alt="Leanprofit" height={50} />
-      <CircularProgress disableShrink sx={{ mt: 6 }} />
-    </Box>
+    <div>
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: theme => theme.zIndex.drawer + 1,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+        open={open}
+        onClick={handleClose}
+      >
+        <img src='/images/lp-white.png' alt='Leanprofit' height={50} />
+
+        <CircularProgress disableShrink sx={{ mt: 6 }} />
+      </Backdrop>
+    </div>
   )
 }
-
-export default FallbackSpinner

@@ -33,7 +33,7 @@ const Timeline = styled(MuiTimeline)(({ theme }) => ({
   }
 }))
 
-const UserViewOverview = ({ invoiceData }) => {
+const UserViewOverview = ({}) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>

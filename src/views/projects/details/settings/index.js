@@ -53,6 +53,7 @@ import { unwrapResult } from '@reduxjs/toolkit'
 import UserTable from '../../edit/UserTable'
 import { Box, Stack } from '@mui/system'
 import toast from 'react-hot-toast'
+import { projectAssigneeRequest } from 'src/helpers/requests'
 
 const defaultValues = {
   client: 0,
@@ -206,10 +207,13 @@ const Settings = () => {
       allowUsersToCreateNewTask: data.allowUsersToCreateNewTask
     }
 
+    const req = projectAssigneeRequest(managerAssignments)
+
     dispatch(putProject(request))
       .then(unwrapResult)
       .then(res => {
         if (res.status === 200) {
+          dispatch()
           toast.success(res.data)
           reset()
         } else {

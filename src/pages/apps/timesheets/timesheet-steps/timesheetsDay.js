@@ -39,12 +39,14 @@ import {
 import TimeSheetTextField from 'src/pages/apps/timesheets/timesheet-steps/TimeSheetTextField'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 const TimesheetsDay = ({ popperPlacement }) => {
   const dispatch = useDispatch()
   const { taskData, projectData } = useSelector(state => state.timesheets)
 
   useEffect(() => {
+    setLoading(true);
     dispatch(fetchData())
     dispatch(fetchAssignedTask())
     dispatch(fetchAssignedProject())
@@ -136,7 +138,7 @@ const TimesheetsDay = ({ popperPlacement }) => {
   return (
     <div>
       {isLoading ? (
-        <FallbackSpinner />
+        <SimpleBackdrop />
       ) : (
         <Card>
           <CardContent>
@@ -153,15 +155,19 @@ const TimesheetsDay = ({ popperPlacement }) => {
                       handleMenuItemClick(event.target.value, event.target.innerText)
                     }
                   >
-                    {projectData?.map(project => (
-                      <MenuItem
-                        key={project?.projectId}
-                        value={project?.projectId}
-                        onClick={() => handleMenuItemClick(project?.projectId)}
-                      >
-                        {project?.projectName ? project?.projectName : 'NO Data'}
-                      </MenuItem>
-                    ))}
+                    {projectData?.length === 0 || !projectData ? (
+                      <MenuItem disabled>No Projects</MenuItem>
+                    ) : (
+                      projectData?.map(project => (
+                        <MenuItem
+                          key={project?.projectId}
+                          value={project?.projectId}
+                          onClick={() => handleMenuItemClick(project?.projectId)}
+                        >
+                          {project?.projectName ? project?.projectName : 'NO Data'}
+                        </MenuItem>
+                      ))
+                    )}
                   </Select>
                 </FormControl>
                 {selectedValueError && !selectedValue && (

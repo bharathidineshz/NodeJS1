@@ -7,9 +7,7 @@ const Signup = () => {
   const router = useRouter()
   const secretString = router.query.slug
 
-  const decodedString = secretString
-    ? Buffer.from(secretString.split('k=')[1], 'base64').toString('utf-8')
-    : ''
+  const decodedString = secretString ? Buffer.from(secretString, 'base64').toString('utf-8') : ''
 
   return <EmployeeSignup data={decodedString} />
 }
