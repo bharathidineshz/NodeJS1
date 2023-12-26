@@ -34,6 +34,7 @@ import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import Toolbar from 'src/views/leave-management/toolBar'
 import LeaveDashboard from 'src/views/leave-management/dashboard/Dashboard'
+import SimpleBackdrop from 'src/helpers/loader'
 
 const AllRequests = () => {
   // ** States
@@ -88,7 +89,6 @@ const AllRequests = () => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
-
 
   const columns = [
     {
@@ -193,7 +193,6 @@ const AllRequests = () => {
       ) : (
         <Grid container spacing={6}>
           <Grid item xs={12}>
-            
             <Card>
               <DataGrid
                 autoHeight
