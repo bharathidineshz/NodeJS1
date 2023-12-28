@@ -1,3 +1,4 @@
+import { hexToRGBA } from 'src/@core/utils/hex-to-rgba'
 import { formatLocalDate } from './dateFormats'
 
 export const SKILLS = [
@@ -20,11 +21,36 @@ export const STATUS = [
   { id: 4, name: 'Due', color: 'error' }
 ]
 
+export const APPROVERS = [
+  { id: 1, name: 'Reporting Manager' },
+  { id: 2, name: 'Human Resource' },
+  { id: 3, name: 'Not Applicable' }
+]
 
+export const CHART_COLORS = theme => {
+  return [
+    theme.palette.primary.main,
+    hexToRGBA(theme.palette.primary.main, 0.8),
+    hexToRGBA(theme.palette.primary.main, 0.6),
+    hexToRGBA(theme.palette.primary.main, 0.4),
+    hexToRGBA(theme.palette.primary.main, 0.2),
+    hexToRGBA(theme.palette.primary.main, 0.1)
+  ]
+}
 
 export const ORG_UNITS = [{ name: 'Marketing' }, ...SKILLS]
 
 export const CATEGORIES = ['Leave Management', 'Tasks', 'Milestone']
+
+export const NODATA = {
+  oops: "Oops! It seems there's no data to display here right now.",
+  missing: "Looks like we're missing some information here",
+  access:
+    'The requested information is not readily accessible at this time. We apologize for the inconvenience.',
+  privacy:
+    'Due to privacy restrictions, we are unable to disclose the information you are seeking.',
+  maintenance: 'This page is currently under construction. Data will be available soon.'
+}
 
 export const roles = {
   1: { name: 'Admin', icon: 'mdi:laptop', color: 'error.main' },
@@ -33,7 +59,11 @@ export const roles = {
   4: { name: 'User', icon: 'mdi:account-outline', color: 'primary.main' }
 }
 
-export const TASK_PRIORITIES = [{id:1, name:'Low',color:'error'},{id:2, name:'Medium',color:'warning'},{id:3, name:'High',color:'success'}]
+export const TASK_PRIORITIES = [
+  { id: 1, name: 'Low', color: 'error' },
+  { id: 2, name: 'Medium', color: 'warning' },
+  { id: 3, name: 'High', color: 'success' }
+]
 
 export const TASk_LIST = [
   {

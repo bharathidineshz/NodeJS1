@@ -24,9 +24,7 @@ export default function SimpleBackdrop() {
         open={open}
         onClick={handleClose}
       >
-        <img src='/images/lp-white.png' alt='Leanprofit' height={50} />
-
-        <CircularProgress disableShrink sx={{ mt: 6 }} />
+        <img src='/images/lp-white.png' className='flip-image' alt='Leanprofit' height={50} />
       </Backdrop>
     </div>
   )

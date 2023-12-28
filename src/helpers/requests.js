@@ -168,15 +168,15 @@ export const mileStoneRequest = req => {
 export const leavePolicyRequest = req => {
   const request = req.id
     ? {
-        id: req.id,
+        leavePolicyId: req.id,
         typeOfLeave: req?.typeOfLeave,
         allowanceCount: !isNaN(req?.allowanceCount) && Number(req?.allowanceCount),
         allowanceTime: !isNaN(req?.allowanceTime) && Number(req?.allowanceTime),
         isPermission: req.isPermission,
         period: req?.period,
-        carryForward: req?.carryForwardCount > 0 ? true : false,
         carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
-        approvalLevel: req?.approvalLevel || 1
+        levelOneApprovalLevelId: req.level1,
+        levelTwoApprovalLevelId: req.level2
       }
     : {
         typeOfLeave: req?.typeOfLeave,
@@ -184,9 +184,9 @@ export const leavePolicyRequest = req => {
         allowanceTime: !isNaN(req?.allowanceTime) && Number(req?.allowanceTime),
         isPermission: req.isPermission,
         period: req?.period,
-        carryForward: req?.carryForwardCount > 0 ? true : false,
         carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
-        approvalLevel: req?.approvalLevel || 1
+        levelOneApprovalLevelId: req.level1,
+        levelTwoApprovalLevelId: req.level2
       }
 
   return request

@@ -354,7 +354,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
           }}
         >
           <Button variant='outlined' color='secondary' onClick={() => setOpen(false)}>
-            Discard
+            Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
             Update

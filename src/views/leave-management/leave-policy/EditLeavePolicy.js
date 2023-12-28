@@ -48,6 +48,7 @@ import { postProject } from 'src/store/apps/projects'
 import { leavePolicyRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
+import { APPROVERS } from 'src/helpers/constants'
 
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
@@ -55,7 +56,9 @@ const schema = yup.object().shape({
   carryForwardCount: yup.number().min(0),
   allowanceTime: yup.number().min(0),
   allowanceCount: yup.number().min(0).required('Allowance required'),
-  isPermission: yup.boolean()
+  isPermission: yup.boolean(),
+  levelOneApprovalLevelId: yup.number().positive().notRequired(),
+  levelTwoApprovalLevelId: yup.number().positive().notRequired()
 })
 
 const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
@@ -70,21 +73,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
     handleSubmit,
     formState: { errors }
   } = useForm({
-    defaultValues: row
-      ? {
-          typeOfLeave: row?.typeOfLeave,
-          count: row?.leaveCount,
-          period: row?.period,
-          carryForwardCount: row?.carryForwardCount
-        }
-      : {
-          typeOfLeave: '',
-          allowanceCount: 0,
-          allowanceTime: 0,
-          isPermission: false,
-          period: '',
-          carryForwardCount: 0
-        },
+    defaultValues:row,
     mode: 'onChange',
     resolver: yupResolver(schema)
   })
@@ -96,7 +85,9 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
       allowanceTime: row?.allowanceTime,
       isPermission: row?.isPermission,
       period: row?.period,
-      carryForwardCount: row?.carryForwardCount
+      carryForwardCount: row?.carryForwardCount,
+      level1: row?.levelOneApprovalId,
+      level2: row?.levelTwoApprovalId
     })
   }, [row])
 
@@ -108,25 +99,19 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
 
   //submit
 
-  const onSubmit = () => {
+  const onSubmit = (data) => {
     try {
-      const req = { id: row?.id, ...watch() }
+      const req = { id: row?.id, ...data }
       dispatch(putPolicy(leavePolicyRequest(req)))
         .then(unwrapResult)
         .then(res => {
-          res.status === 200 ? toast.success('Policy Updated') : toast.error('Error Occurred')
+          res.status === 200 ? toast.success(res.data) : toast.error(res.data)
           dispatch(fetchPolicies())
           setOpen(false)
-          reset({
-            typeOfLeave: '',
-            count: '',
-            period: '',
-            carryForward: '',
-            carryForwardCount: ''
-          })
+          reset()
         })
     } catch (error) {
-      errorToast(error)
+      toast.error(error)
     }
   }
 
@@ -149,7 +134,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             <Icon icon='mdi:close' />
           </IconButton>
           <Box sx={{ mb: 8, textAlign: 'center' }}>
-            <Typography variant='h5'>Edit Leave Policy</Typography>
+            <Typography variant='h5'>Update Leave Policy</Typography>
           </Box>
           <Grid container spacing={6}>
             <Grid item xs={12}>
@@ -161,7 +146,8 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   render={({ field: { value, onChange } }) => (
                     <TextField
                       value={value}
-                      label='Leave Type'
+                      label='Leave Type *'
+                      placeholder='Leave Type'
                       onChange={onChange}
                       error={Boolean(errors.typeOfLeave)}
                     />
@@ -213,7 +199,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             <Grid item xs={12} sm={5}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
-                  <InputLabel id='demo-select-small-label'>Period</InputLabel>
+                  <InputLabel id='demo-select-small-label'>Period *</InputLabel>
                   <Controller
                     name='period'
                     control={control}
@@ -221,7 +207,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                     render={({ field: { value, onChange } }) => (
                       <Select
                         value={value}
-                        label='Period'
+                        label='Period *'
                         onChange={onChange}
                         error={Boolean(errors.period)}
                         labelId='demo-select-small-label'
@@ -247,30 +233,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <Controller
-                  name='carryForwardCount'
-                  control={control}
-                  rules={{ required: false }}
-                  render={({ field: { value, onChange } }) => (
-                    <TextField
-                      value={value}
-                      type='number'
-                      label='Carry forward count'
-                      onChange={onChange}
-                    />
-                  )}
-                />
-                {errors.carryForwardCount && (
-                  <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.carryForwardCount.message}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl>
                 <Controller
                   name='isPermission'
@@ -279,14 +242,21 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   render={({ field: { value, onChange } }) => (
                     <FormControlLabel
                       label='Permission'
-                      control={<Checkbox checked={value} onChange={onChange} name='Permission' />}
+                      control={
+                        <Checkbox
+                          value={value}
+                          checked={value}
+                          onChange={onChange}
+                          name='Permission'
+                        />
+                      }
                     />
                   )}
                 />
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl fullWidth>
                 <Controller
                   name='allowanceTime'
@@ -294,7 +264,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <TextField
-                      value={value}
+                      value={watch('isPermission') ? value : 0}
                       type='number'
                       label='Hours'
                       disabled={!watch('isPermission')}
@@ -309,6 +279,82 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                 )}
               </FormControl>
             </Grid>
+
+            <Grid item xs={12} sm={4} md={4} lg={4}>
+              <FormControl fullWidth>
+                <Controller
+                  name='carryForwardCount'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      label='Carry forward count'
+                      onChange={onChange}
+                    />
+                  )}
+                />
+                {errors.carryForwardCount && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.carryForwardCount.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={6} lg={6}>
+              <FormControl fullWidth>
+                <InputLabel id='demo-select-small-label'>Level 1</InputLabel>
+                <Controller
+                  name='level1'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value}
+                      label='Level 1'
+                      onChange={onChange}
+                      defaultValue={1}
+                      labelId='demo-select-small-label'
+                      aria-describedby='stepper-linear-client'
+                    >
+                      {APPROVERS.map(approver => (
+                        <MenuItem key={approver.id} value={approver.id}>
+                          {approver.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={6} lg={6}>
+              <FormControl fullWidth>
+                <InputLabel id='demo-select-small-label'>Level 2</InputLabel>
+                <Controller
+                  name='level2'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value}
+                      label='Level 2'
+                      onChange={onChange}
+                      defaultValue={2}
+                      labelId='demo-select-small-label'
+                      aria-describedby='stepper-linear-client'
+                    >
+                      {APPROVERS.map(approver => (
+                        <MenuItem key={approver.id} value={approver.id}>
+                          {approver.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+              </FormControl>
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions
@@ -318,8 +364,22 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             pb: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
           }}
         >
-          <Button variant='outlined' color='secondary' onClick={() => setOpen(false)}>
-            Discard
+          <Button
+            variant='outlined'
+            color='secondary'
+            onClick={() => {
+              reset({
+                typeOfLeave: '',
+                allowanceTime: 0,
+                allowanceCount: 0,
+                period: '',
+                isPermission: false,
+                carryForwardCount: 0
+              })
+              setOpen(false)
+            }}
+          >
+            Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
             Update

@@ -118,7 +118,9 @@ const AppBarContent = props => {
   // ** Hook
 
   return (
-    <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box
+      sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+    >
       <Box className='actions-left' sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
         {hidden && !settings.navHidden ? (
           <IconButton color='inherit' sx={{ ml: -2.75 }} onClick={toggleNavVisibility}>
@@ -128,15 +130,15 @@ const AppBarContent = props => {
         {<Autocomplete hidden={hidden} settings={settings} />}
       </Box>
       <Box className='actions-right' sx={{ display: 'flex', alignItems: 'center' }}>
-        <LanguageDropdown settings={settings} saveSettings={saveSettings} />
+        {/* <LanguageDropdown settings={settings} saveSettings={saveSettings} /> */}
         <ModeToggler settings={settings} saveSettings={saveSettings} />
-        {(
+        {
           <>
             <ShortcutsDropdown settings={settings} shortcuts={shortcuts} />
-            <NotificationDropdown settings={settings} notifications={notifications} />
+            {/* <NotificationDropdown settings={settings} notifications={notifications} /> */}
             <UserDropdown settings={settings} />
           </>
-        )}
+        }
       </Box>
     </Box>
   )

@@ -13,6 +13,8 @@ import Icon from 'src/@core/components/icon'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getRandomColor } from 'src/helpers/helpers'
+import { CHART_COLORS, NODATA } from 'src/helpers/constants'
+import { useTheme } from '@emotion/react'
 
 const RADIAN = Math.PI / 180
 
@@ -48,15 +50,16 @@ const LeaveDetails = () => {
   const [data, setData] = useState([])
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
+  const theme = useTheme()
 
   useEffect(() => {
     const _data = []
-
+    const colors = CHART_COLORS(theme)
     store.dashboards.totalLeaves?.forEach((p, i) => {
       _data.push({
         name: p.name,
-        value: p.totalCount,
-        color: getRandomColor()
+        value: p.balanceCount,
+        color: colors[i] == null ? colors[1] : colors[i]
       })
     })
 
@@ -72,34 +75,43 @@ const LeaveDetails = () => {
         }}
       />
       <CardContent>
-        <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
-          <ResponsiveContainer>
-            <PieChart style={{ direction: 'ltr' }}>
-              <Pie data={data} innerRadius={50} dataKey='value' label={data} labelLine={false}>
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </Box>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 4, justifyContent: 'center' }}>
-          {data.map((item, key) => (
-            <Box
-              key={key}
-              sx={{
-                mr: 6,
-                display: 'flex',
-                alignItems: 'center',
-                '& svg': { mr: 1.5, color: item.color }
-              }}
-            >
-              <Icon icon='mdi:circle' fontSize='0.75rem' />
-              <Typography variant='body2'>{item.name}</Typography>
+        {data?.length > 0 ? (
+          <>
+            <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
+              <ResponsiveContainer>
+                <PieChart style={{ direction: 'ltr' }}>
+                  <Pie data={data} innerRadius={50} dataKey='value' label labelLine={false}>
+                    {data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </Box>
-          ))}
-        </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 4, justifyContent: 'center' }}>
+              {data.map((item, key) => (
+                <Box
+                  key={key}
+                  sx={{
+                    mr: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    '& svg': { mr: 1.5, color: item.color }
+                  }}
+                >
+                  <Icon icon='mdi:circle' fontSize='0.75rem' />
+                  <Typography variant='body2'>{item.name}</Typography>
+                </Box>
+              ))}
+            </Box>
+          </>
+        ) : (
+          <div className='gap-1'>
+            <Typography>{NODATA.oops}</Typography>
+            <img src='/images/cards/pose_m1.png' alt='' height='80' style={{ marginTop: -30 }} />
+          </div>
+        )}
       </CardContent>
     </Card>
   )

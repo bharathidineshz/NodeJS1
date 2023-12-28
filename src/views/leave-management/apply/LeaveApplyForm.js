@@ -58,11 +58,10 @@ import toast from 'react-hot-toast'
 const defaultValues = {
   requestType: '',
   requestReason: '',
-  requiresApproval: true,
   fromDate: new Date(),
   toDate: new Date(),
-  fromSession: '',
-  toSession: ''
+  fromSession: false,
+  toSession: false
 }
 
 const schema = yup.object().shape({
@@ -70,9 +69,8 @@ const schema = yup.object().shape({
   requestReason: yup.string().required('Reason is Required'),
   fromDate: yup.date().required('From date is Required'),
   toDate: yup.date().required('To date is Required'),
-  fromSession: yup.string(),
-  toSession: yup.string(),
-  requiresApproval: yup.boolean()
+  fromSession: yup.boolean(),
+  toSession: yup.boolean()
 })
 
 const LeaveApplyForm = ({ isOpen, setOpen }) => {
@@ -235,7 +233,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={6} lg={6}>
+            <Grid item xs={12} sm={8} md={8} lg={8}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <Controller
@@ -262,30 +260,30 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={6} lg={6}>
+            <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl fullWidth>
                 <Controller
                   name='fromSession'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <RadioGroup
-                      row
-                      value={value}
-                      name='simple-radio'
-                      defaultValue={''}
-                      onChange={onChange}
-                      aria-label='simple-radio'
-                    >
-                      <FormControlLabel value='F.N' control={<Radio />} label='F.N' />
-                      <FormControlLabel value='A.N' control={<Radio />} label='A.N' />
-                    </RadioGroup>
+                    <FormControlLabel
+                      label='Half Day'
+                      control={
+                        <Checkbox
+                          checked={value}
+                          defaultChecked={false}
+                          onChange={onChange}
+                          name='halfDay'
+                        />
+                      }
+                    />
                   )}
                 />
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={6} lg={6}>
+            <Grid item xs={12} sm={8} md={8} lg={8}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <Controller
@@ -297,6 +295,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                         id='event-end-date'
                         selected={value}
                         dateFormat={'yyyy-MM-dd'}
+                        minDate={watch('fromDate')}
                         customInput={<PickersComponent label='To Date' registername='toDate' />}
                         onChange={onChange}
                         popperPlacement='auto'
@@ -312,24 +311,24 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={6} lg={6}>
+            <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl fullWidth>
                 <Controller
                   name='toSession'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <RadioGroup
-                      row
-                      value={value}
-                      name='simple-radio'
-                      defaultValue={''}
-                      onChange={onChange}
-                      aria-label='simple-radio'
-                    >
-                      <FormControlLabel value='F.N' control={<Radio />} label='F.N' />
-                      <FormControlLabel value='A.N' control={<Radio />} label='A.N' />
-                    </RadioGroup>
+                    <FormControlLabel
+                      label='Half Day'
+                      control={
+                        <Checkbox
+                          checked={value}
+                          defaultChecked={false}
+                          onChange={onChange}
+                          name='halfDay'
+                        />
+                      }
+                    />
                   )}
                 />
               </FormControl>
@@ -353,13 +352,12 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                 fromDate: new Date(),
                 toDate: new Date(),
                 fromSession: '',
-                toSession: '',
-                requiresApproval: true
+                toSession: ''
               })
               setOpen(false)
             }}
           >
-            Discard
+            Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
             Submit

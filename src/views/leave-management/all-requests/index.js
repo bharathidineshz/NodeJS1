@@ -34,7 +34,7 @@ import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import Toolbar from 'src/views/leave-management/toolBar'
 import LeaveDashboard from 'src/views/leave-management/dashboard/Dashboard'
-import SimpleBackdrop from 'src/helpers/loader'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 const AllRequests = () => {
   // ** States

@@ -117,7 +117,7 @@ const Approval = () => {
     isApproved: false.valueOf,
     rejectData: {}
   })
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
   const theme = useTheme()
@@ -249,9 +249,11 @@ const Approval = () => {
   const handleApproval = (row, name) => e => {
     if (name === 'Approved' || name === 'Rejected') {
       const _row = name == 'Approved' ? row : respond.rejectData
-      const _comment = document.getElementById("Comment").value;
+      const _comment = document.getElementById('Comment')?.value
+        ? document.getElementById('Comment').value
+        : ''
       const req = {
-        comment: name === 'Rejected' ?  _comment: '',
+        comment: _comment,
         statusId: name == 'Approved' ? 2 : name == 'Rejected' ? 3 : 1,
         ..._row
       }
@@ -290,9 +292,7 @@ const Approval = () => {
     setFilteredRows(filteredRows)
   }
 
-  const handleComment = e => {
-    
-  }
+  const handleComment = e => {}
 
   const handleClose = () => {
     setRespond(state => ({ ...state, isOpenDialog: false }))
@@ -315,14 +315,12 @@ const Approval = () => {
               rowSelection={false}
               onRowClick={() => {}}
               pageSizeOptions={[5, 10, 25, 50, 100]}
-              paginationModel={paginationModel}
               onSortModelChange={handleSortModel}
               slots={{
                 toolbar: () => {
                   return <Toolbar isExport searchValue={searchValue} handleFilter={handleSearch} />
                 }
               }}
-              onPaginationModelChange={setPaginationModel}
               loading={store.approvals ? false : true}
               slotProps={{
                 baseButton: {
@@ -332,6 +330,13 @@ const Approval = () => {
                   value: searchValue,
                   clearSearch: () => handleSearch(''),
                   onChange: event => handleSearch(event.target.value)
+                }
+              }}
+              initialState={{
+                pagination: {
+                  paginationModel: {
+                    pageSize: 25
+                  }
                 }
               }}
               className='no-border'

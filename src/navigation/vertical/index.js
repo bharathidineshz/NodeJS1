@@ -119,36 +119,36 @@ const navigation = () => {
       ]
     },
     {
-      title: 'Account Settings',
+      title: 'Settings',
       icon: 'mdi:file-document-outline',
       auth: false,
-      children: [
-        {
-          title: 'Account',
-          path: '/pages/account-settings/account'
-        },
-        {
-          title: 'Security',
-          path: '/pages/account-settings/security'
-        },
-        {
-          title: 'Billing',
-          path: '/pages/account-settings/billing'
-        },
-        {
-          title: 'Notifications',
-          path: '/pages/account-settings/notifications'
-        },
-        {
-          title: 'Connections',
-          path: '/pages/account-settings/connections'
-        },
-        {
-          title: 'Holiday Management',
-          path: '/pages/account-settings/holidaymanagement',
-          auth: false
-        }
-      ]
+      // children: [
+      //   {
+      //     title: 'Account',
+      //     path: '/pages/account-settings/account'
+      //   },
+      //   {
+      //     title: 'Security',
+      //     path: '/pages/account-settings/security'
+      //   },
+      //   {
+      //     title: 'Billing',
+      //     path: '/pages/account-settings/billing'
+      //   },
+      //   {
+      //     title: 'Notifications',
+      //     path: '/pages/account-settings/notifications'
+      //   },
+      //   {
+      //     title: 'Connections',
+      //     path: '/pages/account-settings/connections'
+      //   },
+      //   {
+      //     title: 'Holiday Management',
+      //     path: '/pages/account-settings/holidaymanagement',
+      //     // auth: false
+      //   }
+      // ]
     },
     {
       title: 'Auth Pages',

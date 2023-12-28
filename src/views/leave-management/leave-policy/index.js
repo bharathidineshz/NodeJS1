@@ -7,40 +7,21 @@ import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
 import CardHeader from '@mui/material/CardHeader'
 import { DataGrid } from '@mui/x-data-grid'
-
-// ** ThirdParty Components
-import axios from 'axios'
-
-// ** Custom Components
-import CustomChip from 'src/@core/components/mui/chip'
 import CustomAvatar from 'src/@core/components/mui/avatar'
 
 // ** Utils Import
 import { getInitials } from 'src/@core/utils/get-initials'
-import { AvatarGroup, Button, Grid, IconButton, Popover, Tooltip } from '@mui/material'
+import { IconButton } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-  fetchProjects,
-  fetchUsers,
-  fetchClients,
-  setProject,
-  deleteProject,
-  getProjectDetails,
-  setSelectedProject
-} from 'src/store/apps/projects'
 import { Icon } from '@iconify/react'
-import OptionsMenu from 'src/@core/components/option-menu'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import LeaveHeader from 'src/views/leave-management/LeaveHeader'
 import Toolbar from 'src/views/leave-management/toolBar'
-import Dashboard from '../dashboard/Dashboard'
 import { deletePolicy, fetchPolicies } from 'src/store/leave-management'
-import { base } from 'src/store/endpoints/interceptor'
-import EditLeavePolicy from './EditLeavePolicy'
+import instance, { base } from 'src/store/endpoints/interceptor'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
-import { errorToast, successToast } from 'src/helpers/helpers'
+import { endpoints } from 'src/store/endpoints/endpoints'
 
 const DynamicEditLeavePolicy = dynamic(
   () => import('src/views/leave-management/leave-policy/EditLeavePolicy'),
@@ -52,34 +33,37 @@ const DynamicEditLeavePolicy = dynamic(
   }
 )
 
-const LeavePolicy = ({ data }) => {
+const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
+  ssr: false,
+  loading: () => {
+    return <FallbackSpinner />
+  }
+})
+
+const LeavePolicy = ({ policies }) => {
   // ** States
-  const [total, setTotal] = useState(0)
-  const [sort, setSort] = useState('asc')
   const [isLoading, setLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [rowData, setRowData] = useState({})
+  const [alert, setOpenAlert] = useState(false)
   const [filteredRows, setFilteredRows] = useState([])
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
     dispatch(fetchPolicies())
   }, [])
+  useEffect(() => {
+    setOpen(false)
+  }, [alert])
 
   const columns = [
     {
-      flex: 0.05,
-      field: 'id',
-      minWidth: 80,
-      headerName: 'Id'
-    },
-    {
       flex: 0.35,
       field: 'typeOfLeave',
-      headerName: 'Policy'
+      headerName: 'Policy',
+      renderCell: params => <div style={{ fontWeight: 'bold' }}>{params.value}</div>
     },
     {
       flex: 0.2,
@@ -90,76 +74,71 @@ const LeavePolicy = ({ data }) => {
     {
       flex: 0.2,
       minWidth: 120,
-      headerName: 'Time',
+      headerName: 'Alowance Time',
       field: 'allowanceTime'
     },
     {
       flex: 0.2,
-      minWidth: 120,
       headerName: 'Period',
-      field: 'period'
+      field: 'period',
+      renderCell: params => {
+        return (
+          <>
+            {params.value?.toLowerCase() === 'month' ? (
+              <Typography variant='body2' color='secondary'>
+                Month
+              </Typography>
+            ) : (
+              <Typography variant='body2' color='primary'>
+                Year
+              </Typography>
+            )}
+          </>
+        )
+      }
     },
-    {
-      flex: 0.2,
-      minWidth: 120,
-      headerName: 'Carry Forward',
-      field: 'carryForward',
 
-      renderCell: params => (
-        <Grid>
-          {params.value ? (
-            <CustomAvatar skin='light' color='success'>
-              <Icon icon='mdi:checkbox-marked-circle-outline' />
-            </CustomAvatar>
-          ) : (
-            <CustomAvatar skin='light' color='error'>
-              <Icon icon='mdi:close-circle-outline' />
-            </CustomAvatar>
-          )}
-        </Grid>
-      )
-    },
     {
       flex: 0.2,
-      minWidth: 120,
       headerName: 'Carry Forward Count',
       field: 'carryForwardCount'
+    },
+    {
+      flex: 0.08,
+      headerName: 'Actions',
+      sortable: false,
+      renderCell: ({ row }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton
+            onClick={() => {
+              setOpen(false), setRowData(row), setOpenAlert(!alert)
+            }}
+            color='error'
+          >
+            <Icon icon='mdi:delete-outline' fontSize={20} />
+          </IconButton>
+        </Box>
+      )
     }
-    // {
-    //   flex: 0.08,
-    //   headerName: 'Actions',
-    //   sortable: false,
-    //   renderCell: ({ row }) => (
-    //     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-    //       <IconButton onClick={handleDelete(row)} color='error'>
-    //         <Icon icon='mdi:delete-outline' fontSize={20} />
-    //       </IconButton>
-    //     </Box>
-    //   )
-    // }
   ]
-
-  const handleSortModel = newModel => {
-    if (newModel.length) {
-      setSort(newModel[0].sort)
-      setSortColumn(newModel[0].field)
-      fetchTableData(newModel[0].sort, searchValue, newModel[0].field)
-    } else {
-      setSort('asc')
-      setSortColumn('full_name')
-    }
-  }
 
   //delete
 
-  const handleDelete = row => e => {
+  const handleDelete = () => {
     try {
-      setOpen(false)
-      dispatch(deletePolicy(row.id))
-      dispatch(fetchPolicies())
-      successToast('Policy Deleted')
+      dispatch(deletePolicy(rowData?.id))
+        .then(unwrapResult)
+        .then(res => {
+          if (res.status === 200) {
+            setOpenAlert(!alert)
+            dispatch(fetchPolicies())
+            toast.success(res.data)
+          } else {
+            toast.error(res.data)
+          }
+        })
     } catch (error) {
-      errorToast(error)
+      toast.error(res.data)
     }
   }
 
@@ -193,7 +172,7 @@ const LeavePolicy = ({ data }) => {
     setFilteredRows(rows)
   }
 
-  const handleRowSelection = data => {
+  const handleRowSelection = (data) => {
     console.log('row', data)
     setOpen(true)
     setRowData(data.row)
@@ -210,7 +189,6 @@ const LeavePolicy = ({ data }) => {
               autoHeight
               pagination
               rows={searchValue ? filteredRows : store.policies}
-              rowCount={store.policies.length}
               columns={columns}
               rowSelection={false}
               onRowClick={handleRowSelection}
@@ -235,21 +213,18 @@ const LeavePolicy = ({ data }) => {
           </Card>
 
           <DynamicEditLeavePolicy isOpen={isOpen} row={rowData} setOpen={setOpen} />
+          <DynamicDeleteAlert
+            open={alert}
+            setOpen={setOpenAlert}
+            title='Delete Policy'
+            content='Are you confirm to delete policy?'
+            action='Delete'
+            handleAction={handleDelete}
+          />
         </>
       )}
     </>
   )
-}
-
-export const getStaticProps = async () => {
-  const response = await fetch(base.local + 'api/leave') // Update with your API route
-  const { data } = await response.json()
-
-  return {
-    props: {
-      data
-    }
-  }
 }
 
 export default LeavePolicy

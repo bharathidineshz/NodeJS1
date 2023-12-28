@@ -27,6 +27,7 @@ import LeavePolicy from 'src/views/leave-management/leave-policy'
 import { Button } from '@mui/material'
 import LeaveApplyForm from 'src/views/leave-management/apply/LeaveApplyForm'
 import NewLeavePolicy from 'src/views/leave-management/leave-policy/NewLeavePolicy'
+import Holidays from 'src/views/leave-management/holidays'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
   '& .MuiTabs-indicator': {
@@ -85,7 +86,8 @@ const LeaveManagement = ({ tab, data }) => {
     // 'all requests': <AllRequests />,
     approval: <Approval />,
     reports: <LeaveReports />,
-    leave_policy: <LeavePolicy />
+    leave_policy: <LeavePolicy />,
+    holidays: <Holidays />,
   }
 
   const tabs = [
@@ -93,7 +95,8 @@ const LeaveManagement = ({ tab, data }) => {
     // { name: 'all requests', icon: 'mdi:calendar-outline' },
     { name: 'approval', icon: 'mdi:check-decagram' },
     { name: 'reports', icon: 'mdi:chart-box' },
-    { name: 'leave_policy', icon: 'mdi:text-box-multiple-outline' }
+    { name: 'leave_policy', icon: 'mdi:text-box-multiple-outline' },
+    { name: 'holidays', icon: 'mdi:toggle-switch-off-outline' }
   ]
 
   return (
@@ -134,20 +137,12 @@ const LeaveManagement = ({ tab, data }) => {
                   ))}
                 </TabList>
                 {activeTab === 'my leaves' && (
-                  <Button
-                    variant='contained'
-                    startIcon={<Icon icon='mdi:add' fontSize={20} />}
-                    onClick={() => setOpen(true)}
-                  >
+                  <Button variant='contained' onClick={() => setOpen(true)}>
                     Apply Leave
                   </Button>
                 )}
                 {activeTab === 'leave_policy' && (
-                  <Button
-                    variant='contained'
-                    startIcon={<Icon icon='mdi:add' fontSize={20} />}
-                    onClick={() => setOpen(true)}
-                  >
+                  <Button variant='contained' onClick={() => setOpen(true)}>
                     Add {activeTab === 'leave_policy' ? 'Leave Policy' : activeTab}
                   </Button>
                 )}

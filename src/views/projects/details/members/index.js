@@ -33,7 +33,7 @@ const Members = ({ data }) => {
 
   return (
     <>
-      {store?.projectMembers == null  ? (
+      {store?.projectMembers != null ? (
         <Grid container spacing={6}>
           {store?.projectMembers.length > 0 &&
             store.projectMembers.map((item, index) => {

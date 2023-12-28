@@ -93,7 +93,7 @@ export const putPolicy = createAsyncThunk('putPolicy/LeavePolicy', async params 
 export const deletePolicy = createAsyncThunk('deletePolicy/LeavePolicy', async params => {
   const response = await instance.delete(endpoints.deleteLeavePolicy(params))
 
-  return response.data
+  return response
 })
 
 const initialStates = {
@@ -141,7 +141,7 @@ export const LeaveManagement = createSlice({
       const approvals = [...action.payload]
       approvals.forEach(approval => {
         approval.user = state.users?.find(o => o.id == approval.submittedUserId)
-        approval.request = state.policies.find(o => o.id === approval.requestTypeId)?.typeOfLeave
+        approval.request = state.policies?.find(o => o.id === approval.requestTypeId)?.typeOfLeave
         // approval.fromDate = requestType.fromDate
         // approval.toDate = requestType.toDate
         // approval.requestReason = requestType.requestReason

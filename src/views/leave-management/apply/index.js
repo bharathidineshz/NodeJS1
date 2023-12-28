@@ -62,7 +62,7 @@ const LeaveApply = () => {
   const store = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
-    dispatch(fetchPolicies()).then(()=>{
+    dispatch(fetchPolicies()).then(() => {
       dispatch(fetchUsers())
         .then(unwrapResult)
         .then(res => {
@@ -77,12 +77,6 @@ const LeaveApply = () => {
   }, [dispatch])
 
   const columns = [
-    {
-      flex: 0.1,
-      field: 'id',
-      minWidth: 80,
-      headerName: 'S.NO'
-    },
     {
       flex: 0.15,
       minWidth: 120,

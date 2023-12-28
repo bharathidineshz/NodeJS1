@@ -150,7 +150,7 @@ export const endpoints = {
 
   //leave Management
 
-  deleteLeavePolicy: id => `api/LeavePolicy?policyId=${id}`,
+  deleteLeavePolicy: id => `api/LeavePolicy/DeletePolicy?policyId=${id}`,
   myLeaves: 'api/LeaveRequest',
   getLeavePolicy: '/api/LeavePolicy/GetLeavePolicy',
   createLeavePolicy: '/api/LeavePolicy/CreateLeavePolicy',

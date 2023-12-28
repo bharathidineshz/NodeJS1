@@ -48,6 +48,7 @@ import { postProject } from 'src/store/apps/projects'
 import { leavePolicyRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
+import { APPROVERS } from 'src/helpers/constants'
 
 const defaultValues = {
   typeOfLeave: '',
@@ -55,7 +56,9 @@ const defaultValues = {
   allowanceCount: 0,
   period: '',
   isPermission: false,
-  carryForwardCount: 0
+  carryForwardCount: 0,
+  level1: 1,
+  level2: 2
 }
 
 const schema = yup.object().shape({
@@ -64,7 +67,9 @@ const schema = yup.object().shape({
   allowanceTime: yup.number().min(0),
   period: yup.string().required('Period is Required'),
   isPermission: yup.boolean(),
-  carryForwardCount: yup.number().min(0)
+  carryForwardCount: yup.number().min(0),
+  level1: yup.number().min(0).notRequired(),
+  level2: yup.number().min(0).notRequired()
 })
 
 const NewLeavePolicy = ({ isOpen, setOpen }) => {
@@ -95,24 +100,17 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
 
   //submit
 
-  const onSubmit = async () => {
-    const req = leavePolicyRequest(watch())
+  const onSubmit = async (formData) => {
+    const req = leavePolicyRequest(formData)
     dispatch(postPolicy(req))
       .then(unwrapResult)
       .then(res => {
         dispatch(fetchPolicies())
         setOpen(false)
         res.status === 200 || res.status === 201
-          ? toast.success('Leave Policy Created')
-          : toast.error('Error Occurred')
-        reset({
-          typeOfLeave: '',
-          allowanceTime: 0,
-          allowanceCount: 0,
-          period: '',
-          isPermission: false,
-          carryForwardCount: 0
-        })
+          ? toast.success(res.data)
+          : toast.error(res.data)
+        reset()
       })
   }
 
@@ -147,7 +145,8 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                   render={({ field: { value, onChange } }) => (
                     <TextField
                       value={value}
-                      label='Leave Type'
+                      label='Leave Type *'
+                      placeholder='Leave Type'
                       onChange={onChange}
                       error={Boolean(errors.typeOfLeave)}
                     />
@@ -199,7 +198,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
             <Grid item xs={12} sm={5}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
-                  <InputLabel id='demo-select-small-label'>Period</InputLabel>
+                  <InputLabel id='demo-select-small-label'>Period *</InputLabel>
                   <Controller
                     name='period'
                     control={control}
@@ -207,7 +206,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                     render={({ field: { value, onChange } }) => (
                       <Select
                         value={value}
-                        label='Period'
+                        label='Period *'
                         onChange={onChange}
                         error={Boolean(errors.period)}
                         labelId='demo-select-small-label'
@@ -233,29 +232,32 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12}>
-              <FormControl fullWidth>
+          
+
+            <Grid item xs={12} sm={4} md={4} lg={4}>
+              <FormControl>
                 <Controller
-                  name='carryForwardCount'
+                  name='isPermission'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <TextField
-                      value={watch('carryForward') ? value : 0}
-                      label='Carry forward count'
-                      onChange={onChange}
+                    <FormControlLabel
+                      label='Permission'
+                      control={
+                        <Checkbox
+                          value={value}
+                          checked={value}
+                          onChange={onChange}
+                          name='Permission'
+                        />
+                      }
                     />
                   )}
                 />
-                {errors.carryForwardCount && (
-                  <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.carryForwardCount.message}
-                  </FormHelperText>
-                )}
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid item xs={12}sm={4} md={4} lg={4}>
               <FormControl fullWidth>
                 <Controller
                   name='allowanceTime'
@@ -279,79 +281,81 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <FormControl>
-                <Controller
-                  name='isPermission'
-                  control={control}
-                  rules={{ required: false }}
-                  render={({ field: { value, onChange } }) => (
-                    <FormControlLabel
-                      label='Permission'
-                      control={
-                        <Checkbox
-                          value={value}
-                          checked={value}
-                          onChange={onChange}
-                          name='Permission'
-                        />
-                      }
-                    />
-                  )}
-                />
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl fullWidth>
                 <Controller
-                  name='requiresApproval'
+                  name='carryForwardCount'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <FormControlLabel
-                      label='Requires Approval'
-                      control={
-                        <Checkbox
-                          checked={value}
-                          value={value}
-                          defaultChecked={value}
-                          onChange={onChange}
-                          name='Requires Approval'
-                        />
-                      }
+                    <TextField
+                      value={value}
+                      label='Carry forward count'
+                      onChange={onChange}
                     />
                   )}
                 />
-                {errors.requiresApproval && (
+                {errors.carryForwardCount && (
                   <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.requiresApproval.message}
+                    {errors.carryForwardCount.message}
                   </FormHelperText>
                 )}
               </FormControl>
             </Grid>
 
-            {/* <Grid item xs={12} sm={6}>
-              <FormControl>
+            <Grid item xs={12} sm={6} md={6} lg={6}>
+              <FormControl fullWidth>
+                <InputLabel id='demo-select-small-label'>Level 1</InputLabel>
                 <Controller
-                  name='carryForward'
+                  name='level1'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <FormControlLabel
-                      label='Carry Forward'
-                      control={
-                        <Checkbox
-                          checked={value}
-                          value={value}
-                          onChange={onChange}
-                          name='carryForward'
-                        />
-                      }
-                    />
+                    <Select
+                      value={value}
+                      label='Level 1'
+                      onChange={onChange}
+                      defaultValue={1}
+                      labelId='demo-select-small-label'
+                      aria-describedby='stepper-linear-client'
+                    >
+                      {APPROVERS.map(approver => (
+                        <MenuItem key={approver.id} value={approver.id}>
+                          {approver.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
                   )}
                 />
               </FormControl>
-            </Grid> */}
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={6} lg={6}>
+              <FormControl fullWidth>
+                <InputLabel id='demo-select-small-label'>Level 2</InputLabel>
+                <Controller
+                  name='level2'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value}
+                      label='Level 2'
+                      onChange={onChange}
+                      defaultValue={2}
+                      labelId='demo-select-small-label'
+                      aria-describedby='stepper-linear-client'
+                    >
+                      {APPROVERS.map(approver => (
+                        <MenuItem key={approver.id} value={approver.id}>
+                          {approver.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+              </FormControl>
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions
@@ -376,7 +380,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               setOpen(false)
             }}
           >
-            Discard
+            Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
             Add
