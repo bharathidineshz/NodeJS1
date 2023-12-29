@@ -89,7 +89,19 @@ export const putPolicy = createAsyncThunk('putPolicy/LeavePolicy', async params 
   return response
 })
 
+export const putRequestApproval = createAsyncThunk('putRequestApproval/LeaveApproval', async params => {
+  const response = await instance.put(endpoints.updateApproval, params)
+
+  return response
+})
+
 //delete
+export const deleteRequest = createAsyncThunk('deleteRequest/LeaveRequest', async params => {
+  const response = await instance.delete(endpoints.deleteRequest(params))
+
+  return response
+})
+
 export const deletePolicy = createAsyncThunk('deletePolicy/LeavePolicy', async params => {
   const response = await instance.delete(endpoints.deleteLeavePolicy(params))
 
@@ -139,17 +151,20 @@ export const LeaveManagement = createSlice({
     })
     builder.addCase(fetchApprovals.fulfilled, (state, action) => {
       const approvals = [...action.payload]
-      approvals.forEach(approval => {
-        approval.user = state.users?.find(o => o.id == approval.submittedUserId)
-        approval.request = state.policies?.find(o => o.id === approval.requestTypeId)?.typeOfLeave
-        // approval.fromDate = requestType.fromDate
-        // approval.toDate = requestType.toDate
-        // approval.requestReason = requestType.requestReason
-
-        if (approval.user)
-          approval.user.fullName = `${approval.user.firstName} ${approval.user.lastName}`
+      const _approvals = []
+       approvals.forEach(approval => {
+        const user = state.users.find(o => o.id === approval.submittedUserId)
+        _approvals.push({
+          ...approval,
+          leaveRequestApprovalId : approval.requestApprovals.id,
+          userName: approval.requestApprovals.username,
+          email: user.email,
+          request: approval.requestApprovals.typeOfLeave,
+          comment: approval.requestApprovals.comment,
+          status: approval.requestApprovals.status
+        })
       })
-      state.approvals = approvals
+      state.approvals = _approvals
     })
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
       const users = [...action.payload]
@@ -159,15 +174,22 @@ export const LeaveManagement = createSlice({
       state.users = users
     })
     builder.addCase(fetchUserReports.fulfilled, (state, action) => {
-      const reports = { ...action.payload }
-      reports.totalLeaves?.map((report, i) => {
-        report.id = i
+      const reports = [...action.payload]
+      const _reports = []
+      reports.forEach((report, i) => {
+        const policy = state.policies.find(o => o.id === report.requestTypeId)
+        const status = state.statuses.find(o => o.id === report.requestStatusId)
+        _reports.push({
+          request: policy.typeOfLeave,
+          statusName: status.statusName,
+          ...report
+        })
       })
-      state.reports = reports
+      state.reports = _reports
     })
     builder.addCase(fetchDashboard.fulfilled, (state, action) => {
-      const dashboards = { ...action.payload }
-      dashboards.totalLeaves?.map((report, i) => {
+      const dashboards = [...action.payload]
+      dashboards?.map((report, i) => {
         report.id = i
       })
       state.dashboards = dashboards

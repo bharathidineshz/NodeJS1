@@ -60,8 +60,8 @@ const defaultValues = {
   requestReason: '',
   fromDate: new Date(),
   toDate: new Date(),
-  fromSession: false,
-  toSession: false
+  isFromDateHalfDay: false,
+  isToDateHalfDay: false
 }
 
 const schema = yup.object().shape({
@@ -69,8 +69,8 @@ const schema = yup.object().shape({
   requestReason: yup.string().required('Reason is Required'),
   fromDate: yup.date().required('From date is Required'),
   toDate: yup.date().required('To date is Required'),
-  fromSession: yup.boolean(),
-  toSession: yup.boolean()
+  isFromDateHalfDay: yup.boolean().notRequired(),
+  isToDateHalfDay: yup.boolean().notRequired()
 })
 
 const LeaveApplyForm = ({ isOpen, setOpen }) => {
@@ -106,55 +106,42 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
 
   //submit
 
-  const onSubmit = async () => {
+  const onSubmit = async formData => {
     try {
       const currentUser = JSON.parse(localStorage.getItem('userData'))
       const user = store.users.find(o => currentUser.user === o.email)
-      const req = store.policies.find(o => o.typeOfLeave === watch('requestType'))
+      const req = store.policies.find(o => o.typeOfLeave === formData.requestType)
 
       const request = myLeaveRequest({
         submittedUserId: user.id,
         requestTypeId: req.id,
-        isFromDateHalfDay: watch('fromSession') ? true : false,
-        isToDateHalfDay: watch('toSession') ? true : false,
-        fromDateSession: watch('fromSession'),
-        toDateSession: watch('toSession'),
-        ...watch()
+        ...formData
       })
       dispatch(postLeaveRequest(request))
         .then(unwrapResult)
         .then(res => {
           if (res?.status == 200 || res.status == 201) {
             setOpen(false)
-            toast.success('Leave Request Submitted', {
-              position: 'top-right',
-              duration: 3000
-            })
+            toast.success(res.data)
             dispatch(fetchMyLeaves())
-            reset({
-              requestType: '',
-              requestReason: '',
-              fromDate: new Date(),
-              toDate: new Date(),
-              fromSession: '',
-              toSession: '',
-              requiresApproval: true
-            })
+            reset()
           } else {
             setOpen(true)
-            toast.error('Error Occurred', {
-              position: 'top-right',
-              duration: 3000
-            })
+            toast.error(res.data)
           }
         })
     } catch (error) {
-      errorToast(error)
+      toast.error(error)
     }
   }
 
+  const handleFromDateChange = selectedDate => {
+    // Set the "to date" value when "from date" changes
+    setValue('toDate', selectedDate)
+  }
+
   return (
-    <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={() => setOpen(false)}>
+    <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={() => setOpen(false)}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent
           sx={{
@@ -194,7 +181,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                         <TextField
                           {...params}
                           error={Boolean(errors.requestType)}
-                          label='Request Type'
+                          label='Request Type *'
                         />
                       )}
                     />
@@ -219,7 +206,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                       value={value}
                       minRows={2}
                       multiline
-                      label='Request Reason'
+                      label='Request Reason *'
                       onChange={onChange}
                       error={Boolean(errors.requestReason)}
                     />
@@ -233,7 +220,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={8} md={8} lg={8}>
+            <Grid item xs={8} sm={8} md={8} lg={8}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <Controller
@@ -244,9 +231,12 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                       <DatePicker
                         id='event-start-date'
                         selected={value}
+                        minDate={new Date()}
                         dateFormat={'yyyy-MM-dd'}
                         customInput={<PickersComponent label='From Date' registername='fromDate' />}
-                        onChange={onChange}
+                        onChange={e => {
+                          onChange(e), handleFromDateChange(e)
+                        }}
                         popperPlacement='auto'
                       />
                     )}
@@ -260,10 +250,10 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12} sm={4} md={4} lg={4}>
+            <Grid item xs={4} sm={4} md={4} lg={4}>
               <FormControl fullWidth>
                 <Controller
-                  name='fromSession'
+                  name='isFromDateHalfDay'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
@@ -283,7 +273,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={8} md={8} lg={8}>
+            <Grid item xs={8} sm={8} md={8} lg={8}>
               <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                 <FormControl fullWidth>
                   <Controller
@@ -293,7 +283,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                     render={({ field: { value, onChange } }) => (
                       <DatePicker
                         id='event-end-date'
-                        selected={value}
+                        selected={watch('fromDate') > value ? watch('fromDate') : value}
                         dateFormat={'yyyy-MM-dd'}
                         minDate={watch('fromDate')}
                         customInput={<PickersComponent label='To Date' registername='toDate' />}
@@ -311,15 +301,20 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
-            <Grid item xs={12} sm={4} md={4} lg={4}>
+            <Grid item xs={4} sm={4} md={4} lg={4}>
               <FormControl fullWidth>
                 <Controller
-                  name='toSession'
+                  name='isToDateHalfDay'
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <FormControlLabel
                       label='Half Day'
+                      disabled={
+                        watch('fromDate').toDateString() != watch('toDate').toDateString()
+                          ? false
+                          : true
+                      }
                       control={
                         <Checkbox
                           checked={value}

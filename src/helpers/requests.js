@@ -176,7 +176,7 @@ export const leavePolicyRequest = req => {
         period: req?.period,
         carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
         levelOneApprovalLevelId: req.level1,
-        levelTwoApprovalLevelId: req.level2
+        levelTwoApprovalLevelId: req.level1 === 3 ? 0 : req.level2
       }
     : {
         typeOfLeave: req?.typeOfLeave,
@@ -186,7 +186,7 @@ export const leavePolicyRequest = req => {
         period: req?.period,
         carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
         levelOneApprovalLevelId: req.level1,
-        levelTwoApprovalLevelId: req.level2
+        levelTwoApprovalLevelId: req.level1 === 3 ? 0 : req.level2
       }
 
   return request
@@ -201,12 +201,8 @@ export const myLeaveRequest = req => {
         toDate: req?.toDate?.toISOString(),
         isFromDateHalfDay: req.isFromDateHalfDay,
         isToDateHalfDay: req.isToDateHalfDay,
-        fromDateSession: req.fromDateSession,
-        toDateSession: req.toDateSession,
         requestReason: req?.requestReason,
-        currentLevelId: 1,
-        submittedUserId: req?.submittedUserId,
-        isApprovalRequired: req.requiresApproval
+        submittedUserId: req?.submittedUserId
       }
     : {
         requestTypeId: req?.requestTypeId,
@@ -214,25 +210,21 @@ export const myLeaveRequest = req => {
         toDate: req?.toDate?.toISOString(),
         isFromDateHalfDay: req.isFromDateHalfDay,
         isToDateHalfDay: req.isToDateHalfDay,
-        fromDateSession: req.fromDateSession,
-        toDateSession: req.toDateSession,
         requestReason: req?.requestReason,
-        currentLevelId: 1,
-        submittedUserId: req?.submittedUserId,
-        isApprovalRequired: req.requiresApproval
+        submittedUserId: req?.submittedUserId
       }
 
   return request
 }
 
 export const approvalRequest = req => {
+
   const request = {
+    leaveRequestApprovalId: req.leaveRequestApprovalId,
     leaveRequestId: req.id,
-    statusId: req?.statusId,
-    approverId: req?.approvalUserId,
-    level: req.currentLevelId,
-    comment: req?.comment || '',
-    createdDate: new Date().toISOString()
+    leaveStatusId: req.leaveStatusId,
+    approvalLevelId: req.approvalLevelId,
+    comment: req.comment
   }
 
   return request

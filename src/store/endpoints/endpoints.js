@@ -150,7 +150,6 @@ export const endpoints = {
 
   //leave Management
 
-  deleteLeavePolicy: id => `api/LeavePolicy/DeletePolicy?policyId=${id}`,
   myLeaves: 'api/LeaveRequest',
   getLeavePolicy: '/api/LeavePolicy/GetLeavePolicy',
   createLeavePolicy: '/api/LeavePolicy/CreateLeavePolicy',
@@ -158,10 +157,13 @@ export const endpoints = {
   requests: 'api/LeaveRequest',
   getApprovals: 'api/LeaveRequestApprove/GetLeaveRequestApproval',
   createApproval: 'api/LeaveRequestApprove/CreateLeaveRequestApproval',
+  updateApproval: 'api/LeaveRequestApprove/UpdateLeaveRequestApproval',
+  deleteLeavePolicy: id => `api/LeavePolicy/DeletePolicy?policyId=${id}`,
+  deleteRequest: id => `api/LeaveRequest?requestId=${id}`,
 
   getStatus: '/api/Status/GetStatus',
   getSkills: 'api/MasterSkill',
   getUserReports: (userId, fromDate, toDate) =>
-    `api/Report/getUserLeaveRequest?UserId=${userId}&FromDate=${fromDate}&ToDate=${toDate}`,
-  getDashboard: userId => `api/Report/getUserLeaveRequest?UserId=${userId}`
+    `api/Report/GetUserLeaveRequest?UserId=${userId}&FromDate=${fromDate}&ToDate=${toDate}`,
+  getDashboard: userId => `api/Report/GetUserLeaveBalance?UserId=${userId}`
 }

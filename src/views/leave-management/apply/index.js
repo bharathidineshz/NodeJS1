@@ -33,10 +33,12 @@ import {
   fetchPolicies,
   fetchUsers,
   fetchUserReports,
-  fetchDashboard
+  fetchDashboard,
+  deleteRequest
 } from 'src/store/leave-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import dynamic from 'next/dynamic'
+import toast from 'react-hot-toast'
 
 const DynamicEditLeaveRequest = dynamic(
   () => import('src/views/leave-management/apply/EditLeaveRequest'),
@@ -48,12 +50,22 @@ const DynamicEditLeaveRequest = dynamic(
   }
 )
 
+const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
+  ssr: false,
+  loading: () => {
+    return <FallbackSpinner />
+  }
+})
+
+
+
 const LeaveApply = () => {
   // ** States
   const [row, setRow] = useState({})
   const [sort, setSort] = useState('asc')
   const [isLoading, setLoading] = useState(true)
   const [isOpen, setOpen] = useState(false)
+  const [alert, setOpenAlert] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [sortColumn, setSortColumn] = useState('name')
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
@@ -76,6 +88,10 @@ const LeaveApply = () => {
     setLoading(false)
   }, [dispatch])
 
+  useEffect(() => {
+    setOpen(false)
+  }, [alert])
+
   const columns = [
     {
       flex: 0.15,
@@ -84,13 +100,14 @@ const LeaveApply = () => {
       headerName: 'Request'
     },
     {
-      flex: 0.15,
+      flex: 0.17,
       minWidth: 120,
       field: 'requestReason',
-      headerName: 'Reason'
+      headerName: 'Reason',
+      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
-      flex: 0.17,
+      flex: 0.15,
       minWidth: 100,
       headerName: 'From Date',
       field: 'fromDate',
@@ -106,6 +123,42 @@ const LeaveApply = () => {
       renderCell: params => {
         return formatLocalDate(new Date(params.value))
       }
+    },
+    {
+      flex: 0.14,
+      headerName: 'From Half Day',
+      field: 'isFromDateHalfDay',
+      renderCell: params => (
+        <Grid>
+          {params.value ? (
+            <CustomAvatar skin='light' color='success'>
+              <Icon icon='mdi:checkbox-marked-circle-outline' />
+            </CustomAvatar>
+          ) : (
+            <CustomAvatar skin='light' color='error'>
+              <Icon icon='mdi:close-circle-outline' />
+            </CustomAvatar>
+          )}
+        </Grid>
+      )
+    },
+    {
+      flex: 0.14,
+      headerName: 'To Half Day',
+      field: 'isToDateHalfDay',
+      renderCell: params => (
+        <Grid>
+          {params.value ? (
+            <CustomAvatar skin='light' color='success'>
+              <Icon icon='mdi:checkbox-marked-circle-outline' />
+            </CustomAvatar>
+          ) : (
+            <CustomAvatar skin='light' color='error'>
+              <Icon icon='mdi:close-circle-outline' />
+            </CustomAvatar>
+          )}
+        </Grid>
+      )
     },
     {
       flex: 0.12,
@@ -124,19 +177,28 @@ const LeaveApply = () => {
           />
         )
       }
+    },
+    {
+      flex: 0.08,
+      headerName: 'Action',
+      field: 'action',
+      sortable: false,
+      renderCell: ({ row }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton
+            onClick={() => {
+              setOpen(false), setRow(row), setOpenAlert(!alert)
+            }}
+            color='error'
+          >
+            <Icon icon='mdi:delete-outline' fontSize={20} />
+          </IconButton>
+        </Box>
+      )
     }
   ]
 
-  const handleSortModel = newModel => {
-    if (newModel.length) {
-      setSort(newModel[0].sort)
-      setSortColumn(newModel[0].field)
-      fetchTableData(newModel[0].sort, searchValue, newModel[0].field)
-    } else {
-      setSort('asc')
-      setSortColumn('full_name')
-    }
-  }
+
 
   const handleSearch = value => {
     setSearchValue(value)
@@ -152,6 +214,26 @@ const LeaveApply = () => {
     console.log('row', data)
     setOpen(true)
     setRow(data.row)
+  }
+
+  //delete
+
+  const handleDelete = () => {
+    try {
+      dispatch(deleteRequest(row?.id))
+        .then(unwrapResult)
+        .then(res => {
+          if (res.status === 200) {
+            setOpenAlert(!alert)
+            dispatch(fetchMyLeaves())
+            toast.success(res.data)
+          } else {
+            toast.error(res.data)
+          }
+        })
+    } catch (error) {
+      toast.error(res.data)
+    }
   }
 
   return (
@@ -177,7 +259,7 @@ const LeaveApply = () => {
               onSortModelChange={() => {}}
               loading={store.myLeaves ? false : true}
               onPaginationModelChange={setPaginationModel}
-              onRowClick={data => data.row.requestStatusId == 1 && handleRowSelection(data)}
+              onCellClick={data => (data.row.requestStatusId == 1  &&data.field != "action" )&& handleRowSelection(data)}
               slotProps={{
                 baseButton: {
                   variant: 'outlined'
@@ -193,6 +275,14 @@ const LeaveApply = () => {
         </Grid>
       </Grid>
       <DynamicEditLeaveRequest isOpen={isOpen} row={row} setOpen={setOpen} />
+      <DynamicDeleteAlert
+        open={alert}
+        setOpen={setOpenAlert}
+        title='Delete Request'
+        content='Are you confirm to delete request?'
+        action='Delete'
+        handleAction={handleDelete}
+      />
     </>
   )
 }

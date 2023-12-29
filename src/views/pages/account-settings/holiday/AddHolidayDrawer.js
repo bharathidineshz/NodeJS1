@@ -20,7 +20,7 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm, Controller } from 'react-hook-form'
 import DatePicker from 'react-datepicker'
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'
 
 // ** Styled Components
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
@@ -44,16 +44,12 @@ const Header = styled(Box)(({ theme }) => ({
 }))
 
 const schema = yup.object().shape({
-  date: yup
-    .date()
-    .required("Holiday date is required"),
-  leaveDescription: yup
-    .string()
-    .required('Leave description is required'),
+  date: yup.date().required('Holiday date is required'),
+  leaveDescription: yup.string().required('Leave description is required')
 })
 
 const defaultValues = {
-  date: null,
+  date: new Date(),
   leaveDescription: ''
 }
 
@@ -79,7 +75,7 @@ const SidebarAddHoliday = props => {
 
   const onSubmit = data => {
     var date = dayjs(data.date).format('YYYY-MM-DD')
-    data.date = date;
+    data.date = date
     var holidayArray = [data]
     console.log(holidayArray)
     dispatch(addHoliday(holidayArray))
@@ -90,6 +86,12 @@ const SidebarAddHoliday = props => {
   const handleClose = () => {
     toggle()
     reset({})
+  }
+
+  const isWeekday = date => {
+    const day = new Date(date).getDay()
+
+    return day !== 0 && day !== 6
   }
 
   return (
@@ -117,20 +119,21 @@ const SidebarAddHoliday = props => {
               render={({ field: { value, onChange } }) => (
                 <DatePickerWrapper>
                   <DatePicker
-                    onChange={(date) => { onChange(date) }}
+                    onChange={date => {
+                      onChange(date)
+                    }}
                     selected={value}
+                    filterDate={isWeekday}
                     customInput={
-                      <CustomInput
-                        label='Holiday Date'
-                        fullWidth
-                        error={Boolean(errors.date)}
-                      />
+                      <CustomInput label='Holiday Date' fullWidth error={Boolean(errors.date)} />
                     }
                   />
                 </DatePickerWrapper>
               )}
             />
-            {errors.date && <FormHelperText sx={{ color: 'error.main' }}>Holiday date is required</FormHelperText>}
+            {errors.date && (
+              <FormHelperText sx={{ color: 'error.main' }}>Holiday date is required</FormHelperText>
+            )}
           </FormControl>
           <FormControl fullWidth sx={{ mb: 6 }}>
             <Controller
@@ -147,7 +150,11 @@ const SidebarAddHoliday = props => {
                 />
               )}
             />
-            {errors.leaveDescription && <FormHelperText sx={{ color: 'error.main' }}>Leave description is required</FormHelperText>}
+            {errors.leaveDescription && (
+              <FormHelperText sx={{ color: 'error.main' }}>
+                Leave description is required
+              </FormHelperText>
+            )}
           </FormControl>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Button size='large' type='submit' variant='contained' sx={{ mr: 3 }}>

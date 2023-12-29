@@ -55,7 +55,7 @@ const LeaveDetails = () => {
   useEffect(() => {
     const _data = []
     const colors = CHART_COLORS(theme)
-    store.dashboards.totalLeaves?.forEach((p, i) => {
+    store.dashboards?.forEach((p, i) => {
       _data.push({
         name: p.name,
         value: p.balanceCount,

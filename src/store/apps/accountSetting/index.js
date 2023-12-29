@@ -9,9 +9,7 @@ import toast from 'react-hot-toast'
 
 // ** Fetch Hoildays
 export const fetchHolidays = createAsyncThunk('/account-settings/holidaymanagement/getHoliday', async params => {
-  const response = await instance.get(endpoints.getHolidayRequests, {
-    params
-  })
+  const response = await instance.get(endpoints.getHolidayRequests)
 
   return response.data
 })
@@ -38,30 +36,22 @@ export const updateHoliday = createAsyncThunk('/account-settings/holidaymanageme
 
     const response = await instance.put(endpoints.updateHolidayRequests, event)
 
-    await dispatch(fetchHolidays())
-    toast.success("Holiday Entry Updated succesfully")
-
-    return response.data.event
+    return response
 
   } catch (error) {
-    toast.error(error.message)
-
-    return error.message
+    return error
   }
 })
 
 // ** Delete Holiday
 export const deleteHoliday = createAsyncThunk('/account-settings/holidaymanagement/deleteHoliday', async (event, { dispatch }) => {
   try {
-    const response = await instance.delete(endpoints.deleteHolidayRequests, { data: event })
-    await dispatch(fetchHolidays())
-    toast.success("Holiday Entry Deleted succesfully")
+    const response = await instance.delete(endpoints.deleteHolidayRequests, {data: event})
 
-    return response.data.event
+    return response
 
   } catch (error) {
-    toast.error(error.message)
-
+   
     return error.message
   }
 })

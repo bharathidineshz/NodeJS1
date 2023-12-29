@@ -48,6 +48,8 @@ import axios from 'axios'
 import { endpointURL, endpoints } from 'src/store/endpoints/endpoints'
 import toast from 'react-hot-toast'
 import { base } from 'src/store/endpoints/interceptor'
+import { useDispatch, useSelector } from 'react-redux'
+import { setUserRoleId } from 'src/store/apps/user'
 
 // ** Styled Components
 const LoginIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -120,6 +122,8 @@ const LoginPage = () => {
   const { settings } = useSettings()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
   const router = useRouter()
+  const dispatch = useDispatch();
+  const store = useSelector(state=> state.user);
 
   // ** Vars
   const { skin } = settings
@@ -142,6 +146,7 @@ const LoginPage = () => {
       window.localStorage.setItem('accessToken', response.data.accessToken)
       const userData = jwt.decode(response.data.accessToken, { complete: true }).payload
       window.localStorage.setItem('userData', JSON.stringify(userData))
+      dispatch(setUserRoleId(userData?.roleId))
       JSON.parse(userData.org)
         ? router.replace({
             pathname: '/apps/timesheets'

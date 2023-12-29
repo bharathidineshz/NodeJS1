@@ -233,6 +233,29 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
               </DatePickerWrapper>
             </Grid>
 
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='carryForwardCount'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField
+                      value={value}
+                      label='Carry forward count'
+                      onChange={onChange}
+                    />
+                  )}
+                />
+                {errors.carryForwardCount && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.carryForwardCount.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+          
+
             <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl>
                 <Controller
@@ -256,7 +279,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={4} md={4} lg={4}>
+            <Grid item xs={12}sm={8} md={8} lg={8}>
               <FormControl fullWidth>
                 <Controller
                   name='allowanceTime'
@@ -275,28 +298,6 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                 {(watch('isPermission') ? errors.hours : errors.days) && (
                   <FormHelperText sx={{ color: 'error.main' }}>
                     {watch('isPermission') ? errors.hours.message : errors.days.message}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={4} md={4} lg={4}>
-              <FormControl fullWidth>
-                <Controller
-                  name='carryForwardCount'
-                  control={control}
-                  rules={{ required: false }}
-                  render={({ field: { value, onChange } }) => (
-                    <TextField
-                      value={value}
-                      label='Carry forward count'
-                      onChange={onChange}
-                    />
-                  )}
-                />
-                {errors.carryForwardCount && (
-                  <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.carryForwardCount.message}
                   </FormHelperText>
                 )}
               </FormControl>
@@ -338,10 +339,11 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <Select
-                      value={value}
+                    value={watch('level1') === 3 ? '' : value}
                       label='Level 2'
                       onChange={onChange}
                       defaultValue={2}
+                      disabled={watch('level1') === 3}
                       labelId='demo-select-small-label'
                       aria-describedby='stepper-linear-client'
                     >

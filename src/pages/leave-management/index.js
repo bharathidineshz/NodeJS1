@@ -28,6 +28,7 @@ import { Button } from '@mui/material'
 import LeaveApplyForm from 'src/views/leave-management/apply/LeaveApplyForm'
 import NewLeavePolicy from 'src/views/leave-management/leave-policy/NewLeavePolicy'
 import Holidays from 'src/views/leave-management/holidays'
+import { useSelector } from 'react-redux'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
   '& .MuiTabs-indicator': {
@@ -59,6 +60,7 @@ const LeaveManagement = ({ tab, data }) => {
   // ** Hooks
   const router = useRouter()
   const hideText = useMediaQuery(theme => theme.breakpoints.down('sm'))
+  const store = useSelector(state => state.user)
 
   const handleChange = (event, value) => {
     setIsLoading(true)
@@ -81,23 +83,35 @@ const LeaveManagement = ({ tab, data }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
-  const tabContentList = {
-    'my leaves': <LeaveApply />,
-    // 'all requests': <AllRequests />,
-    approval: <Approval />,
-    reports: <LeaveReports />,
-    leave_policy: <LeavePolicy />,
-    holidays: <Holidays />,
-  }
+  const tabContentList =
+    store.userRoleId == 1 || store.userRoleId == 2 || store.userRoleId == 3
+      ? {
+          'my leaves': <LeaveApply />,
+          // 'all requests': <AllRequests />,
+          approval: <Approval />,
+          reports: <LeaveReports />,
+          leave_policy: <LeavePolicy />,
+          holidays: <Holidays />
+        }
+      : {
+          'my leaves': <LeaveApply />,
+          approval: <Approval />
+        }
 
-  const tabs = [
-    { name: 'my leaves', icon: 'mdi:calendar-alert' },
-    // { name: 'all requests', icon: 'mdi:calendar-outline' },
-    { name: 'approval', icon: 'mdi:check-decagram' },
-    { name: 'reports', icon: 'mdi:chart-box' },
-    { name: 'leave_policy', icon: 'mdi:text-box-multiple-outline' },
-    { name: 'holidays', icon: 'mdi:toggle-switch-off-outline' }
-  ]
+  const tabs =
+    store.userRoleId == 1 || store.userRoleId == 2 || store.userRoleId == 3
+      ? [
+          { name: 'my leaves', icon: 'mdi:calendar-alert' },
+          // { name: 'all requests', icon: 'mdi:calendar-outline' },
+          { name: 'approval', icon: 'mdi:check-decagram' },
+          { name: 'reports', icon: 'mdi:chart-box' },
+          { name: 'leave_policy', icon: 'mdi:text-box-multiple-outline' },
+          { name: 'holidays', icon: 'mdi:toggle-switch-off-outline' }
+        ]
+      : [
+          { name: 'my leaves', icon: 'mdi:calendar-alert' },
+          { name: 'approval', icon: 'mdi:check-decagram' }
+        ]
 
   return (
     <Grid container spacing={6}>

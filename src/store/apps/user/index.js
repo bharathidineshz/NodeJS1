@@ -67,7 +67,8 @@ export const appUsersSlice = createSlice({
     params: {},
     allData: [],
     skills: [],
-    userId: 0
+    userId: 0,
+    userRoleId: 0,
   },
   reducers: {
     setLoggedInUser: (state, action) => {
@@ -75,6 +76,10 @@ export const appUsersSlice = createSlice({
     },
     setUserId: (state, { payload }) => {
       state.userId = payload
+    },
+    setUserRoleId: (state,{payload})=>{
+      state.userRoleId = payload ? Number(payload) : 0
+
     }
   },
   extraReducers: builder => {
@@ -91,6 +96,6 @@ export const appUsersSlice = createSlice({
   }
 })
 
-export const { setLoggedInUser, setUserId } = appUsersSlice.actions
+export const { setLoggedInUser, setUserId,setUserRoleId } = appUsersSlice.actions
 
 export default appUsersSlice.reducer

@@ -47,6 +47,7 @@ import {
   fetchStatus,
   fetchUsers,
   postLeaveApproval,
+  putRequestApproval,
   setLeaveApproval
 } from 'src/store/leave-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
@@ -57,56 +58,6 @@ const Approval = () => {
   const [total, setTotal] = useState(0)
   const [comment, setComment] = useState('')
 
-  const [rows, setRows] = useState([
-    {
-      id: 1,
-      date: new Date().toDateString(),
-      userName: 'Chanakya Jayabalan',
-      email: 'chanakya.jayabalan@athen.tech',
-      status: 'Pending',
-      request: 'Permission',
-      reason: 'Going Hospital',
-      image: '/images/avatars/1.png',
-      fromDate: new Date().toDateString(),
-      toDate: new Date().toDateString()
-    },
-    {
-      id: 2,
-      request: 'Sick Leave',
-      date: new Date().toDateString(),
-      status: 'Pending',
-      userName: 'Dhineshkumar Selvam',
-      email: 'dhinesh.selvam@athen.tech',
-      image: '/images/avatars/2.png',
-      reason: 'Fever',
-      fromDate: new Date().toDateString(),
-      toDate: new Date().toDateString()
-    },
-    {
-      id: 3,
-      request: 'Casual Leave',
-      date: new Date().toDateString(),
-      status: 'Approved',
-      userName: 'Naveenkumar Mounasamy',
-      email: 'naveen.mounasamy@athen.tech',
-      image: '/images/avatars/3.png',
-      reason: 'Festival celeberation in hometown',
-      fromDate: new Date().toDateString(),
-      toDate: new Date().toDateString()
-    },
-    {
-      id: 4,
-      request: 'Work From Home',
-      date: new Date().toDateString(),
-      status: 'Rejected',
-      userName: 'Dhivya Kumarasamy',
-      email: 'dhivya.kumarasamy@athen.tech',
-      image: '/images/avatars/4.png',
-      reason: 'Powercut in Office',
-      fromDate: new Date().toDateString(),
-      toDate: new Date().toDateString()
-    }
-  ])
   const [isLoading, setLoading] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [filteredRows, setFilteredRows] = useState([])
@@ -123,27 +74,16 @@ const Approval = () => {
   const theme = useTheme()
 
   useEffect(() => {
-    dispatch(fetchPolicies())
     dispatch(fetchUsers())
-      .then(unwrapResult)
-      .then(res => {
-        dispatch(fetchStatus())
-        dispatch(fetchApprovals())
-      })
+    dispatch(fetchApprovals())
   }, [dispatch])
 
   const columns = [
     {
-      flex: 0.05,
-      field: 'id',
-      minWidth: 80,
-      headerName: 'Id'
-    },
-    {
       flex: 0.35,
-      field: 'user',
+      field: 'userName',
       headerName: 'User',
-      renderCell: ({ row, value }) => {
+      renderCell: ({ row }) => {
         return (
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
             <CustomAvatar
@@ -152,11 +92,11 @@ const Approval = () => {
               color='primary'
               sx={{ mr: 3, fontSize: '.8rem', width: '1.875rem', height: '1.875rem' }}
             >
-              {getInitials(value ? value.fullName : 'Unknown User')}
+              {getInitials(row.userName ? row.userName : 'Unknown User')}
             </CustomAvatar>
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Typography variant=''>{value?.fullName}</Typography>
-              <Typography variant='caption'>{value?.email}</Typography>
+              <Typography variant=''>{row?.userName}</Typography>
+              <Typography variant='caption'>{row?.email}</Typography>
             </Box>
           </Box>
         )
@@ -169,9 +109,10 @@ const Approval = () => {
       field: 'request'
     },
     {
-      flex: 0.3,
+      flex: 0.2,
       headerName: 'Reason',
-      field: 'requestReason'
+      field: 'requestReason',
+      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
       flex: 0.175,
@@ -195,42 +136,49 @@ const Approval = () => {
       flex: 0.175,
       minWidth: 110,
       field: 'comment',
-      headerName: 'Comment'
+      headerName: 'Comment',
+      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
-      flex: 0.3,
+      flex: 0.23,
       sortable: false,
-      field: 'requestStatusId',
+      field: 'status',
       headerName: 'Status',
-      align: 'center',
-      renderCell: params => (
-        <Box columnGap={2} sx={{ display: 'flex', alignItems: 'center' }}>
-          {params.value === 1 ? (
-            <>
-              <Button
-                size='small'
-                variant='contained'
-                onClick={handleApproval(params.row, '')}
-                color='error'
-              >
-                Reject
-              </Button>
-              <Button
-                size='small'
-                variant='contained'
-                onClick={handleApproval(params.row, 'Approved')}
-                color='success'
-              >
-                Approve
-              </Button>
-            </>
-          ) : params.value === 2 ? (
-            <CustomChip size='small' label='Approved' skin='light' color='success' />
-          ) : (
-            <CustomChip size='small' label='Rejected' skin='light' color='error' />
-          )}
-        </Box>
-      )
+      align: 'left',
+      renderCell: params => {
+        return (
+          <Box columnGap={2} sx={{ display: 'flex' }}>
+            {params.row.requestStatusId === 2 ? (
+              <CustomChip size='small' label='Approved' skin='light' color='success' />
+            ) : params.row.requestStatusId === 3 ? (
+              <CustomChip size='small' label='Rejected' skin='light' color='error' />
+            ) : (
+              <Box className='gap-1' sx={{ display: 'flex', alignItems: 'center' }}>
+                <>
+                  <Button
+                    size='small'
+                    variant='contained'
+                    onClick={handleApproval(params.row, '')}
+                    color='error'
+                    sx={{ fontSize: 12 }}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    size='small'
+                    variant='contained'
+                    onClick={handleApproval(params.row, 'Approved')}
+                    color='success'
+                    sx={{ fontSize: 12 }}
+                  >
+                    Approve
+                  </Button>
+                </>
+              </Box>
+            )}
+          </Box>
+        )
+      }
     }
   ]
 
@@ -253,12 +201,13 @@ const Approval = () => {
         ? document.getElementById('Comment').value
         : ''
       const req = {
+        ..._row,
         comment: _comment,
-        statusId: name == 'Approved' ? 2 : name == 'Rejected' ? 3 : 1,
-        ..._row
+        leaveStatusId: name == 'Approved' ? 2 : name == 'Rejected' ? 3 : 1,
+        approvalLevelId: _row.currentLevelId === 1 ? 2 : 1
       }
       const request = approvalRequest(req)
-      dispatch(postLeaveApproval(request))
+      dispatch(putRequestApproval(request))
         .then(unwrapResult)
         .then(res => {
           if (res.status === 200 || res.status === 201) {
@@ -286,8 +235,9 @@ const Approval = () => {
     const filteredRows = store.approvals.filter(
       o =>
         o.requestReason.toLowerCase().trim().includes(value) ||
-        o.user.fullName.toLowerCase().trim().includes(value) ||
-        o.user.email.toLowerCase().trim().includes(value)
+        o.userName.toLowerCase().trim().includes(value) ||
+        o.email.toLowerCase().trim().includes(value) ||
+        o.comment.toLowerCase().trim().includes(value)
     )
     setFilteredRows(filteredRows)
   }
@@ -300,79 +250,73 @@ const Approval = () => {
 
   return (
     <>
-      {isLoading ? (
-        <FallbackSpinner />
-      ) : (
-        <>
-          <Card>
-            <DataGrid
-              autoHeight
-              pagination
-              rows={searchValue ? filteredRows : store.approvals}
-              rowCount={store.approvals ? store.approvals.length : 0}
-              columns={columns}
-              sortingMode='server'
-              rowSelection={false}
-              onRowClick={() => {}}
-              pageSizeOptions={[5, 10, 25, 50, 100]}
-              onSortModelChange={handleSortModel}
-              slots={{
-                toolbar: () => {
-                  return <Toolbar isExport searchValue={searchValue} handleFilter={handleSearch} />
-                }
-              }}
-              loading={store.approvals ? false : true}
-              slotProps={{
-                baseButton: {
-                  variant: 'outlined'
-                },
-                toolbar: {
-                  value: searchValue,
-                  clearSearch: () => handleSearch(''),
-                  onChange: event => handleSearch(event.target.value)
-                }
-              }}
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 25
-                  }
-                }
-              }}
-              className='no-border'
-            />
-          </Card>
+      <Card>
+        <DataGrid
+          autoHeight
+          pagination
+          rows={searchValue ? filteredRows : store.approvals}
+          rowCount={store.approvals ? store.approvals.length : 0}
+          columns={columns}
+          sortingMode='server'
+          rowSelection={false}
+          onRowClick={() => {}}
+          pageSizeOptions={[5, 10, 25, 50, 100]}
+          onSortModelChange={handleSortModel}
+          slots={{
+            toolbar: () => {
+              return <Toolbar isExport searchValue={searchValue} handleFilter={handleSearch} />
+            }
+          }}
+          loading={store.approvals ? false : true}
+          slotProps={{
+            baseButton: {
+              variant: 'outlined'
+            },
+            toolbar: {
+              value: searchValue,
+              clearSearch: () => handleSearch(''),
+              onChange: event => handleSearch(event.target.value)
+            }
+          }}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 25
+              }
+            }
+          }}
+          className='no-border'
+        />
+      </Card>
 
-          <Dialog
-            open={respond.isOpenDialog}
-            onClose={handleClose}
-            aria-labelledby='form-dialog-title'
-            maxWidth='sm'
+      <Dialog
+        open={respond.isOpenDialog}
+        onClose={handleClose}
+        aria-labelledby='form-dialog-title'
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle id='form-dialog-title'>Comment</DialogTitle>
+        <DialogContent>
+          <TextField
+            key='comment'
+            id='Comment'
             fullWidth
-          >
-            <DialogTitle id='form-dialog-title'>Comment</DialogTitle>
-            <DialogContent>
-              <TextField
-                key='comment'
-                id='Comment'
-                fullWidth
-                minRows={2}
-                multiline
-                autoFocus
-                sx={{ mt: 4 }}
-              />
-            </DialogContent>
-            <DialogActions className='dialog-actions-dense'>
-              <Button variant='outlined' onClick={handleClose}>
-                Discard
-              </Button>
-              <Button variant='contained' color='error' onClick={handleApproval({}, 'Rejected')}>
-                Reject
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </>
-      )}
+            minRows={2}
+            multiline
+            autoFocus
+            sx={{ mt: 4 }}
+          />
+        </DialogContent>
+        <DialogActions className='dialog-actions-dense'>
+          <Button variant='outlined' onClick={handleClose}>
+            Discard
+          </Button>
+          <Button variant='contained' color='error' onClick={handleApproval({}, 'Rejected')}>
+            Reject
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }

@@ -22,6 +22,7 @@ import instance, { base } from 'src/store/endpoints/interceptor'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import { endpoints } from 'src/store/endpoints/endpoints'
+import axios from 'axios'
 
 const DynamicEditLeavePolicy = dynamic(
   () => import('src/views/leave-management/leave-policy/EditLeavePolicy'),
@@ -40,7 +41,7 @@ const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/Del
   }
 })
 
-const LeavePolicy = ({ policies }) => {
+const LeavePolicy = ({ data }) => {
   // ** States
   const [isLoading, setLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
@@ -105,7 +106,8 @@ const LeavePolicy = ({ policies }) => {
     },
     {
       flex: 0.08,
-      headerName: 'Actions',
+      headerName: 'Action',
+      field: 'action',
       sortable: false,
       renderCell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -172,7 +174,7 @@ const LeavePolicy = ({ policies }) => {
     setFilteredRows(rows)
   }
 
-  const handleRowSelection = (data) => {
+  const handleRowSelection = data => {
     console.log('row', data)
     setOpen(true)
     setRowData(data.row)
@@ -191,7 +193,9 @@ const LeavePolicy = ({ policies }) => {
               rows={searchValue ? filteredRows : store.policies}
               columns={columns}
               rowSelection={false}
-              onRowClick={handleRowSelection}
+              onCellClick={data =>
+                 data.field != 'action' && handleRowSelection(data)
+              }
               pageSizeOptions={[5, 10, 25, 50, 100]}
               className='no-border'
               slots={{
@@ -225,6 +229,22 @@ const LeavePolicy = ({ policies }) => {
       )}
     </>
   )
+}
+
+export async function getStaticProps() {
+  // Use Axios to fetch data from an API with headers
+  const response = await axios.get( base.url + endpoints.getLeavePolicy, {
+    headers: {
+      Authorization: `Bearer ${window.localStorage.getItem('accessToken')}`
+    }
+  })
+  const { data } = response
+
+  return {
+    props: {
+      data
+    }
+  }
 }
 
 export default LeavePolicy

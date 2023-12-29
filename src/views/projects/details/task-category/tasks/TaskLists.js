@@ -30,7 +30,15 @@ import {
 } from 'src/store/apps/projects'
 import toast from 'react-hot-toast'
 import { unwrapResult } from '@reduxjs/toolkit'
-import DeleteAlert from './DeleteAlert'
+import FallbackSpinner from 'src/layouts/components/LogoSpinner'
+import dynamic from 'next/dynamic'
+
+const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
+  ssr: false,
+  loading: () => {
+    return <FallbackSpinner />
+  }
+})
 
 const TaskLists = () => {
   const [isOpen, setOpen] = useState(false)
@@ -236,7 +244,7 @@ const TaskLists = () => {
         ))}
       <NewTask isOpen={isOpen} setOpen={setOpen} />
 
-      <DeleteAlert
+      <DynamicDeleteAlert
         open={openAlert}
         setOpen={setAlert}
         title='Delete Task'

@@ -100,16 +100,14 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
 
   //submit
 
-  const onSubmit = async (formData) => {
+  const onSubmit = async formData => {
     const req = leavePolicyRequest(formData)
     dispatch(postPolicy(req))
       .then(unwrapResult)
       .then(res => {
         dispatch(fetchPolicies())
         setOpen(false)
-        res.status === 200 || res.status === 201
-          ? toast.success(res.data)
-          : toast.error(res.data)
+        res.status === 200 || res.status === 201 ? toast.success(res.data) : toast.error(res.data)
         reset()
       })
   }
@@ -232,7 +230,23 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               </DatePickerWrapper>
             </Grid>
 
-          
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  name='carryForwardCount'
+                  control={control}
+                  rules={{ required: false }}
+                  render={({ field: { value, onChange } }) => (
+                    <TextField value={value} label='Carry forward count' onChange={onChange} />
+                  )}
+                />
+                {errors.carryForwardCount && (
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    {errors.carryForwardCount.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
 
             <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl>
@@ -257,7 +271,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}sm={4} md={4} lg={4}>
+            <Grid item xs={12} sm={8} md={8} lg={8}>
               <FormControl fullWidth>
                 <Controller
                   name='allowanceTime'
@@ -276,28 +290,6 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                 {(watch('isPermission') ? errors.hours : errors.days) && (
                   <FormHelperText sx={{ color: 'error.main' }}>
                     {watch('isPermission') ? errors.hours.message : errors.days.message}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={4} md={4} lg={4}>
-              <FormControl fullWidth>
-                <Controller
-                  name='carryForwardCount'
-                  control={control}
-                  rules={{ required: false }}
-                  render={({ field: { value, onChange } }) => (
-                    <TextField
-                      value={value}
-                      label='Carry forward count'
-                      onChange={onChange}
-                    />
-                  )}
-                />
-                {errors.carryForwardCount && (
-                  <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.carryForwardCount.message}
                   </FormHelperText>
                 )}
               </FormControl>
@@ -339,10 +331,11 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <Select
-                      value={value}
+                      value={watch('level1') === 3 ? '' : value}
                       label='Level 2'
                       onChange={onChange}
                       defaultValue={2}
+                      disabled={watch('level1') === 3}
                       labelId='demo-select-small-label'
                       aria-describedby='stepper-linear-client'
                     >
@@ -369,14 +362,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
             variant='outlined'
             color='secondary'
             onClick={() => {
-              reset({
-                typeOfLeave: '',
-                allowanceTime: 0,
-                allowanceCount: 0,
-                period: '',
-                isPermission: false,
-                carryForwardCount: 0
-              })
+              reset()
               setOpen(false)
             }}
           >

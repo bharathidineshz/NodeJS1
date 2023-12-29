@@ -26,7 +26,7 @@ const DeleteAlert = (props) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions className='dialog-actions-dense'>
-          <Button color='error' onClick={()=> setOpen(!open)}>Discard</Button>
+          <Button color='error' onClick={()=> setOpen(!open)}>Cancel</Button>
           <Button color="error" variant='contained' onClick={()=> handleAction()}>{action}</Button>
         </DialogActions>
       </Dialog>

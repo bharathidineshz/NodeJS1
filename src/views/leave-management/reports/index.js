@@ -19,23 +19,12 @@ import CustomAvatar from 'src/@core/components/mui/avatar'
 import { getInitials } from 'src/@core/utils/get-initials'
 import { AvatarGroup, Button, Grid, IconButton, Popover, Tooltip } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-  fetchProjects,
-  fetchUsers,
-  fetchClients,
-  setProject,
-  deleteProject,
-  getProjectDetails,
-  setSelectedProject
-} from 'src/store/apps/projects'
-import { Icon } from '@iconify/react'
-import OptionsMenu from 'src/@core/components/option-menu'
+import { getProjectDetails, setSelectedProject } from 'src/store/apps/projects'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import LeaveHeader from 'src/views/leave-management/LeaveHeader'
-import Toolbar from 'src/views/leave-management/toolBar'
-import Dashboard from '../dashboard/Dashboard'
 import ReportsHeader from './ReportsHeader'
+import { fetchPolicies, fetchStatus } from 'src/store/leave-management'
+import { formatLocalDate } from 'src/helpers/dateFormats'
 
 const LeaveReports = () => {
   // ** States
@@ -48,24 +37,66 @@ const LeaveReports = () => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
 
+  useEffect(() => {
+    dispatch(fetchPolicies())
+    dispatch(fetchStatus())
+  }, [])
+
   const columns = [
     {
       flex: 0.2,
       minWidth: 230,
-      field: 'name',
-      headerName: 'Request Type'
+      field: 'request',
+      headerName: 'Request Type',
+      renderCell: params => <div style={{fontWeight:'bold'}}>{params.value}</div>
     },
     {
       flex: 0.2,
-      minWidth: 250,
-      field: 'totalCount',
-      headerName: 'Total'
+      minWidth: 230,
+      field: 'requestReason',
+      headerName: 'Reason',
+      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
       flex: 0.15,
-      field: 'balanceCount',
-      minWidth: 150,
-      headerName: 'Remaining'
+      minWidth: 250,
+      field: 'duration',
+      headerName: 'Duration'
+    },
+    {
+      flex: 0.15,
+      field: 'fromDate',
+      headerName: 'From',
+      renderCell: params => <>{formatLocalDate(new Date(params.value))}</>
+    },
+    {
+      flex: 0.15,
+      field: 'toDate',
+      headerName: 'To',
+      renderCell: params => <>{formatLocalDate(new Date(params.value))}</>
+
+    },
+    {
+      flex: 0.15,
+      field: 'createdDate',
+      headerName: 'Date',
+      renderCell: params => <>{formatLocalDate(new Date(params.value))}</>
+
+    },
+    {
+      flex: 0.15,
+      field: 'statusName',
+      headerName: 'Status',
+      renderCell: params => {
+        return (
+          <CustomChip
+            size='small'
+            skin='light'
+            color={params.row.requestStatusId === 2 ? 'success' :params.row.requestStatusId === 3 ? 'error' : 'warning'}
+            label={params.value}
+          />
+        )
+      }
     }
   ]
 
@@ -120,7 +151,7 @@ const LeaveReports = () => {
             <DataGrid
               autoHeight
               pagination
-              rows={store.reports?.totalLeaves || []}
+              rows={store.reports || []}
               columns={columns}
               sortingMode='server'
               rowSelection={false}

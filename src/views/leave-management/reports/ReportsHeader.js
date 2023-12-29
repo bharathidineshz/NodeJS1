@@ -17,7 +17,7 @@ const ReportsHeader = () => {
   const [report, setReport] = useState({
     userId: 0,
     start: new Date(),
-    end: new Date(),
+    end: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
     isExportDisabled: true,
     isLoading: false
   })
@@ -30,9 +30,9 @@ const ReportsHeader = () => {
     setReport(prev => ({ ...prev, start: start, end: end }))
   }
 
-  const getReports = () => {
+  const getReports = async () => {
     setReport(report => ({ ...report, isLoading: true }))
-    dispatch(
+    await dispatch(
       fetchUserReports({
         userId: report.userId,
         fromDate: report.start?.toISOString(),
