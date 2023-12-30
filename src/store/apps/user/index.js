@@ -11,8 +11,9 @@ export const fetchUsers = createAsyncThunk('appUsers/fetchData', async params =>
 
   return response.data
 })
+
 export const fetchSkills = createAsyncThunk('fetchSkills/Skills', async params => {
-  const response = await instance.get(endpoints.getSkills)
+  const response = await instance.get(endpoints.skills)
 
   return response.data
 })
@@ -68,7 +69,7 @@ export const appUsersSlice = createSlice({
     allData: [],
     skills: [],
     userId: 0,
-    userRoleId: 0,
+    userRoleId: 0
   },
   reducers: {
     setLoggedInUser: (state, action) => {
@@ -77,9 +78,8 @@ export const appUsersSlice = createSlice({
     setUserId: (state, { payload }) => {
       state.userId = payload
     },
-    setUserRoleId: (state,{payload})=>{
+    setUserRoleId: (state, { payload }) => {
       state.userRoleId = payload ? Number(payload) : 0
-
     }
   },
   extraReducers: builder => {
@@ -96,6 +96,6 @@ export const appUsersSlice = createSlice({
   }
 })
 
-export const { setLoggedInUser, setUserId,setUserRoleId } = appUsersSlice.actions
+export const { setLoggedInUser, setUserId, setUserRoleId } = appUsersSlice.actions
 
 export default appUsersSlice.reducer

@@ -6,7 +6,7 @@ import {
   TextField,
   useMediaQuery
 } from '@mui/material'
-import React, { useState } from 'react'
+import React, { memo, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { useDispatch, useSelector } from 'react-redux'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
@@ -15,7 +15,7 @@ import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInpu
 
 const ReportsHeader = () => {
   const [report, setReport] = useState({
-    userId: 0,
+    user: null,
     start: new Date(),
     end: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
     isExportDisabled: true,
@@ -31,15 +31,13 @@ const ReportsHeader = () => {
   }
 
   const getReports = async () => {
-    setReport(report => ({ ...report, isLoading: true }))
     await dispatch(
       fetchUserReports({
-        userId: report.userId,
+        userId: report.user?.id,
         fromDate: report.start?.toISOString(),
         toDate: report.end?.toISOString()
       })
     )
-    setReport(report => ({ ...report, isLoading: false }))
   }
 
   return (
@@ -48,10 +46,9 @@ const ReportsHeader = () => {
         <Autocomplete
           options={store.users}
           id='autocomplete-limit-tags'
-          getOptionLabel={option => option.fullName || ''}
-          onChange={(e, value) =>
-            setReport(report => ({ ...report, userId: value ? value.id : 0 }))
-          }
+          getOptionLabel={option => option.fullName}
+          value={report.user}
+          onChange={(e, value) => setReport(report => ({ ...report, user: value }))}
           renderInput={params => <TextField {...params} label='Search User' placeholder='User' />}
         />
       </Grid>
@@ -80,15 +77,10 @@ const ReportsHeader = () => {
           gap: 4
         }}
       >
-        <Button variant='outlined' color='secondary' disabled={report.isExportDisabled}>
+        {/* <Button variant='outlined' color='secondary' disabled={report.isExportDisabled}>
           Export
-        </Button>
-        <Button
-          variant='contained'
-          onClick={getReports}
-          disabled={!report.userId}
-          startIcon={report.isLoading && <CircularProgress />}
-        >
+        </Button> */}
+        <Button variant='contained' onClick={getReports} disabled={report.user == null}>
           Get Report
         </Button>
       </Grid>

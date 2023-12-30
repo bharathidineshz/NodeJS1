@@ -36,6 +36,18 @@ export const organizationRequest = req => {
   return request
 }
 
+//CONFIGURATIONS
+
+export const settingsRequest = req => {
+  const request = {
+    currency: req.currency?.cc,
+    workingdays: [req.startWeekDay, req.endWeekDay].join('-'),
+    timeZone: req.timezone?.offset
+  }
+
+  return request
+}
+
 //USERS
 
 export const userRequest = req => {
@@ -218,7 +230,6 @@ export const myLeaveRequest = req => {
 }
 
 export const approvalRequest = req => {
-
   const request = {
     leaveRequestApprovalId: req.leaveRequestApprovalId,
     leaveRequestId: req.id,

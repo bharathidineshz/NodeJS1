@@ -5,7 +5,7 @@ import { Avatar, Box, Chip } from '@mui/material'
 import CustomChip from 'src/@core/components/mui/chip'
 import { getInitials } from 'src/@core/utils/get-initials'
 
-const CustomSkillPicker = ({ values, items, label, setSkills, ...rest }) => {
+const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete ,originalItems}) => {
   const [selectedValues, setSelectedValues] = React.useState([])
   const [fieldValue, setFieldValue] = React.useState([])
   const [options, setOptions] = React.useState([])
@@ -18,27 +18,27 @@ const CustomSkillPicker = ({ values, items, label, setSkills, ...rest }) => {
     var _options = [...options]
     const values = [...selectedValues.flat(), newValue[0]]
     setSelectedValues(values.flat())
-    const index = _options.findIndex(o => o.skillName === newValue[0].skillName)
+    const index = _options.findIndex(o => o.fullName === newValue[0].fullName)
     _options.splice(index, 1)
     setOptions(_options)
-    setSkills && setSkills(values.flat())
+    onSelect(name, values.flat())
   }
 
   const handleDelete = selectedValue => {
     const values = [...selectedValues]
-    const person = items.find(o => o.skillName === selectedValue.skillName)
-    const indx = values.findIndex(o => o.skillName === selectedValue.skillName)
+    const person = originalItems.find(o => o.fullName === selectedValue.fullName)
+    const Hr = HRs.find(o => o.userId === selectedValue.id)
+    const indx = values.findIndex(o => o.fullName === selectedValue.fullName)
     values.splice(indx, 1)
     !options.includes(person) && options.push(person)
     setOptions(options)
+    onDelete(Hr?.id)
     setSelectedValues(values)
-    setSkills && setSkills(values)
   }
 
   return (
     <Box>
       <Autocomplete
-        {...rest}
         multiple
         fullWidth
         limitTags={3}
@@ -47,7 +47,7 @@ const CustomSkillPicker = ({ values, items, label, setSkills, ...rest }) => {
         value={fieldValue}
         onChange={handleChange}
         options={options}
-        getOptionLabel={option => option.skillName}
+        getOptionLabel={option => option.fullName}
         renderInput={params => <TextField {...params} label={label} />}
       />
       <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 3 }}>
@@ -55,10 +55,11 @@ const CustomSkillPicker = ({ values, items, label, setSkills, ...rest }) => {
           return (
             <Chip
               key={key}
+              avatar={<Avatar src={`/images/avatars/${key + 1}.png`} />}
               color='primary'
-              variant='filled'
+              variant='outlined'
               onDelete={() => handleDelete(selectedValue)}
-              label={selectedValue.skillName}
+              label={selectedValue.fullName}
               size='small'
               sx={{ m: 1.5 }}
             />
@@ -69,4 +70,4 @@ const CustomSkillPicker = ({ values, items, label, setSkills, ...rest }) => {
   )
 }
 
-export default React.memo(CustomSkillPicker)
+export default React.memo(CustomHRPicker)

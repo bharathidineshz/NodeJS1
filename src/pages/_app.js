@@ -83,9 +83,6 @@ const App = props => {
     Component.getLayout ??
     (page => <UserLayout contentHeightFixed={contentHeightFixed}>{page}</UserLayout>)
   const setConfig = Component.setConfig ?? undefined
-  const authGuard = Component.authGuard ?? true
-  const guestGuard = Component.guestGuard ?? false
-  const aclAbilities = Component.acl ?? defaultACLObj
 
   const router = useRouter()
 
@@ -126,6 +123,7 @@ const App = props => {
                   <ReactHotToast>
                     <Toaster
                       position={settings.toastPosition}
+                      duration={settings.toastDuration}
                       toastOptions={{ className: 'react-hot-toast' }}
                     />
                   </ReactHotToast>

@@ -10,7 +10,7 @@ import { GridToolbarExport } from '@mui/x-data-grid'
 import Icon from 'src/@core/components/icon'
 
 const Toolbar = props => {
-  const { btnName, isBtn, isExport, onClick, handleFilter, searchValue } = props
+  const { btnName, isBtn, isExport, onClick, handleFilter, searchValue, label } = props
 
   return (
     <Box
@@ -32,7 +32,14 @@ const Toolbar = props => {
       )}
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
-        <TextField size='small' autoFocus sx={{ mr: 4 }} value={searchValue} placeholder='Search Requests' onChange={e => handleFilter(e.target.value)} />
+        <TextField
+          size='small'
+          autoFocus
+          sx={{ mr: 4 }}
+          value={searchValue}
+          placeholder={`Search ${label}`}
+          onChange={e => handleFilter(e.target.value)}
+        />
         {isBtn && (
           <Button variant='contained' onClick={onClick}>
             {btnName}

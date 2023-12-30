@@ -43,6 +43,7 @@ import FallbackSpinner from 'src/layouts/components/LogoSpinner'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import { unwrapResult } from '@reduxjs/toolkit'
+import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
   ssr: false,
@@ -58,9 +59,6 @@ const Holidays = ({ popperPlacement }) => {
   const [row, setRowData] = useState({})
   const [rows, setRows] = useState([])
   const [addUserOpen, setAddUserOpen] = useState(false)
-  const [renderDatagrid, setRenderDatagrid] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(null)
-  const [leaveDescription, setLeaveDescription] = useState(null)
   const [isLoading, setLoading] = useState(false)
   const [formOpen, setForm] = useState(false)
   const [alert, setAlert] = useState(false)
@@ -82,7 +80,8 @@ const Holidays = ({ popperPlacement }) => {
       flex: 1,
       field: 'leaveDescription',
       headerName: 'Description',
-      editable: true
+      editable: true,
+      renderCell: params => <div style={{ fontWeight: '600' }}>{params.value}</div>
     },
     {
       flex: 0.3,
@@ -135,14 +134,12 @@ const Holidays = ({ popperPlacement }) => {
 
   const handleSearch = value => {
     setSearchValue(value)
-    const filteredRows = rows.filter(o =>
-      o.leaveDescription.toLowerCase().trim().includes(value) ||
-      o.date.toDateString().includes(value) 
-    )
+    const filteredRows = rows.filter(o => o.leaveDescription.trim().includes(value))
     setFilteredRows(filteredRows)
   }
 
   const handleDelete = () => {
+    setAlert(false)
     try {
       dispatch(
         deleteHoliday([
@@ -156,16 +153,14 @@ const Holidays = ({ popperPlacement }) => {
         .then(unwrapResult)
         .then(res => {
           if (res?.status == 200 || res.status == 201) {
-            setAlert(false)
-            toast.success(res.data)
+            customSuccessToast(res.data)
             dispatch(fetchHolidays())
           } else {
-            setAlert(true)
-            toast.error(res.data)
+            customErrorToast(res.data)
           }
         })
     } catch (error) {
-      toast.error(error)
+      customErrorToast(res.data)
     }
   }
 
@@ -198,15 +193,26 @@ const Holidays = ({ popperPlacement }) => {
         <Grid>
           <DataGrid
             autoHeight
+            pagination
             rows={searchValue ? filteredRows : rows || []}
             columns={columns}
             disableRowSelectionOnClick
             onRowClick={handleRowClick}
-            pageSizeOptions={[10, 25, 50]}
+            pageSizeOptions={[5, 10, 25, 50, 100]}
+            localeText={{ noRowsLabel: 'No Holiday' }}
+            loading={rows == null || rows?.length == 0}
+            disableColumnMenu
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 10
+                }
+              }
+            }}
           />
         </Grid>
       </DatePickerWrapper>
-      <SidebarAddHoliday open={addUserOpen} toggle={toggleAddUserDrawer}></SidebarAddHoliday>
+      <SidebarAddHoliday open={addUserOpen} holidays={rows} toggle={toggleAddUserDrawer}></SidebarAddHoliday>
       <HolidayForm isOpen={formOpen} row={row} setOpen={setForm} />
       <DynamicDeleteAlert
         open={alert}

@@ -1,19 +1,17 @@
 // ** Third Party Imports
 import axios from 'axios'
+import FallbackSpinner from 'src/layouts/components/LogoSpinner'
 import LeaveManagement from 'src/pages/leave-management/'
-import { endpoints } from 'src/store/endpoints/endpoints'
-import instance from 'src/store/endpoints/interceptor'
-import { fetchPolicies } from 'src/store/leave-management'
 
 // ** Demo Components Imports
 
 const LeaveManagementTab = ({ tab, data }) => {
-  return <LeaveManagement tab={tab} data={data} />
+  return tab ? <LeaveManagement tab={tab} data={data} /> : <FallbackSpinner />
 }
 
 export const getStaticPaths = () => {
   return {
-    paths:  [
+    paths: [
       { params: { tab: 'my leaves' } },
       { params: { tab: 'approval' } },
       { params: { tab: 'reports' } },
@@ -25,11 +23,10 @@ export const getStaticPaths = () => {
 }
 
 export const getStaticProps = async ({ params }) => {
-
   return {
     props: {
-      tab: params?.tab,
-    },
+      tab: params?.tab
+    }
   }
 }
 

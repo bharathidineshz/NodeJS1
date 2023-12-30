@@ -17,8 +17,13 @@ const initialSettings = {
   navCollapsed: themeConfig.navCollapsed,
   contentWidth: themeConfig.contentWidth,
   toastPosition: themeConfig.toastPosition,
+  toastDuration: themeConfig.toastDuration,
+
   verticalNavToggleType: themeConfig.verticalNavToggleType,
-  appBar: themeConfig.layout === 'horizontal' && themeConfig.appBar === 'hidden' ? 'fixed' : themeConfig.appBar
+  appBar:
+    themeConfig.layout === 'horizontal' && themeConfig.appBar === 'hidden'
+      ? 'fixed'
+      : themeConfig.appBar
 }
 
 const staticSettings = {
@@ -27,7 +32,8 @@ const staticSettings = {
   layout: initialSettings.layout,
   navHidden: initialSettings.navHidden,
   lastLayout: initialSettings.lastLayout,
-  toastPosition: initialSettings.toastPosition
+  toastPosition: initialSettings.toastPosition,
+  toastDuration: themeConfig.toastDuration
 }
 
 const restoreSettings = () => {
@@ -55,6 +61,7 @@ const storeSettings = settings => {
   delete initSettings.navHidden
   delete initSettings.lastLayout
   delete initSettings.toastPosition
+  delete initSettings.toastDuration
   window.localStorage.setItem('settings', JSON.stringify(initSettings))
 }
 
@@ -92,7 +99,11 @@ export const SettingsProvider = ({ children, pageSettings }) => {
     setSettings(updatedSettings)
   }
 
-  return <SettingsContext.Provider value={{ settings, saveSettings }}>{children}</SettingsContext.Provider>
+  return (
+    <SettingsContext.Provider value={{ settings, saveSettings }}>
+      {children}
+    </SettingsContext.Provider>
+  )
 }
 
 export const SettingsConsumer = SettingsContext.Consumer

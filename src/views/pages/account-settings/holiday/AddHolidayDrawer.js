@@ -55,10 +55,11 @@ const defaultValues = {
 
 const SidebarAddHoliday = props => {
   // ** Props
-  const { open, toggle } = props
+  const { open, toggle, holidays } = props
 
   // ** Hooks
   const dispatch = useDispatch()
+  const [existError, setExistError] = useState(false)
 
   const {
     reset,
@@ -73,11 +74,23 @@ const SidebarAddHoliday = props => {
     resolver: yupResolver(schema)
   })
 
+  function isExistHoliday(array, value) {
+    return array.some(obj => Object.values(obj).includes(value))
+  }
+
   const onSubmit = data => {
     var date = dayjs(data.date).format('YYYY-MM-DD')
     data.date = date
     var holidayArray = [data]
     console.log(holidayArray)
+    const isExist = isExistHoliday(holidays, data.leaveDescription?.trim())
+
+    if (isExist) {
+      setExistError(true)
+
+      return
+    }
+    setExistError(false)
     dispatch(addHoliday(holidayArray))
     toggle()
     reset({})
@@ -85,7 +98,8 @@ const SidebarAddHoliday = props => {
 
   const handleClose = () => {
     toggle()
-    reset({})
+    setExistError(false)
+    reset()
   }
 
   const isWeekday = date => {
@@ -123,7 +137,6 @@ const SidebarAddHoliday = props => {
                       onChange(date)
                     }}
                     selected={value}
-                    filterDate={isWeekday}
                     customInput={
                       <CustomInput label='Holiday Date' fullWidth error={Boolean(errors.date)} />
                     }
@@ -153,6 +166,11 @@ const SidebarAddHoliday = props => {
             {errors.leaveDescription && (
               <FormHelperText sx={{ color: 'error.main' }}>
                 Leave description is required
+              </FormHelperText>
+            )}
+            {existError && (
+              <FormHelperText sx={{ color: 'error.main' }}>
+                This Holiday already exist
               </FormHelperText>
             )}
           </FormControl>

@@ -146,6 +146,7 @@ const LoginPage = () => {
       window.localStorage.setItem('accessToken', response.data.accessToken)
       const userData = jwt.decode(response.data.accessToken, { complete: true }).payload
       window.localStorage.setItem('userData', JSON.stringify(userData))
+      window.localStorage.setItem('roleId', userData?.roleId)
       dispatch(setUserRoleId(userData?.roleId))
       JSON.parse(userData.org)
         ? router.replace({

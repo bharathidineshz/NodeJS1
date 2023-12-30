@@ -23,7 +23,6 @@ import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import { endpoints } from 'src/store/endpoints/endpoints'
 import axios from 'axios'
-import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 const DynamicEditLeavePolicy = dynamic(
   () => import('src/views/leave-management/leave-policy/EditLeavePolicy'),
@@ -42,7 +41,7 @@ const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/Del
   }
 })
 
-const LeavePolicy = ({ data }) => {
+const DepartmentConfig = ({ data }) => {
   // ** States
   const [isLoading, setLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
@@ -135,14 +134,33 @@ const LeavePolicy = ({ data }) => {
           if (res.status === 200) {
             setOpenAlert(!alert)
             dispatch(fetchPolicies())
-            customSuccessToast(res.data)
+            toast.success(res.data)
           } else {
-            customErrorToast(res.data)
+            toast.error(res.data)
           }
         })
     } catch (error) {
-      customErrorToast(res.data)
+      toast.error(res.data)
     }
+  }
+
+  // ** renders client column
+  const renderUsers = params => {
+    const stateNum = Math.floor(Math.random() * 6)
+    const states = ['success', 'error', 'warning', 'info', 'primary', 'secondary']
+    const color = states[stateNum]
+    const user = store.users?.find(o => o.id === params.userId)
+    const fullName = `${user?.firstName} ${user?.lastName}`
+
+    return (
+      <CustomAvatar
+        skin='light'
+        color={color}
+        sx={{ mr: 1, fontSize: '.8rem', width: '1.875rem', height: '1.875rem' }}
+      >
+        {getInitials(fullName ? fullName : 'Unkown User')}
+      </CustomAvatar>
+    )
   }
 
   const handleSearch = value => {
@@ -150,11 +168,8 @@ const LeavePolicy = ({ data }) => {
 
     const rows = store.policies.filter(
       l =>
-        l.typeOfLeave.trim().includes(value) ||
-        l.period.trim().includes(value) ||
-        l.allowanceCount.toString().trim().includes(value) ||
-        l.allowanceTime.toString().trim().includes(value) ||
-        l.carryForwardCount.toString().trim().includes(value)
+        l.typeOfLeave.toLowerCase().trim().includes(value) ||
+        l.period.toLowerCase().trim().includes(value)
     )
     setFilteredRows(rows)
   }
@@ -178,25 +193,30 @@ const LeavePolicy = ({ data }) => {
               rows={searchValue ? filteredRows : store.policies}
               columns={columns}
               rowSelection={false}
+              disableColumnMenu={true}
               onCellClick={data => data.field != 'action' && handleRowSelection(data)}
               pageSizeOptions={[5, 10, 25, 50, 100]}
-              localeText={{ noRowsLabel: 'No Policies' }}
               className='no-border'
-              loading={store.policies == null || store.policies?.length == 0}
-              disableColumnMenu
               slots={{
                 toolbar: () => {
                   return (
-                    <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Policy' />
+                    <Toolbar
+                      searchValue={searchValue}
+                      handleFilter={handleSearch}
+                      label='Department'
+                    />
                   )
                 }
               }}
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 25,
-                  },
+              slotProps={{
+                baseButton: {
+                  variant: 'outlined'
                 },
+                toolbar: {
+                  value: searchValue,
+                  clearSearch: () => handleSearch(''),
+                  onChange: event => handleSearch(event.target.value)
+                }
               }}
             />
           </Card>
@@ -232,4 +252,4 @@ export async function getStaticProps() {
   }
 }
 
-export default LeavePolicy
+export default DepartmentConfig

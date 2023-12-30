@@ -4,14 +4,6 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Button from '@mui/material/Button'
 
 export default function SimpleBackdrop() {
-  const [open, setOpen] = React.useState(true)
-  const handleClose = () => {
-    setOpen(false)
-  }
-  const handleOpen = () => {
-    setOpen(true)
-  }
-
   return (
     <div>
       <Backdrop
@@ -21,8 +13,7 @@ export default function SimpleBackdrop() {
           display: 'flex',
           flexDirection: 'column'
         }}
-        open={open}
-        onClick={handleClose}
+        open={true}
       >
         <img src='/images/lp-white.png' className='flip-image' alt='Leanprofit' height={50} />
       </Backdrop>

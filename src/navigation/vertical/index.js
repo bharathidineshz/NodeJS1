@@ -43,19 +43,19 @@ const navigation = () => {
       icon: 'mdi:clock-time-four-outline',
       path: '/apps/timesheets',
 
-      auth: false
+      // auth: false
     },
     {
       title: 'Clients',
       icon: 'mdi:account-group-outline',
       path: '/clients',
 
-      auth: false
+      // auth: false
     },
     {
       title: 'Projects',
       icon: 'mdi:clipboard-text',
-      auth: false,
+      // auth: false,
       path: '/projects/list'
     },
     {
@@ -92,7 +92,7 @@ const navigation = () => {
       icon: 'mdi:file-document-outline',
       path: '/apps/invoice/list',
 
-      auth: false
+      // // auth: false
     },
     {
       title: 'User',
@@ -104,7 +104,7 @@ const navigation = () => {
     {
       title: 'Leave Management',
       icon: 'mdi:calendar-alert-outline',
-      path: '/leave-management',
+      path: '/leave-management/my leaves',
       auth: false
     },
 
@@ -121,34 +121,8 @@ const navigation = () => {
     {
       title: 'Settings',
       icon: 'mdi:file-document-outline',
-      auth: false,
-      // children: [
-      //   {
-      //     title: 'Account',
-      //     path: '/pages/account-settings/account'
-      //   },
-      //   {
-      //     title: 'Security',
-      //     path: '/pages/account-settings/security'
-      //   },
-      //   {
-      //     title: 'Billing',
-      //     path: '/pages/account-settings/billing'
-      //   },
-      //   {
-      //     title: 'Notifications',
-      //     path: '/pages/account-settings/notifications'
-      //   },
-      //   {
-      //     title: 'Connections',
-      //     path: '/pages/account-settings/connections'
-      //   },
-      //   {
-      //     title: 'Holiday Management',
-      //     path: '/pages/account-settings/holidaymanagement',
-      //     // auth: false
-      //   }
-      // ]
+      path: '/settings/Department',
+      auth: false
     },
     {
       title: 'Auth Pages',

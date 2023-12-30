@@ -1,6 +1,16 @@
 import { hexToRGBA } from 'src/@core/utils/hex-to-rgba'
 import { formatLocalDate } from './dateFormats'
 
+export const WEEKDAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday'
+]
+
 export const SKILLS = [
   { name: 'Angular' },
   { name: 'Asp.Net' },

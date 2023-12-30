@@ -23,7 +23,7 @@ import { getProjectDetails, setSelectedProject } from 'src/store/apps/projects'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import ReportsHeader from './ReportsHeader'
-import { fetchPolicies, fetchStatus } from 'src/store/leave-management'
+import { fetchPolicies, fetchStatus, resetReport } from 'src/store/leave-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 
 const LeaveReports = () => {
@@ -33,13 +33,16 @@ const LeaveReports = () => {
   const [isLoading, setLoading] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [sortColumn, setSortColumn] = useState('name')
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
     dispatch(fetchPolicies())
     dispatch(fetchStatus())
+
+    return () => {
+      dispatch(resetReport([]))
+    }
   }, [])
 
   const columns = [
@@ -48,7 +51,7 @@ const LeaveReports = () => {
       minWidth: 230,
       field: 'request',
       headerName: 'Request Type',
-      renderCell: params => <div style={{fontWeight:'bold'}}>{params.value}</div>
+      renderCell: params => <div style={{ fontWeight: 'bold' }}>{params.value}</div>
     },
     {
       flex: 0.2,
@@ -74,14 +77,12 @@ const LeaveReports = () => {
       field: 'toDate',
       headerName: 'To',
       renderCell: params => <>{formatLocalDate(new Date(params.value))}</>
-
     },
     {
       flex: 0.15,
       field: 'createdDate',
       headerName: 'Date',
       renderCell: params => <>{formatLocalDate(new Date(params.value))}</>
-
     },
     {
       flex: 0.15,
@@ -92,7 +93,13 @@ const LeaveReports = () => {
           <CustomChip
             size='small'
             skin='light'
-            color={params.row.requestStatusId === 2 ? 'success' :params.row.requestStatusId === 3 ? 'error' : 'warning'}
+            color={
+              params.row.requestStatusId === 2
+                ? 'success'
+                : params.row.requestStatusId === 3
+                ? 'error'
+                : 'warning'
+            }
             label={params.value}
           />
         )
@@ -132,7 +139,6 @@ const LeaveReports = () => {
 
   const handleSearch = value => {
     setSearchValue(value)
-    fetchTableData(sort, value, sortColumn)
   }
 
   const handleProjectSelection = data => {
@@ -153,30 +159,26 @@ const LeaveReports = () => {
               pagination
               rows={store.reports || []}
               columns={columns}
-              sortingMode='server'
+              sortingMode='client'
               rowSelection={false}
               onRowClick={handleProjectSelection}
               pageSizeOptions={[5, 10, 25, 50, 100]}
-              paginationModel={paginationModel}
-              onSortModelChange={handleSortModel}
+              loading={store.reports == null}
+              className='no-border'
+              localeText={{ noRowsLabel: 'No Reports' }}
+              disableColumnMenu
+              initialState={{
+                pagination: {
+                  paginationModel: {
+                    pageSize: 25
+                  }
+                }
+              }}
               slots={{
                 toolbar: () => {
                   return <ReportsHeader />
                 }
               }}
-              onPaginationModelChange={setPaginationModel}
-              loading={store.reports ? false : true}
-              slotProps={{
-                baseButton: {
-                  variant: 'outlined'
-                },
-                toolbar: {
-                  value: searchValue,
-                  clearSearch: () => handleSearch(''),
-                  onChange: event => handleSearch(event.target.value)
-                }
-              }}
-              className='no-border'
             />
           </Card>
         </>

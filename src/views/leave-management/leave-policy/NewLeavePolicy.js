@@ -49,6 +49,7 @@ import { leavePolicyRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { APPROVERS } from 'src/helpers/constants'
+import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 const defaultValues = {
   typeOfLeave: '',
@@ -63,7 +64,7 @@ const defaultValues = {
 
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
-  allowanceCount: yup.number().min(0).required('Allowance Required'),
+  allowanceCount: yup.number().positive("Should greater than 0").required('Allowance Required'),
   allowanceTime: yup.number().min(0),
   period: yup.string().required('Period is Required'),
   isPermission: yup.boolean(),
@@ -92,23 +93,32 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
     resolver: yupResolver(schema)
   })
 
-  const isWeekday = date => {
-    const day = new Date(date).getDay()
-
-    return day !== 0 && day !== 6
+  function isExistPolicy(array, value) {
+    return array.some(obj => Object.values(obj).includes(value))
   }
 
   //submit
 
   const onSubmit = async formData => {
+    const isExist = isExistPolicy(store.policies, formData.typeOfLeave?.trim())
+
+    if (isExist) {
+      setError('typeOfLeave', { type: 'custom', message: 'Policy already exist' })
+
+      return
+    }
+    setOpen(false)
+    reset()
+
     const req = leavePolicyRequest(formData)
     dispatch(postPolicy(req))
       .then(unwrapResult)
       .then(res => {
         dispatch(fetchPolicies())
-        setOpen(false)
-        res.status === 200 || res.status === 201 ? toast.success(res.data) : toast.error(res.data)
-        reset()
+
+        res.status === 200 || res.status === 201
+          ? customSuccessToast(res.data)
+          : customErrorToast(res.data)
       })
   }
 
@@ -174,9 +184,9 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                     />
                   )}
                 />
-                {errors.allowance && (
+                {errors.allowanceCount && (
                   <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.allowance.message}
+                    {errors.allowanceCount.message}
                   </FormHelperText>
                 )}
               </FormControl>

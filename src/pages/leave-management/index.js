@@ -29,6 +29,8 @@ import LeaveApplyForm from 'src/views/leave-management/apply/LeaveApplyForm'
 import NewLeavePolicy from 'src/views/leave-management/leave-policy/NewLeavePolicy'
 import Holidays from 'src/views/leave-management/holidays'
 import { useSelector } from 'react-redux'
+import FallbackSpinner from 'src/layouts/components/LogoSpinner'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
   '& .MuiTabs-indicator': {
@@ -56,6 +58,7 @@ const LeaveManagement = ({ tab, data }) => {
   const [activeTab, setActiveTab] = useState('my leaves')
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
+  const [role, setRole] = useState('')
 
   // ** Hooks
   const router = useRouter()
@@ -80,11 +83,15 @@ const LeaveManagement = ({ tab, data }) => {
     if (tab && tab !== activeTab) {
       setActiveTab(tab)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (typeof window !== 'undefined') {
+      // Perform localStorage action
+      const role = localStorage?.getItem('roleId')
+      setRole(role)
+    }
   }, [tab])
 
   const tabContentList =
-    store.userRoleId == 1 || store.userRoleId == 2 || store.userRoleId == 3
+    role == 1 || role == 2 || role == 3
       ? {
           'my leaves': <LeaveApply />,
           // 'all requests': <AllRequests />,
@@ -99,7 +106,7 @@ const LeaveManagement = ({ tab, data }) => {
         }
 
   const tabs =
-    store.userRoleId == 1 || store.userRoleId == 2 || store.userRoleId == 3
+    role == 1 || role == 2 || role == 3
       ? [
           { name: 'my leaves', icon: 'mdi:calendar-alert' },
           // { name: 'all requests', icon: 'mdi:calendar-outline' },
@@ -108,87 +115,102 @@ const LeaveManagement = ({ tab, data }) => {
           { name: 'leave_policy', icon: 'mdi:text-box-multiple-outline' },
           { name: 'holidays', icon: 'mdi:toggle-switch-off-outline' }
         ]
-      : [
+      : role == 4
+      ? [
           { name: 'my leaves', icon: 'mdi:calendar-alert' },
           { name: 'approval', icon: 'mdi:check-decagram' }
         ]
+      : []
 
-  return (
+  return activeTab != null ? (
     <Grid container spacing={6}>
       {activeTab === undefined ? null : (
-        <Grid item xs={12}>
-          <TabContext value={activeTab}>
-            <Grid container spacing={6}>
-              <Grid item xs={12} display='flex' justifyContent='space-between' alignItems='center'>
-                {/* <Grid item>
-                  <Typography variant='h5' fontWeight='600' color='primary'>
-                    ADAT
-                  </Typography>
-                </Grid> */}
-                <TabList
-                  variant='scrollable'
-                  scrollButtons='auto'
-                  onChange={handleChange}
-                  aria-label='basic tabs example'
+        <>
+          <Grid item xs={12}>
+            <TabContext value={activeTab}>
+              <Grid container spacing={6}>
+                <Grid
+                  item
+                  xs={12}
+                  display='flex'
+                  justifyContent='space-between'
+                  flexWrap='wrap'
+                  alignItems='center'
                 >
-                  {tabs.map((tab, key) => (
-                    <Tab
-                      key={key}
-                      value={tab.name}
-                      label={
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            ...(!hideText && { '& svg': { mr: 2 } })
-                          }}
-                        >
-                          <Icon fontSize={20} icon={tab.icon} />
-                          {!hideText && (tab.name === 'leave_policy' ? 'leave policy' : tab.name)}
-                        </Box>
-                      }
-                    />
-                  ))}
-                </TabList>
-                {activeTab === 'my leaves' && (
-                  <Button variant='contained' onClick={() => setOpen(true)}>
-                    Apply Leave
-                  </Button>
-                )}
-                {activeTab === 'leave_policy' && (
-                  <Button variant='contained' onClick={() => setOpen(true)}>
-                    Add {activeTab === 'leave_policy' ? 'Leave Policy' : activeTab}
-                  </Button>
-                )}
-              </Grid>
-              <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
-                {isLoading ? (
-                  <Box
-                    sx={{ mt: 6, display: 'flex', alignItems: 'center', flexDirection: 'column' }}
+                  {/* <Grid item>
+      <Typography variant='h5' fontWeight='600' color='primary'>
+        ADAT
+      </Typography>
+    </Grid> */}
+                  <TabList
+                    variant='scrollable'
+                    scrollButtons='auto'
+                    onChange={handleChange}
+                    aria-label='basic tabs example'
                   >
-                    <CircularProgress sx={{ mb: 4 }} />
-                    <Typography>Loading...</Typography>
-                  </Box>
-                ) : (
-                  <TabPanel sx={{ p: 0 }} value={activeTab}>
-                    {tab === 'files' ? (
-                      <Grid xs={12}>{tabContentList[activeTab]}</Grid>
-                    ) : (
-                      tabContentList[activeTab]
-                    )}
-                  </TabPanel>
-                )}
+                    {tabs.map((tab, key) => (
+                      <Tab
+                        key={key}
+                        value={tab.name}
+                        label={
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              ...(!hideText && { '& svg': { mr: 2 } })
+                            }}
+                          >
+                            <Icon fontSize={20} icon={tab.icon} />
+                            {!hideText && (tab.name === 'leave_policy' ? 'leave policy' : tab.name)}
+                          </Box>
+                        }
+                      />
+                    ))}
+                  </TabList>
+                  {activeTab === 'my leaves' && (
+                    <Button variant='contained' onClick={() => setOpen(true)}>
+                      Apply Leave
+                    </Button>
+                  )}
+                  {activeTab === 'leave_policy' && (
+                    <Button variant='contained' onClick={() => setOpen(true)}>
+                      Add {activeTab === 'leave_policy' ? 'Leave Policy' : activeTab}
+                    </Button>
+                  )}
+                </Grid>
+                <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
+                  {isLoading ? (
+                    <Box
+                      sx={{ mt: 6, display: 'flex', alignItems: 'center', flexDirection: 'column' }}
+                    >
+                      <CircularProgress sx={{ mb: 4 }} />
+                      <Typography>Loading...</Typography>
+                    </Box>
+                  ) : (
+                    <TabPanel sx={{ p: 0 }} value={activeTab}>
+                      {tab === 'files' ? (
+                        <Grid xs={12}>{tabContentList[activeTab]}</Grid>
+                      ) : (
+                        tabContentList[activeTab]
+                      )}
+                    </TabPanel>
+                  )}
+                </Grid>
               </Grid>
-            </Grid>
-          </TabContext>
-          {activeTab === 'my leaves' ? (
-            <LeaveApplyForm isOpen={isOpen} setOpen={setOpen} />
-          ) : (
-            <NewLeavePolicy isOpen={isOpen} setOpen={setOpen} />
-          )}
-        </Grid>
+            </TabContext>
+          </Grid>
+          <Grid item xs={12}>
+            {activeTab === 'my leaves' ? (
+              <LeaveApplyForm isOpen={isOpen} setOpen={setOpen} />
+            ) : (
+              <NewLeavePolicy isOpen={isOpen} setOpen={setOpen} />
+            )}
+          </Grid>
+        </>
       )}
     </Grid>
+  ) : (
+    <SimpleBackdrop />
   )
 }
 

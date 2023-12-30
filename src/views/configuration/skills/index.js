@@ -23,17 +23,15 @@ import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import { endpoints } from 'src/store/endpoints/endpoints'
 import axios from 'axios'
-import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import { deleteSkill } from 'src/store/settings'
+import { fetchRequiredSkills } from 'src/store/apps/projects'
 
-const DynamicEditLeavePolicy = dynamic(
-  () => import('src/views/leave-management/leave-policy/EditLeavePolicy'),
-  {
-    ssr: false,
-    loading: () => {
-      return <FallbackSpinner />
-    }
+const DynamicEditSkill = dynamic(() => import('src/views/configuration/skills/EditSkill'), {
+  ssr: false,
+  loading: () => {
+    return <FallbackSpinner />
   }
-)
+})
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
   ssr: false,
@@ -42,7 +40,7 @@ const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/Del
   }
 })
 
-const LeavePolicy = ({ data }) => {
+const SkillsConfig = ({ data }) => {
   // ** States
   const [isLoading, setLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
@@ -51,59 +49,19 @@ const LeavePolicy = ({ data }) => {
   const [alert, setOpenAlert] = useState(false)
   const [filteredRows, setFilteredRows] = useState([])
   const dispatch = useDispatch()
-  const store = useSelector(state => state.leaveManagement)
+  const store = useSelector(state => state.projects)
 
   useEffect(() => {
-    dispatch(fetchPolicies())
-  }, [])
-  useEffect(() => {
     setOpen(false)
+    dispatch(fetchRequiredSkills())
   }, [alert])
 
   const columns = [
     {
-      flex: 0.35,
-      field: 'typeOfLeave',
-      headerName: 'Policy',
+      flex: 0.6,
+      field: 'skillName',
+      headerName: 'Skill',
       renderCell: params => <div style={{ fontWeight: 'bold' }}>{params.value}</div>
-    },
-    {
-      flex: 0.2,
-      minWidth: 120,
-      headerName: 'Count',
-      field: 'allowanceCount'
-    },
-    {
-      flex: 0.2,
-      minWidth: 120,
-      headerName: 'Alowance Time',
-      field: 'allowanceTime'
-    },
-    {
-      flex: 0.2,
-      headerName: 'Period',
-      field: 'period',
-      renderCell: params => {
-        return (
-          <>
-            {params.value?.toLowerCase() === 'month' ? (
-              <Typography variant='body2' color='secondary'>
-                Month
-              </Typography>
-            ) : (
-              <Typography variant='body2' color='primary'>
-                Year
-              </Typography>
-            )}
-          </>
-        )
-      }
-    },
-
-    {
-      flex: 0.2,
-      headerName: 'Carry Forward Count',
-      field: 'carryForwardCount'
     },
     {
       flex: 0.08,
@@ -129,33 +87,45 @@ const LeavePolicy = ({ data }) => {
 
   const handleDelete = () => {
     try {
-      dispatch(deletePolicy(rowData?.id))
+      dispatch(deleteSkill(rowData?.id))
         .then(unwrapResult)
         .then(res => {
           if (res.status === 200) {
             setOpenAlert(!alert)
             dispatch(fetchPolicies())
-            customSuccessToast(res.data)
+            toast.success(res.data)
           } else {
-            customErrorToast(res.data)
+            toast.error(res.data)
           }
         })
     } catch (error) {
-      customErrorToast(res.data)
+      toast.error(error.message)
     }
+  }
+
+  // ** renders client column
+  const renderUsers = params => {
+    const stateNum = Math.floor(Math.random() * 6)
+    const states = ['success', 'error', 'warning', 'info', 'primary', 'secondary']
+    const color = states[stateNum]
+    const user = store.users?.find(o => o.id === params.userId)
+    const fullName = `${user?.firstName} ${user?.lastName}`
+
+    return (
+      <CustomAvatar
+        skin='light'
+        color={color}
+        sx={{ mr: 1, fontSize: '.8rem', width: '1.875rem', height: '1.875rem' }}
+      >
+        {getInitials(fullName ? fullName : 'Unkown User')}
+      </CustomAvatar>
+    )
   }
 
   const handleSearch = value => {
     setSearchValue(value)
 
-    const rows = store.policies.filter(
-      l =>
-        l.typeOfLeave.trim().includes(value) ||
-        l.period.trim().includes(value) ||
-        l.allowanceCount.toString().trim().includes(value) ||
-        l.allowanceTime.toString().trim().includes(value) ||
-        l.carryForwardCount.toString().trim().includes(value)
-    )
+    const rows = store.requiredSkills.filter(l => l.skillName.toLowerCase().trim().includes(value))
     setFilteredRows(rows)
   }
 
@@ -175,38 +145,38 @@ const LeavePolicy = ({ data }) => {
             <DataGrid
               autoHeight
               pagination
-              rows={searchValue ? filteredRows : store.policies}
+              rows={searchValue ? filteredRows : store.requiredSkills}
               columns={columns}
               rowSelection={false}
               onCellClick={data => data.field != 'action' && handleRowSelection(data)}
               pageSizeOptions={[5, 10, 25, 50, 100]}
-              localeText={{ noRowsLabel: 'No Policies' }}
               className='no-border'
-              loading={store.policies == null || store.policies?.length == 0}
-              disableColumnMenu
+              disableColumnMenu={true}
+              loading={store.requiredSkills?.length === 0}
+              localeText={{ noRowsLabel: 'No Skills' }}
               slots={{
                 toolbar: () => {
                   return (
-                    <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Policy' />
+                    <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Skill' />
                   )
                 }
               }}
               initialState={{
                 pagination: {
                   paginationModel: {
-                    pageSize: 25,
-                  },
-                },
+                    pageSize: 25
+                  }
+                }
               }}
             />
           </Card>
 
-          <DynamicEditLeavePolicy isOpen={isOpen} row={rowData} setOpen={setOpen} />
+          <DynamicEditSkill isOpen={isOpen} row={rowData} setOpen={setOpen} />
           <DynamicDeleteAlert
             open={alert}
             setOpen={setOpenAlert}
-            title='Delete Policy'
-            content='Are you confirm to delete policy?'
+            title='Delete Skill'
+            content='Are you confirm to delete skill?'
             action='Delete'
             handleAction={handleDelete}
           />
@@ -232,4 +202,4 @@ export async function getStaticProps() {
   }
 }
 
-export default LeavePolicy
+export default SkillsConfig

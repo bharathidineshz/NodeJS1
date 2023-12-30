@@ -207,7 +207,7 @@ const AllRequests = () => {
                 onSortModelChange={() => {}}
                 slots={{
                   toolbar: () => {
-                    return <Toolbar isExport />
+                    return <Toolbar />
                   }
                 }}
                 onPaginationModelChange={setPaginationModel}

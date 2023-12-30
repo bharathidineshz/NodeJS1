@@ -22,7 +22,12 @@ import { AvatarGroup, Button, Grid, IconButton, Tooltip } from '@mui/material'
 import Link from 'next/link'
 import ProjectHeader from 'src/views/projects/list/Header'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchClients, fetchProjects, fetchUsers, setSelectedProject } from 'src/store/apps/projects'
+import {
+  fetchClients,
+  fetchProjects,
+  fetchUsers,
+  setSelectedProject
+} from 'src/store/apps/projects'
 import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
 import FallbackSpinner from 'src/@core/components/spinner'
@@ -54,7 +59,7 @@ const TableServerSide = () => {
   const router = useRouter()
 
   useEffect(() => {
-    setLoading(true);
+    setLoading(true)
     dispatch(fetchUsers())
     dispatch(fetchClients())
       .then(unwrapResult)
@@ -171,8 +176,8 @@ const TableServerSide = () => {
       </CustomAvatar>
     )
   }
-  
-//SEARCH
+
+  //SEARCH
   const handleSearch = value => {
     setSearchValue(value)
     const rows = store.allProjects.filter(
@@ -187,11 +192,11 @@ const TableServerSide = () => {
 
   const handleProjectSelection = data => {
     dispatch(setSelectedProject(data.row))
-    localStorage.setItem("project", JSON.stringify(data.row))
-    localStorage.setItem("projectId", data.row.id)
+    localStorage.setItem('project', JSON.stringify(data.row))
+    localStorage.setItem('projectId', data.row.id)
 
     router.push({
-      pathname: '/projects/details/task',
+      pathname: '/projects/details/task'
     })
   }
 
@@ -217,7 +222,7 @@ const TableServerSide = () => {
             onSortModelChange={handleSortModel}
             slots={{
               toolbar: () => {
-                return <Toolbar searchValue={searchValue} handleFilter={handleSearch} isExport />
+                return <Toolbar searchValue={searchValue} handleFilter={handleSearch} />
               }
             }}
             onPaginationModelChange={setPaginationModel}

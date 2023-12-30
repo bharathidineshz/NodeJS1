@@ -15,6 +15,7 @@ import timesheets from 'src/store/apps/timesheets'
 import organization from './apps/organization'
 import accountSetting from 'src/store/apps/accountSetting'
 import leaveManagement from 'src/store/leave-management'
+import settings from 'src/store/settings'
 
 export const store = configureStore({
   reducer: {
@@ -30,7 +31,8 @@ export const store = configureStore({
     permissions,
     timesheets,
     accountSetting,
-    leaveManagement
+    leaveManagement,
+    settings
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

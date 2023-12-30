@@ -147,6 +147,18 @@ export const endpoints = {
 
   //skills
   skills: 'api/MasterSkill',
+  deleteSkill: id => `api/MasterSkill?MasterSkillId=${id}`,
+
+  //organization Configuration
+  createConfig: `/api/OrganizationGeneralSettings`,
+  updateConfig: `/api/OrganizationGeneralSettings/UpdateOrganizationGeneralSetting`,
+  getConfig: `/api/OrganizationGeneralSettings/GetOrganizationGeneralSettings`,
+  OrgLeaveHrApproval: `/api/OrganizationLeaveHRApproval`,
+
+  //HR Approval
+
+  HRApprovals: 'api/OrganizationLeaveHRApproval',
+  deleteHRApproval: id => `api/OrganizationLeaveHRApproval?id=${id}`,
 
   //leave Management
 
@@ -162,7 +174,7 @@ export const endpoints = {
   deleteRequest: id => `api/LeaveRequest?requestId=${id}`,
 
   getStatus: '/api/Status/GetStatus',
-  getSkills: 'api/MasterSkill',
+
   getUserReports: (userId, fromDate, toDate) =>
     `api/Report/GetUserLeaveRequest?UserId=${userId}&FromDate=${fromDate}&ToDate=${toDate}`,
   getDashboard: userId => `api/Report/GetUserLeaveBalance?UserId=${userId}`

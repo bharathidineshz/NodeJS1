@@ -25,6 +25,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormHelperText,
   Grid,
   IconButton,
   Popover,
@@ -52,6 +53,7 @@ import {
 } from 'src/store/leave-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import { approvalRequest } from 'src/helpers/requests'
+import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 const Approval = () => {
   // ** States
@@ -61,6 +63,7 @@ const Approval = () => {
   const [isLoading, setLoading] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [filteredRows, setFilteredRows] = useState([])
+  const [errorComment, setErroComment] = useState(false)
 
   const [respond, setRespond] = useState({
     isRejected: false,
@@ -182,24 +185,24 @@ const Approval = () => {
     }
   ]
 
-  const handleSortModel = newModel => {
-    if (newModel.length) {
-      setSort(newModel[0].sort)
-      setSortColumn(newModel[0].field)
-      fetchTableData(newModel[0].sort, searchValue, newModel[0].field)
-    } else {
-      setSort('asc')
-      setSortColumn('full_name')
-    }
-  }
+
 
   //handle approval
   const handleApproval = (row, name) => e => {
     if (name === 'Approved' || name === 'Rejected') {
+      setRespond(state => ({ ...state, isOpenDialog: false }))
+
       const _row = name == 'Approved' ? row : respond.rejectData
       const _comment = document.getElementById('Comment')?.value
         ? document.getElementById('Comment').value
         : ''
+
+      if (_comment == null || _comment == '') {
+        setErroComment(true)
+
+        return
+      }
+      setErroComment(false)
       const req = {
         ..._row,
         comment: _comment,
@@ -219,10 +222,10 @@ const Approval = () => {
               status: name
             }
             dispatch(setLeaveApproval(rows))
-            setRespond(state => ({ ...state, isOpenDialog: false }))
-            name == 'Approved' ? toast.success('Request Approved') : toast.error('Request Rejected')
+
+            name == 'Approved' ? customSuccessToast(res.data) : customErrorToast(res.data)
           } else {
-            toast.error(`Error Occurred`)
+            customErrorToast(res.data)
           }
         })
     } else {
@@ -257,25 +260,18 @@ const Approval = () => {
           rows={searchValue ? filteredRows : store.approvals}
           rowCount={store.approvals ? store.approvals.length : 0}
           columns={columns}
-          sortingMode='server'
+          sortingMode='client'
           rowSelection={false}
-          onRowClick={() => {}}
+          className='no-border'
+          localeText={{ noRowsLabel: 'No Approvals' }}
+          loading={store.approvals == null || store.approvals?.length == 0}
           pageSizeOptions={[5, 10, 25, 50, 100]}
-          onSortModelChange={handleSortModel}
+          disableColumnMenu
           slots={{
             toolbar: () => {
-              return <Toolbar isExport searchValue={searchValue} handleFilter={handleSearch} />
-            }
-          }}
-          loading={store.approvals ? false : true}
-          slotProps={{
-            baseButton: {
-              variant: 'outlined'
-            },
-            toolbar: {
-              value: searchValue,
-              clearSearch: () => handleSearch(''),
-              onChange: event => handleSearch(event.target.value)
+              return (
+                <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Approval' />
+              )
             }
           }}
           initialState={{
@@ -285,7 +281,6 @@ const Approval = () => {
               }
             }
           }}
-          className='no-border'
         />
       </Card>
 
@@ -307,6 +302,9 @@ const Approval = () => {
             autoFocus
             sx={{ mt: 4 }}
           />
+          {errorComment && (
+            <FormHelperText sx={{ color: 'error.main' }}>Comment is required</FormHelperText>
+          )}
         </DialogContent>
         <DialogActions className='dialog-actions-dense'>
           <Button variant='outlined' onClick={handleClose}>

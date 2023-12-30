@@ -62,7 +62,7 @@ const LeaveDashboard = () => {
         }}
       />
       <CardContent>
-        {data?.length > 0 ? (
+        {store.dashboards.length > 0 ? (
           <>
             <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
               <ResponsiveContainer>

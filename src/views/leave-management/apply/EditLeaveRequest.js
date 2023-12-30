@@ -46,6 +46,7 @@ import { LOGGEDUSER, myLeaveRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import PickersComponent from 'src/views/forms/form-elements/pickers/PickersCustomInput'
+import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 const schema = yup.object().shape({
   requestType: yup.string().required('Request Type is Required'),
@@ -99,6 +100,8 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
 
   const onSubmit = async formData => {
     try {
+      setOpen(false)
+      reset()
       const currentUser = JSON.parse(localStorage.getItem('userData'))
       const user = store.users.find(o => currentUser.user === o.email)
       const req = store.policies.find(o => o.typeOfLeave === watch('requestType'))
@@ -112,13 +115,10 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
         .then(unwrapResult)
         .then(res => {
           if (res?.status === 200) {
-            setOpen(false)
-            toast.success(res.data)
-            reset()
+            customSuccessToast(res.data)
             dispatch(fetchMyLeaves())
           } else {
-            setOpen(true)
-            toast.error(res.data)
+            customErrorToast(res.data)
           }
         })
     } catch (error) {

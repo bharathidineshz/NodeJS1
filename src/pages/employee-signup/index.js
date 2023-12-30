@@ -209,6 +209,7 @@ const EmployeeSignup = ({ data }) => {
       window.localStorage.setItem('accessToken', response.data.accessToken)
       const userData = jwt.decode(response.data.accessToken, { complete: true }).payload
       window.localStorage.setItem('userData', JSON.stringify(userData))
+      window.localStorage.setItem('roleId', userData?.roleId)
 
       router.replace({
         pathname: '/apps/timesheets'

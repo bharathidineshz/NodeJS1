@@ -18,7 +18,6 @@ import BlankLayout from 'src/@core/layouts/BlankLayout'
 // ** Hooks
 
 // ** Util Import
-import getHomeRoute from 'src/layouts/components/acl/getHomeRoute'
 
 const AclGuard = props => {
   // ** Props
@@ -30,10 +29,7 @@ const AclGuard = props => {
   // ** Vars
   let ability
   useEffect(() => {
-    if (router.route === '/') {
-      const homeRoute = getHomeRoute()
-      router.replace(homeRoute)
-    }
+   
   }, [router])
 
   // User is logged in, build ability for the user based on his role

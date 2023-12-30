@@ -39,6 +39,8 @@ import {
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
+import SimpleBackdrop from 'src/@core/components/spinner'
+import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 const DynamicEditLeaveRequest = dynamic(
   () => import('src/views/leave-management/apply/EditLeaveRequest'),
@@ -57,8 +59,6 @@ const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/Del
   }
 })
 
-
-
 const LeaveApply = () => {
   // ** States
   const [row, setRow] = useState({})
@@ -68,23 +68,20 @@ const LeaveApply = () => {
   const [alert, setOpenAlert] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [sortColumn, setSortColumn] = useState('name')
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const [filteredRows, setFilteredRows] = useState([])
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
-    dispatch(fetchPolicies()).then(() => {
-      dispatch(fetchUsers())
-        .then(unwrapResult)
-        .then(res => {
-          const currentUser = JSON.parse(localStorage.getItem('userData'))
-          const user = res.find(o => currentUser.user === o.email)
-          dispatch(fetchStatus())
-          dispatch(fetchMyLeaves())
-          dispatch(fetchDashboard(user.id))
-        })
-    })
+    dispatch(fetchUsers())
+      .then(unwrapResult)
+      .then(res => {
+        const currentUser = JSON.parse(localStorage.getItem('userData'))
+        const user = res.find(o => currentUser.user === o.email)
+        dispatch(fetchStatus())
+        dispatch(fetchMyLeaves())
+        dispatch(fetchDashboard(user.id))
+      })
     setLoading(false)
   }, [dispatch])
 
@@ -96,7 +93,7 @@ const LeaveApply = () => {
     {
       flex: 0.15,
       minWidth: 120,
-      field: 'requestType',
+      field: 'leavePolicyName',
       headerName: 'Request'
     },
     {
@@ -124,42 +121,7 @@ const LeaveApply = () => {
         return formatLocalDate(new Date(params.value))
       }
     },
-    {
-      flex: 0.14,
-      headerName: 'From Half Day',
-      field: 'isFromDateHalfDay',
-      renderCell: params => (
-        <Grid>
-          {params.value ? (
-            <CustomAvatar skin='light' color='success'>
-              <Icon icon='mdi:checkbox-marked-circle-outline' />
-            </CustomAvatar>
-          ) : (
-            <CustomAvatar skin='light' color='error'>
-              <Icon icon='mdi:close-circle-outline' />
-            </CustomAvatar>
-          )}
-        </Grid>
-      )
-    },
-    {
-      flex: 0.14,
-      headerName: 'To Half Day',
-      field: 'isToDateHalfDay',
-      renderCell: params => (
-        <Grid>
-          {params.value ? (
-            <CustomAvatar skin='light' color='success'>
-              <Icon icon='mdi:checkbox-marked-circle-outline' />
-            </CustomAvatar>
-          ) : (
-            <CustomAvatar skin='light' color='error'>
-              <Icon icon='mdi:close-circle-outline' />
-            </CustomAvatar>
-          )}
-        </Grid>
-      )
-    },
+
     {
       flex: 0.12,
       minWidth: 100,
@@ -198,14 +160,10 @@ const LeaveApply = () => {
     }
   ]
 
-
-
   const handleSearch = value => {
     setSearchValue(value)
     const filterdRows = store.myLeaves.filter(
-      l =>
-        l.requestReason.toLowerCase().trim().includes(value) ||
-        l.requestType.toLowerCase().trim().includes(value)
+      l => l.requestReason.trim().includes(value) || l.leavePolicyName.trim().includes(value)
     )
     setFilteredRows(filterdRows)
   }
@@ -226,9 +184,9 @@ const LeaveApply = () => {
           if (res.status === 200) {
             setOpenAlert(!alert)
             dispatch(fetchMyLeaves())
-            toast.success(res.data)
+            customSuccessToast(res.data)
           } else {
-            toast.error(res.data)
+            customErrorToast(res.data)
           }
         })
     } catch (error) {
@@ -238,42 +196,46 @@ const LeaveApply = () => {
 
   return (
     <>
-      <Grid container spacing={6}>
-        <Grid item xs={12} md={6} lg={6}>
-          <LeaveDashboard />
-        </Grid>
-        <Grid item xs={12} md={6} lg={6}>
-          <LeaveDetails />
-        </Grid>
-        <Grid item xs={12}>
-          <Card>
-            <Toolbar searchValue={searchValue} handleFilter={handleSearch} />
-            <DataGrid
-              autoHeight
-              pagination
-              rows={searchValue ? filteredRows : store.myLeaves}
-              columns={columns}
-              rowSelection={false}
-              pageSizeOptions={[5, 10, 25, 50, 100]}
-              paginationModel={paginationModel}
-              onSortModelChange={() => {}}
-              loading={store.myLeaves ? false : true}
-              onPaginationModelChange={setPaginationModel}
-              onCellClick={data => (data.row.requestStatusId == 1  &&data.field != "action" )&& handleRowSelection(data)}
-              slotProps={{
-                baseButton: {
-                  variant: 'outlined'
-                },
-                toolbar: {
-                  value: searchValue,
-                  clearSearch: () => handleSearch(''),
-                  onChange: event => handleSearch(event.target.value)
+      {store?.dashboards.length > 0 || store?.myLeaves.length > 0 ? (
+        <Grid container spacing={6}>
+          <Grid item xs={12} md={6} lg={6}>
+            <LeaveDashboard />
+          </Grid>
+          <Grid item xs={12} md={6} lg={6}>
+            <LeaveDetails />
+          </Grid>
+          <Grid item xs={12}>
+            <Card>
+              <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Request' />
+              <DataGrid
+                autoHeight
+                pagination
+                rows={searchValue ? filteredRows : store.myLeaves}
+                columns={columns}
+                rowSelection={false}
+                pageSizeOptions={[5, 10, 25, 50, 100]}
+                loading={store.myLeaves == null || store.myLeaves?.length == 0}
+                localeText={{ noRowsLabel: 'No Leaves' }}
+                onCellClick={data =>
+                  data.row.requestStatusId == 1 &&
+                  data.field != 'action' &&
+                  handleRowSelection(data)
                 }
-              }}
-            />
-          </Card>
+                initialState={{
+                  pagination: {
+                    paginationModel: {
+                      pageSize: 25
+                    }
+                  }
+                }}
+              />
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      ) : (
+        <SimpleBackdrop />
+      )}
+
       <DynamicEditLeaveRequest isOpen={isOpen} row={row} setOpen={setOpen} />
       <DynamicDeleteAlert
         open={alert}

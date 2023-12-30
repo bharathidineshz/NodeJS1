@@ -35,7 +35,7 @@ const themeOptions = (settings, overrideMode) => {
         }
       },
       shadows: shadows(mode === 'semi-dark' ? overrideMode : mode),
-      typography
+      typography,
     },
     userThemeConfig
   )
@@ -47,7 +47,7 @@ const themeOptions = (settings, overrideMode) => {
           ? mergedThemeConfig.palette[themeColor]
           : palette(mode === 'semi-dark' ? overrideMode : mode, skin, themeColor).primary)
       }
-    }
+    },
   })
 }
 

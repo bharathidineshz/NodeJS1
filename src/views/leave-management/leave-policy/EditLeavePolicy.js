@@ -55,7 +55,7 @@ const schema = yup.object().shape({
   period: yup.string().required('Period is Required'),
   carryForwardCount: yup.number().min(0),
   allowanceTime: yup.number().min(0),
-  allowanceCount: yup.number().min(0).required('Allowance required'),
+  allowanceCount: yup.number().positive("Should greater than 0").required('Allowance Required'),
   isPermission: yup.boolean(),
   levelOneApprovalLevelId: yup.number().positive().notRequired(),
   levelTwoApprovalLevelId: yup.number().positive().notRequired()
@@ -177,9 +177,9 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                     />
                   )}
                 />
-                {errors.allowance && (
+                {errors.allowanceCount && (
                   <FormHelperText sx={{ color: 'error.main' }}>
-                    {errors.allowance.message}
+                    {errors.allowanceCount.message}
                   </FormHelperText>
                 )}
               </FormControl>
