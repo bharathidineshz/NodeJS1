@@ -6,24 +6,32 @@ import {
   TextField,
   useMediaQuery
 } from '@mui/material'
-import React, { memo, useState } from 'react'
+import React, { memo, useEffect, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { useDispatch, useSelector } from 'react-redux'
+import SimpleBackdrop from 'src/@core/components/spinner'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
+import { setLoading } from 'src/store/authentication/register'
 import { fetchUserReports } from 'src/store/leave-management'
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 
-const ReportsHeader = () => {
+const ReportsHeader = ({ user, fromDate, toDate, getData }) => {
   const [report, setReport] = useState({
     user: null,
     start: new Date(),
     end: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
-    isExportDisabled: true,
-    isLoading: false
+    isExportDisabled: true
   })
+  const [isLoading, setLoading] = useState(false)
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
   const isSM = useMediaQuery(theme => theme.breakpoints.up('sm'))
+
+  useEffect(() => {
+    setReport(prev => ({ ...prev, start: fromDate, end: toDate, user: user }))
+    setLoading(false)
+
+  }, [user])
 
   const handleOnChange = dates => {
     const [start, end] = dates
@@ -31,16 +39,20 @@ const ReportsHeader = () => {
   }
 
   const getReports = async () => {
-    await dispatch(
-      fetchUserReports({
+    setLoading(true)
+    await getData(
+      {
         userId: report.user?.id,
         fromDate: report.start?.toISOString(),
         toDate: report.end?.toISOString()
-      })
+      },
+      report.user
     )
   }
 
-  return (
+  return isLoading ? (
+    <SimpleBackdrop />
+  ) : (
     <Grid display='flex' flexWrap='wrap' justifyContent='start' columnGap={6} sx={{ m: 5 }}>
       <Grid xs={12} sm={4} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
         <Autocomplete

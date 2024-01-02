@@ -2,6 +2,7 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
+import { useEffect, useState } from 'react'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
@@ -9,9 +10,27 @@ import Icon from 'src/@core/components/icon'
 const TableHeader = props => {
   // ** Props
   const { handleFilter, toggle, value } = props
+  const [role, setRole] = useState('')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Perform localStorage action
+      const role = localStorage?.getItem('roleId')
+      setRole(role)
+    }
+  }, [])
 
   return (
-    <Box sx={{ p: 5, pb: 3, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box
+      sx={{
+        p: 5,
+        pb: 3,
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}
+    >
       <Button
         sx={{ mr: 4, mb: 2 }}
         color='secondary'
@@ -29,9 +48,13 @@ const TableHeader = props => {
           onChange={e => handleFilter(e.target.value)}
         />
 
-        <Button sx={{ mb: 2 }} onClick={toggle} variant='contained'>
-          Add User
-        </Button>
+        {role == 1 ||
+          role == 2 ||
+          (role == 3 && (
+            <Button sx={{ mb: 2 }} onClick={toggle} variant='contained'>
+              Add User
+            </Button>
+          ))}
       </Box>
     </Box>
   )

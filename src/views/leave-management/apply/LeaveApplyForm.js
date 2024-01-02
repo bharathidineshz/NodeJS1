@@ -145,9 +145,13 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
     setValue('toDate', selectedDate)
   }
 
+  const currentYear = new Date().getFullYear();
+  const minDate = new Date(currentYear, 0, 1);
+  const maxDate = new Date(currentYear+1, 11, 31);
+
   return (
     <>
-      <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={() => setOpen(false)}>
+      <Dialog fullWidth open={isOpen}   maxWidth='sm' onClose={() => setOpen(false)}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent
             sx={{
@@ -237,7 +241,8 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                         <DatePicker
                           id='event-start-date'
                           selected={value}
-                          minDate={new Date()}
+                          minDate={minDate}
+                          maxDate={maxDate}
                           dateFormat={'yyyy-MM-dd'}
                           customInput={
                             <PickersComponent label='From Date' registername='fromDate' />
@@ -294,6 +299,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                           selected={watch('fromDate') > value ? watch('fromDate') : value}
                           dateFormat={'yyyy-MM-dd'}
                           minDate={watch('fromDate')}
+                          maxDate={maxDate}
                           customInput={<PickersComponent label='To Date' registername='toDate' />}
                           onChange={onChange}
                           popperPlacement='auto'

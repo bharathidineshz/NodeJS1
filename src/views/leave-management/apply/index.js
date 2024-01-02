@@ -104,7 +104,7 @@ const LeaveApply = () => {
       renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
-      flex: 0.15,
+      flex: 0.14,
       minWidth: 100,
       headerName: 'From Date',
       field: 'fromDate',
@@ -113,13 +113,49 @@ const LeaveApply = () => {
       }
     },
     {
-      flex: 0.17,
+      flex: 0.14,
       minWidth: 100,
       headerName: 'To Date',
       field: 'toDate',
       renderCell: params => {
         return formatLocalDate(new Date(params.value))
       }
+    },
+    {
+      minWidth: 100,
+      field: 'isFromHalfDay',
+      headerName: 'From Half day',
+      renderCell: params => (
+        <Grid>
+          {params.value ? (
+            <CustomAvatar skin='light' color='success'>
+              <Icon icon='mdi:checkbox-marked-circle-outline' />
+            </CustomAvatar>
+          ) : (
+            <CustomAvatar skin='light' color='error'>
+              <Icon icon='mdi:close-circle-outline' />
+            </CustomAvatar>
+          )}
+        </Grid>
+      )
+    },
+    {
+      minWidth: 100,
+      field: 'isToHalfDay',
+      headerName: 'To Half Day',
+      renderCell: params => (
+        <Grid>
+          {params.value ? (
+            <CustomAvatar skin='light' color='success'>
+              <Icon icon='mdi:checkbox-marked-circle-outline' />
+            </CustomAvatar>
+          ) : (
+            <CustomAvatar skin='light' color='error'>
+              <Icon icon='mdi:close-circle-outline' />
+            </CustomAvatar>
+          )}
+        </Grid>
+      )
     },
 
     {
@@ -162,10 +198,18 @@ const LeaveApply = () => {
 
   const handleSearch = value => {
     setSearchValue(value)
-    const filterdRows = store.myLeaves.filter(
-      l => l.requestReason.trim().includes(value) || l.leavePolicyName.trim().includes(value)
+    const data = store.myLeaves.map(o => ({
+      ...o,
+      requestReason: o.requestReason.toLowerCase(),
+      leavePolicyName: o.leavePolicyName.toLowerCase()
+    }))
+    const filteredRows = data.filter(
+      o =>
+        o.requestReason.trim().includes(value.toLowerCase()) ||
+        o.leavePolicyName.trim().includes(value.toLowerCase()) 
     )
-    setFilteredRows(filterdRows)
+    const _data = store.myLeaves.filter(o => filteredRows.some(f => f.id == o.id))
+    setFilteredRows(_data)
   }
 
   const handleRowSelection = data => {
@@ -196,7 +240,7 @@ const LeaveApply = () => {
 
   return (
     <>
-      {store?.dashboards.length > 0 || store?.myLeaves.length > 0 ? (
+      {store?.dashboards != null && store?.myLeaves != null ? (
         <Grid container spacing={6}>
           <Grid item xs={12} md={6} lg={6}>
             <LeaveDashboard />
@@ -214,7 +258,7 @@ const LeaveApply = () => {
                 columns={columns}
                 rowSelection={false}
                 pageSizeOptions={[5, 10, 25, 50, 100]}
-                loading={store.myLeaves == null || store.myLeaves?.length == 0}
+                loading={store.myLeaves == null}
                 localeText={{ noRowsLabel: 'No Leaves' }}
                 onCellClick={data =>
                   data.row.requestStatusId == 1 &&
@@ -241,7 +285,6 @@ const LeaveApply = () => {
         open={alert}
         setOpen={setOpenAlert}
         title='Delete Request'
-        content='Are you confirm to delete request?'
         action='Delete'
         handleAction={handleDelete}
       />

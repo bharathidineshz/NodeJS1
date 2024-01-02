@@ -64,11 +64,11 @@ const defaultValues = {
 
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
-  allowanceCount: yup.number().positive("Should greater than 0").required('Allowance Required'),
-  allowanceTime: yup.number().min(0),
+  allowanceCount: yup.number().positive("Should greater than 0").required('Allowance Required').typeError('Must be a number'),
+  allowanceTime: yup.number().min(0).typeError('Must be a number'),
   period: yup.string().required('Period is Required'),
   isPermission: yup.boolean(),
-  carryForwardCount: yup.number().min(0),
+  carryForwardCount: yup.number().min(0).typeError('Must be a number'),
   level1: yup.number().min(0).notRequired(),
   level2: yup.number().min(0).notRequired()
 })
@@ -123,7 +123,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
   }
 
   return (
-    <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={() => setOpen(false)}>
+    <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={() => setOpen(false)}  onBackdropClick={() => setOpen(true)}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent
           sx={{
@@ -247,7 +247,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
                   control={control}
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
-                    <TextField value={value} label='Carry forward count' onChange={onChange} />
+                    <TextField value={value} type="number" label='Carry forward count' onChange={onChange} />
                   )}
                 />
                 {errors.carryForwardCount && (

@@ -53,9 +53,9 @@ import { APPROVERS } from 'src/helpers/constants'
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
   period: yup.string().required('Period is Required'),
-  carryForwardCount: yup.number().min(0),
-  allowanceTime: yup.number().min(0),
-  allowanceCount: yup.number().positive("Should greater than 0").required('Allowance Required'),
+  carryForwardCount: yup.number().min(0).typeError('Must be a number'),
+  allowanceTime: yup.number().min(0).typeError('Must be a number'),
+  allowanceCount: yup.number().positive("Should greater than 0").required('Allowance Required').typeError('Must be a number'),
   isPermission: yup.boolean(),
   levelOneApprovalLevelId: yup.number().positive().notRequired(),
   levelTwoApprovalLevelId: yup.number().positive().notRequired()
@@ -242,6 +242,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   render={({ field: { value, onChange } }) => (
                     <TextField
                       value={value}
+                      type="number"
                       label='Carry forward count'
                       onChange={onChange}
                     />

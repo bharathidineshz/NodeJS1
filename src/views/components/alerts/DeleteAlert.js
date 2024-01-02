@@ -22,7 +22,7 @@ const DeleteAlert = (props) => {
         <DialogTitle id='alert-dialog-title'>{title}</DialogTitle>
         <DialogContent>
           <DialogContentText id='alert-dialog-description'>
-           {content}
+          Are you absolutely certain you want to proceed with the deletion?
           </DialogContentText>
         </DialogContent>
         <DialogActions className='dialog-actions-dense'>

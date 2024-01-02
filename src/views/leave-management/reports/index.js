@@ -23,7 +23,12 @@ import { getProjectDetails, setSelectedProject } from 'src/store/apps/projects'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import ReportsHeader from './ReportsHeader'
-import { fetchPolicies, fetchStatus, resetReport } from 'src/store/leave-management'
+import {
+  fetchPolicies,
+  fetchStatus,
+  fetchUserReports,
+  resetReport
+} from 'src/store/leave-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 
 const LeaveReports = () => {
@@ -35,6 +40,11 @@ const LeaveReports = () => {
   const [sortColumn, setSortColumn] = useState('name')
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
+  const [report, setReport] = useState({
+    user: null,
+    start: new Date(),
+    end: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000)
+  })
 
   useEffect(() => {
     dispatch(fetchPolicies())
@@ -147,6 +157,12 @@ const LeaveReports = () => {
     dispatch(setSelectedProject(data.row))
   }
 
+  const getReports = (data,user) => {
+    dispatch(fetchUserReports(data)).then(() => {
+      setReport(prev => ({ ...prev, start: data.fromDate, end: data.toDate, user: user }))
+    })
+  }
+
   return (
     <>
       {isLoading ? (
@@ -176,7 +192,14 @@ const LeaveReports = () => {
               }}
               slots={{
                 toolbar: () => {
-                  return <ReportsHeader />
+                  return (
+                    <ReportsHeader
+                      getData={getReports}
+                      user={report.user}
+                      fromDate={new Date(report.start)}
+                      toDate={new Date(report.end)}
+                    />
+                  )
                 }
               }}
             />

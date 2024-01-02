@@ -62,14 +62,14 @@ const LeaveDashboard = () => {
         }}
       />
       <CardContent>
-        {store.dashboards.length > 0 ? (
+        {store.dashboards != null ? (
           <>
             <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
               <ResponsiveContainer>
-                <PieChart style={{ direction: 'ltr' }}>
+                <PieChart style={{ direction: 'ltr' }} stroke="none">
                   <Pie data={data} innerRadius={50} dataKey='value' label labelLine={false}>
                     {data.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.color}  />
                     ))}
                   </Pie>
                   <Tooltip />

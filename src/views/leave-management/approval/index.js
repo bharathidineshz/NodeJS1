@@ -185,8 +185,6 @@ const Approval = () => {
     }
   ]
 
-
-
   //handle approval
   const handleApproval = (row, name) => e => {
     if (name === 'Approved' || name === 'Rejected') {
@@ -197,7 +195,7 @@ const Approval = () => {
         ? document.getElementById('Comment').value
         : ''
 
-      if (_comment == null || _comment == '') {
+      if ((_comment == null || _comment == '') && name == 'Rejected') {
         setErroComment(true)
 
         return
@@ -235,14 +233,25 @@ const Approval = () => {
 
   const handleSearch = value => {
     setSearchValue(value)
-    const filteredRows = store.approvals.filter(
+    const data = store.approvals.map(o => ({
+      ...o,
+      request: o.request.toLowerCase(),
+      requestReason: o.requestReason.toLowerCase(),
+      userName: o.userName.toLowerCase(),
+      email: o.email.toLowerCase(),
+      comment: o.comment.toLowerCase()
+    }))
+
+    const filteredRows = data.filter(
       o =>
-        o.requestReason.toLowerCase().trim().includes(value) ||
-        o.userName.toLowerCase().trim().includes(value) ||
-        o.email.toLowerCase().trim().includes(value) ||
-        o.comment.toLowerCase().trim().includes(value)
+        o.request.trim().includes(value.toLowerCase()) ||
+        o.userName.trim().includes(value.toLowerCase()) ||
+        o.requestReason.trim().includes(value.toLowerCase()) ||
+        o.email.trim().includes(value.toLowerCase()) ||
+        o.comment.trim().includes(value.toLowerCase()) 
     )
-    setFilteredRows(filteredRows)
+    const _data = store.approvals.filter(o => filteredRows.some(f => f.id == o.id))
+    setFilteredRows(_data)
   }
 
   const handleComment = e => {}
@@ -264,7 +273,7 @@ const Approval = () => {
           rowSelection={false}
           className='no-border'
           localeText={{ noRowsLabel: 'No Approvals' }}
-          loading={store.approvals == null || store.approvals?.length == 0}
+          loading={store.approvals == null}
           pageSizeOptions={[5, 10, 25, 50, 100]}
           disableColumnMenu
           slots={{

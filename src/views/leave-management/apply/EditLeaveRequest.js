@@ -126,6 +126,10 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
     }
   }
 
+  const currentYear = new Date().getFullYear();
+  const minDate = new Date(currentYear, 0, 1);
+  const maxDate = new Date(currentYear+1, 11, 31);
+
   return (
     <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={() => setOpen(false)}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -220,7 +224,8 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                         id='event-start-date'
                         selected={value}
                         dateFormat={'yyyy-MM-dd'}
-                        minDate={new Date()}
+                        minDate={minDate}
+                        maxDate={maxDate}
                         customInput={<PickersComponent label='From Date' registername='fromDate' />}
                         onChange={onChange}
                         popperPlacement='auto'
@@ -272,6 +277,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                         selected={watch('fromDate') > value ? watch('fromDate') : value}
                         dateFormat={'yyyy-MM-dd'}
                         minDate={watch('fromDate')}
+                        maxDate={maxDate}
                         customInput={<PickersComponent label='To Date' registername='toDate' />}
                         onChange={onChange}
                         popperPlacement='auto'

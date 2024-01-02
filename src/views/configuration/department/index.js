@@ -226,7 +226,7 @@ const DepartmentConfig = ({ data }) => {
             open={alert}
             setOpen={setOpenAlert}
             title='Delete Policy'
-            content='Are you confirm to delete policy?'
+            content='Are you absolutely certain you want to proceed with the deletion?'
             action='Delete'
             handleAction={handleDelete}
           />

@@ -70,13 +70,13 @@ const LeavePolicy = ({ data }) => {
     {
       flex: 0.2,
       minWidth: 120,
-      headerName: 'Count',
+      headerName: 'Allowance',
       field: 'allowanceCount'
     },
     {
       flex: 0.2,
       minWidth: 120,
-      headerName: 'Alowance Time',
+      headerName: 'Permission Hours',
       field: 'allowanceTime'
     },
     {
@@ -148,15 +148,25 @@ const LeavePolicy = ({ data }) => {
   const handleSearch = value => {
     setSearchValue(value)
 
-    const rows = store.policies.filter(
-      l =>
-        l.typeOfLeave.trim().includes(value) ||
-        l.period.trim().includes(value) ||
-        l.allowanceCount.toString().trim().includes(value) ||
-        l.allowanceTime.toString().trim().includes(value) ||
-        l.carryForwardCount.toString().trim().includes(value)
+    const rows = store.policies.map(l => ({
+      ...l,
+      typeOfLeave: l.typeOfLeave.toLowerCase(),
+      period: l.period.toLowerCase(),
+      allowanceCount: l.allowanceCount.toString(),
+      allowanceTime: l.allowanceTime.toString(),
+      carryForwardCount: l.carryForwardCount.toString()
+    }))
+
+    const filteredRows = rows.filter(
+      o =>
+        o.typeOfLeave.trim().includes(value.toLowerCase()) ||
+        o.period.trim().includes(value.toLowerCase()) ||
+        o.allowanceCount.trim().includes(value) ||
+        o.allowanceTime.trim().includes(value) ||
+        o.carryForwardCount.trim().includes(value)
     )
-    setFilteredRows(rows)
+    const _data = store.policies.filter(o => filteredRows.some(f => f.id == o.id))
+    setFilteredRows(_data)
   }
 
   const handleRowSelection = data => {
@@ -182,7 +192,7 @@ const LeavePolicy = ({ data }) => {
               pageSizeOptions={[5, 10, 25, 50, 100]}
               localeText={{ noRowsLabel: 'No Policies' }}
               className='no-border'
-              loading={store.policies == null || store.policies?.length == 0}
+              loading={store.policies == null}
               disableColumnMenu
               slots={{
                 toolbar: () => {
@@ -194,9 +204,9 @@ const LeavePolicy = ({ data }) => {
               initialState={{
                 pagination: {
                   paginationModel: {
-                    pageSize: 25,
-                  },
-                },
+                    pageSize: 25
+                  }
+                }
               }}
             />
           </Card>
@@ -206,7 +216,6 @@ const LeavePolicy = ({ data }) => {
             open={alert}
             setOpen={setOpenAlert}
             title='Delete Policy'
-            content='Are you confirm to delete policy?'
             action='Delete'
             handleAction={handleDelete}
           />

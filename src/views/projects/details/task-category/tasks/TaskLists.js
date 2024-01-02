@@ -248,7 +248,6 @@ const TaskLists = () => {
         open={openAlert}
         setOpen={setAlert}
         title='Delete Task'
-        content='Are you confirm to delete task?'
         action='Delete'
         handleAction={handleDeleteTask}
       />

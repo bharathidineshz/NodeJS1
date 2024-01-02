@@ -75,7 +75,7 @@ const LeaveDetails = () => {
         }}
       />
       <CardContent>
-        {data?.length > 0 ? (
+        {data != null ? (
           <>
             <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
               <ResponsiveContainer>

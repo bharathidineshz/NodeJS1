@@ -60,6 +60,7 @@ const SidebarAddHoliday = props => {
   // ** Hooks
   const dispatch = useDispatch()
   const [existError, setExistError] = useState(false)
+  const [existDateError, setExistDateError] = useState(false)
 
   const {
     reset,
@@ -84,9 +85,16 @@ const SidebarAddHoliday = props => {
     var holidayArray = [data]
     console.log(holidayArray)
     const isExist = isExistHoliday(holidays, data.leaveDescription?.trim())
+    const dates = holidays.map(o => new Date(o.date).toDateString())
+    const isExisDate = dates.includes(new Date(date).toDateString())
 
     if (isExist) {
       setExistError(true)
+
+      return
+    }
+    if (isExisDate) {
+      setExistDateError(true)
 
       return
     }
@@ -146,6 +154,11 @@ const SidebarAddHoliday = props => {
             />
             {errors.date && (
               <FormHelperText sx={{ color: 'error.main' }}>Holiday date is required</FormHelperText>
+            )}
+             {existDateError && (
+              <FormHelperText sx={{ color: 'error.main' }}>
+                This Date already exist
+              </FormHelperText>
             )}
           </FormControl>
           <FormControl fullWidth sx={{ mb: 6 }}>

@@ -176,7 +176,6 @@ const SkillsConfig = ({ data }) => {
             open={alert}
             setOpen={setOpenAlert}
             title='Delete Skill'
-            content='Are you confirm to delete skill?'
             action='Delete'
             handleAction={handleDelete}
           />

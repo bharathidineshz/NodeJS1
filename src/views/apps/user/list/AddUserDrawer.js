@@ -313,9 +313,7 @@ const SidebarAddUser = props => {
               label='Skills'
               setSkills={handleSkills}
             />
-            {skills.length === 0 && (
-              <FormHelperText sx={{ color: 'error.main' }}>Skills required</FormHelperText>
-            )}
+           
           </FormControl>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Button size='large' type='submit' variant='contained' sx={{ mr: 3 }}>

@@ -28,9 +28,11 @@ import { Button } from '@mui/material'
 import LeaveApplyForm from 'src/views/leave-management/apply/LeaveApplyForm'
 import NewLeavePolicy from 'src/views/leave-management/leave-policy/NewLeavePolicy'
 import Holidays from 'src/views/leave-management/holidays'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import FallbackSpinner from 'src/layouts/components/LogoSpinner'
 import SimpleBackdrop from 'src/@core/components/spinner'
+import SidebarAddHoliday from 'src/views/pages/account-settings/holiday/AddHolidayDrawer'
+import { fetchHolidays } from 'src/store/apps/accountSetting'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
   '& .MuiTabs-indicator': {
@@ -59,11 +61,13 @@ const LeaveManagement = ({ tab, data }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
   const [role, setRole] = useState('')
+  const dispatch = useDispatch();
 
   // ** Hooks
   const router = useRouter()
   const hideText = useMediaQuery(theme => theme.breakpoints.down('sm'))
   const store = useSelector(state => state.user)
+  const _store = useSelector(state=> state.accountSetting)
 
   const handleChange = (event, value) => {
     setIsLoading(true)
@@ -87,6 +91,7 @@ const LeaveManagement = ({ tab, data }) => {
       // Perform localStorage action
       const role = localStorage?.getItem('roleId')
       setRole(role)
+      dispatch(fetchHolidays())
     }
   }, [tab])
 
@@ -137,11 +142,6 @@ const LeaveManagement = ({ tab, data }) => {
                   flexWrap='wrap'
                   alignItems='center'
                 >
-                  {/* <Grid item>
-      <Typography variant='h5' fontWeight='600' color='primary'>
-        ADAT
-      </Typography>
-    </Grid> */}
                   <TabList
                     variant='scrollable'
                     scrollButtons='auto'
@@ -177,6 +177,11 @@ const LeaveManagement = ({ tab, data }) => {
                       Add {activeTab === 'leave_policy' ? 'Leave Policy' : activeTab}
                     </Button>
                   )}
+                  {activeTab === 'holidays' && (
+                    <Button variant='contained' onClick={() => setOpen(true)}>
+                      Add Holiday
+                    </Button>
+                  )}
                 </Grid>
                 <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
                   {isLoading ? (
@@ -202,6 +207,8 @@ const LeaveManagement = ({ tab, data }) => {
           <Grid item xs={12}>
             {activeTab === 'my leaves' ? (
               <LeaveApplyForm isOpen={isOpen} setOpen={setOpen} />
+            ) : activeTab === 'holidays' ? (
+              <SidebarAddHoliday open={isOpen} holidays={_store.holidays ||[]} toggle={setOpen} />
             ) : (
               <NewLeavePolicy isOpen={isOpen} setOpen={setOpen} />
             )}

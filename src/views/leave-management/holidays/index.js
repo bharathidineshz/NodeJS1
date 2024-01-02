@@ -134,8 +134,10 @@ const Holidays = ({ popperPlacement }) => {
 
   const handleSearch = value => {
     setSearchValue(value)
-    const filteredRows = rows.filter(o => o.leaveDescription.trim().includes(value))
-    setFilteredRows(filteredRows)
+    const data = rows.map(o => ({ ...o, leaveDescription: o.leaveDescription.toLowerCase() }))
+    const filteredRows = data.filter(o => o.leaveDescription.trim().includes(value.toLowerCase()) || formatLocalDate(o.date).includes(value))
+    const _data = rows.filter(o => filteredRows.some(f => f.id == o.id))
+    setFilteredRows(_data)
   }
 
   const handleDelete = () => {
@@ -184,10 +186,6 @@ const Holidays = ({ popperPlacement }) => {
               placeholder='Search Holiday'
               onChange={e => handleSearch(e.target.value)}
             />
-
-            <Button sx={{ mb: 2 }} onClick={() => toggleAddUserDrawer()} variant='contained'>
-              Add Holiday
-            </Button>
           </Box>
         </Box>
         <Grid>
@@ -200,7 +198,7 @@ const Holidays = ({ popperPlacement }) => {
             onRowClick={handleRowClick}
             pageSizeOptions={[5, 10, 25, 50, 100]}
             localeText={{ noRowsLabel: 'No Holiday' }}
-            loading={rows == null || rows?.length == 0}
+            loading={rows == null}
             disableColumnMenu
             initialState={{
               pagination: {
@@ -212,13 +210,12 @@ const Holidays = ({ popperPlacement }) => {
           />
         </Grid>
       </DatePickerWrapper>
-      <SidebarAddHoliday open={addUserOpen} holidays={rows} toggle={toggleAddUserDrawer}></SidebarAddHoliday>
+
       <HolidayForm isOpen={formOpen} row={row} setOpen={setForm} />
       <DynamicDeleteAlert
         open={alert}
         setOpen={setAlert}
         title='Delete Holiday'
-        content='Are you confirm to delete holiday?'
         action='Delete'
         handleAction={handleDelete}
       />
