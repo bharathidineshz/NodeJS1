@@ -50,6 +50,7 @@ import toast from 'react-hot-toast'
 import { base } from 'src/store/endpoints/interceptor'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserRoleId } from 'src/store/apps/user'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 // ** Styled Components
 const LoginIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -108,13 +109,14 @@ const schema = yup.object().shape({
 })
 
 const defaultValues = {
-  email: 'naveen.mounasamy@athen.tech',
-  password: '123qwe'
+  email: '',
+  password: ''
 }
 
 const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   // ** Hooks
   const theme = useTheme()
@@ -122,8 +124,8 @@ const LoginPage = () => {
   const { settings } = useSettings()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
   const router = useRouter()
-  const dispatch = useDispatch();
-  const store = useSelector(state=> state.user);
+  const dispatch = useDispatch()
+  const store = useSelector(state => state.user)
 
   // ** Vars
   const { skin } = settings
@@ -140,6 +142,7 @@ const LoginPage = () => {
   })
 
   const onSubmit = async data => {
+    setLoading(true)
     const response = await axios.post(base.url + endpoints.login, data)
 
     if (response.data.accessToken) {
@@ -148,14 +151,16 @@ const LoginPage = () => {
       window.localStorage.setItem('userData', JSON.stringify(userData))
       window.localStorage.setItem('roleId', userData?.roleId)
       dispatch(setUserRoleId(userData?.roleId))
+      setLoading(false)
       JSON.parse(userData.org)
         ? router.replace({
-            pathname: '/apps/timesheets'
+            pathname: '/leave-management/my leaves'
           })
         : router.replace({
             pathname: '/organizational-setup'
           })
     } else {
+      setLoading(false)
       toast.error('Login Failed')
     }
   }
@@ -189,6 +194,7 @@ const LoginPage = () => {
           skin === 'bordered' && !hidden ? { borderLeft: `1px solid ${theme.palette.divider}` } : {}
         }
       >
+        {loading && <SimpleBackdrop />}
         <Box
           sx={{
             p: 12,
@@ -228,14 +234,6 @@ const LoginPage = () => {
                 Please sign-in to your account and start the adventure
               </Typography>
             </Box>
-            {/* <Alert icon={false} sx={{ py: 3, mb: 6, ...bgColors.primaryLight, '& .MuiAlert-message': { p: 0 } }}>
-              <Typography variant='caption' sx={{ mb: 2, display: 'block', color: 'primary.main' }}>
-                Admin: <strong>admin@materio.com</strong> / Pass: <strong>admin</strong>
-              </Typography>
-              <Typography variant='caption' sx={{ display: 'block', color: 'primary.main' }}>
-                Client: <strong>client@materio.com</strong> / Pass: <strong>client</strong>
-              </Typography>
-            </Alert> */}
             <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
               <FormControl fullWidth sx={{ mb: 4 }}>
                 <Controller
@@ -338,7 +336,7 @@ const LoginPage = () => {
                   <LinkStyled href='/register'>Create an account</LinkStyled>
                 </Typography>
               </Box>
-              <Divider sx={{ my: theme => `${theme.spacing(5)} !important` }}>or</Divider>
+              {/* <Divider sx={{ my: theme => `${theme.spacing(5)} !important` }}>or</Divider>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconButton
                   href='/'
@@ -372,7 +370,7 @@ const LoginPage = () => {
                 >
                   <Icon icon='mdi:google' />
                 </IconButton>
-              </Box>
+              </Box> */}
             </form>
           </BoxWrapper>
         </Box>

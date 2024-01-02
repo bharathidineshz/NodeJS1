@@ -57,6 +57,7 @@ import toast from 'react-hot-toast'
 import { fetchHolidays, updateHoliday } from 'src/store/apps/accountSetting'
 import { formatDateToYYYYMMDD } from 'src/helpers/dateFormats'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import subDays from 'date-fns/subDays'
 
 const defaultValues = {
   date: new Date(),
@@ -71,6 +72,7 @@ const schema = yup.object().shape({
 const HolidayForm = ({ isOpen, row, setOpen }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
+  const { holidays } = useSelector(state => state.accountSetting)
   const theme = useTheme()
 
   const {
@@ -192,6 +194,8 @@ const HolidayForm = ({ isOpen, row, setOpen }) => {
                         id='event-start-date'
                         selected={value}
                         dateFormat={'yyyy-MM-dd'}
+                        excludeDates={holidays.map(o => subDays(new Date(o.date), 0))}
+                        highlightDates={holidays.map(o => subDays(new Date(o.date), 0))}
                         customInput={
                           <PickersComponent label='Holiday Date' registername='fromDate' />
                         }

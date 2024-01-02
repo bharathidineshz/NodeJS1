@@ -41,14 +41,14 @@ const navigation = () => {
     {
       title: 'Timesheets',
       icon: 'mdi:clock-time-four-outline',
-      path: '/apps/timesheets',
+      path: '/apps/timesheets'
 
       // auth: false
     },
     {
       title: 'Clients',
       icon: 'mdi:account-group-outline',
-      path: '/clients',
+      path: '/clients'
 
       // auth: false
     },
@@ -90,15 +90,13 @@ const navigation = () => {
     {
       title: 'Invoice',
       icon: 'mdi:file-document-outline',
-      path: '/apps/invoice/list',
-
-      // // auth: false
+      path: '/apps/invoice/list'
     },
     {
       title: 'User',
       icon: 'mdi:account-outline',
       auth: false,
-      path: '/apps/user/list'
+      path: '/users/list'
     },
 
     {

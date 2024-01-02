@@ -47,6 +47,8 @@ import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import PickersComponent from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import { fetchHolidays } from 'src/store/apps/accountSetting'
+import subDays from 'date-fns/subDays'
 
 const schema = yup.object().shape({
   requestType: yup.string().required('Request Type is Required'),
@@ -61,6 +63,8 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
   const [index, setIndex] = useState(0)
+  const [holidays, setHolidays] = useState([])
+  const [weekOffs, setWeekOffs] = useState([])
 
   const {
     reset,
@@ -87,14 +91,12 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
         isFromDateHalfDay: row.isFromDateHalfDay,
         isToDateHalfDay: row.isToDateHalfDay
       })
+      dispatch(fetchHolidays()).then(res => {
+        const { payload } = res
+        setHolidays(payload.map(o => subDays(new Date(o.date), 0)))
+      })
     }
   }, [reset, row])
-
-  const isWeekday = date => {
-    const day = new Date(date).getDay()
-
-    return day !== 0 && day !== 6
-  }
 
   //submit
 
@@ -117,6 +119,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
           if (res?.status === 200) {
             customSuccessToast(res.data)
             dispatch(fetchMyLeaves())
+            dispatch(fetchDashboard(user.id))
           } else {
             customErrorToast(res.data)
           }
@@ -126,9 +129,15 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
     }
   }
 
-  const currentYear = new Date().getFullYear();
-  const minDate = new Date(currentYear, 0, 1);
-  const maxDate = new Date(currentYear+1, 11, 31);
+  const currentYear = new Date().getFullYear()
+  const minDate = new Date(currentYear, 0, 1)
+  const maxDate = new Date(currentYear + 1, 11, 31)
+
+  const isWeekday = date => {
+    const day = new Date(date).getDay()
+
+    return day !== 0 && day !== 6
+  }
 
   return (
     <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={() => setOpen(false)}>
@@ -226,6 +235,9 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                         dateFormat={'yyyy-MM-dd'}
                         minDate={minDate}
                         maxDate={maxDate}
+                        excludeDates={holidays}
+                        highlightDates={holidays}
+                        filterDate={isWeekday}
                         customInput={<PickersComponent label='From Date' registername='fromDate' />}
                         onChange={onChange}
                         popperPlacement='auto'
@@ -278,6 +290,9 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                         dateFormat={'yyyy-MM-dd'}
                         minDate={watch('fromDate')}
                         maxDate={maxDate}
+                        excludeDates={holidays}
+                        highlightDates={holidays}
+                        filterDate={isWeekday}
                         customInput={<PickersComponent label='To Date' registername='toDate' />}
                         onChange={onChange}
                         popperPlacement='auto'

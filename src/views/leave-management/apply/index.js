@@ -183,14 +183,27 @@ const LeaveApply = () => {
       sortable: false,
       renderCell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton
-            onClick={() => {
-              setOpen(false), setRow(row), setOpenAlert(!alert)
-            }}
-            color='error'
-          >
-            <Icon icon='mdi:delete-outline' fontSize={20} />
-          </IconButton>
+          {row.requestStatusId === 2 ? (
+            <Button
+              variant='text'
+              color='secondary'
+              size='small'
+              onClick={() => {
+                setOpen(false), setRow(row), setOpenAlert(!alert)
+              }}
+            >
+              Cancel
+            </Button>
+          ) : row.requestStatusId === 3 ? null : (
+            <IconButton
+              onClick={() => {
+                setOpen(false), setRow(row), setOpenAlert(!alert)
+              }}
+              color='error'
+            >
+              <Icon icon='mdi:delete-outline' fontSize={20} />
+            </IconButton>
+          )}
         </Box>
       )
     }
@@ -206,7 +219,7 @@ const LeaveApply = () => {
     const filteredRows = data.filter(
       o =>
         o.requestReason.trim().includes(value.toLowerCase()) ||
-        o.leavePolicyName.trim().includes(value.toLowerCase()) 
+        o.leavePolicyName.trim().includes(value.toLowerCase())
     )
     const _data = store.myLeaves.filter(o => filteredRows.some(f => f.id == o.id))
     setFilteredRows(_data)
@@ -222,11 +235,14 @@ const LeaveApply = () => {
 
   const handleDelete = () => {
     try {
+      setOpenAlert(!alert)
       dispatch(deleteRequest(row?.id))
         .then(unwrapResult)
         .then(res => {
           if (res.status === 200) {
-            setOpenAlert(!alert)
+            const currentUser = JSON.parse(localStorage.getItem('userData'))
+            const user = store.users.find(o => currentUser.user === o.email)
+            dispatch(fetchDashboard(user.id))
             dispatch(fetchMyLeaves())
             customSuccessToast(res.data)
           } else {
@@ -265,6 +281,11 @@ const LeaveApply = () => {
                   data.field != 'action' &&
                   handleRowSelection(data)
                 }
+                sx={{
+                  '&:hover': {
+                    cursor: 'pointer'
+                  }
+                }}
                 initialState={{
                   pagination: {
                     paginationModel: {

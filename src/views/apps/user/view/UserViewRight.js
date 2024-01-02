@@ -59,7 +59,7 @@ const UserViewRight = ({ tab, invoiceData }) => {
     setActiveTab(value)
     router
       .push({
-        pathname: `/apps/user/view/${value.toLowerCase()}`
+        pathname: `/users/view`
       })
       .then(() => setIsLoading(false))
   }
@@ -87,42 +87,6 @@ const UserViewRight = ({ tab, invoiceData }) => {
             </Box>
           }
         />
-        {/* <Tab
-          value='security'
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center', '& svg': { mr: 2 } }}>
-              <Icon fontSize={20} icon='mdi:lock-outline' />
-              Security
-            </Box>
-          }
-        />
-        <Tab
-          value='billing-plan'
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center', '& svg': { mr: 2 } }}>
-              <Icon fontSize={20} icon='mdi:bookmark-outline' />
-              Billing & Plan
-            </Box>
-          }
-        />
-        <Tab
-          value='notification'
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center', '& svg': { mr: 2 } }}>
-              <Icon fontSize={20} icon='mdi:bell-outline' />
-              Notification
-            </Box>
-          }
-        />
-        <Tab
-          value='connection'
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center', '& svg': { mr: 2 } }}>
-              <Icon fontSize={20} icon='mdi:link' />
-              Connection
-            </Box>
-          }
-        /> */}
       </TabList>
       <Box sx={{ mt: 4 }}>
         {isLoading ? (

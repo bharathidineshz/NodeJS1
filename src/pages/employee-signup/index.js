@@ -212,7 +212,7 @@ const EmployeeSignup = ({ data }) => {
       window.localStorage.setItem('roleId', userData?.roleId)
 
       router.replace({
-        pathname: '/apps/timesheets'
+        pathname: '/leave-management/my leaves'
       })
     } else {
       toast.error('Login Failed')

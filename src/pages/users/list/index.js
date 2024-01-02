@@ -100,7 +100,7 @@ const columns = [
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {renderClient(fullName)}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
-            <LinkStyled href='/apps/user/view/overview/'>{fullName}</LinkStyled>
+            <LinkStyled href={`/users/view/${row.id}`}>{fullName}</LinkStyled>
           </Box>
         </Box>
       )
@@ -170,7 +170,7 @@ const UserList = ({ apiData }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
   useEffect(() => {
-    setLoading(true);
+    setLoading(true)
     dispatch(fetchUsers()).then(res => setLoading(false))
   }, [dispatch, addUserOpen])
 
@@ -213,47 +213,36 @@ const UserList = ({ apiData }) => {
   const onViewUser = data => {
     dispatch(setUserId(data?.row.id))
     router.push({
-      pathname: '/apps/user/view/overview'
+      pathname: `/users/view/${data?.row.id}`
     })
   }
 
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-      {isLoading ? (
-        <SimpleBackdrop />
-      ) : (
-        <Card>
-          <CardHeader />
-          <TableHeader value={value} handleFilter={handleFilter} toggle={toggleAddUserDrawer} />
-          <DataGrid
-            autoHeight
-            rows={filteredData ?? []}
-            columns={columns}
-            disableRowSelectionOnClick
-            onRowClick={onViewUser}
-            pageSizeOptions={[10, 25, 50]}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-          />
-        </Card>
-      )}
+        {isLoading ? (
+          <SimpleBackdrop />
+        ) : (
+          <Card>
+            <CardHeader />
+            <TableHeader value={value} handleFilter={handleFilter} toggle={toggleAddUserDrawer} />
+            <DataGrid
+              autoHeight
+              rows={filteredData ?? []}
+              columns={columns}
+              disableRowSelectionOnClick
+              onRowClick={onViewUser}
+              pageSizeOptions={[10, 25, 50]}
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+            />
+          </Card>
+        )}
       </Grid>
 
       <AddUserDrawer open={addUserOpen} toggle={toggleAddUserDrawer} />
     </Grid>
   )
-}
-
-export const getStaticProps = async () => {
-  const res = await axios.get('/cards/statistics')
-  const apiData = res.data
-
-  return {
-    props: {
-      apiData
-    }
-  }
 }
 
 export default UserList

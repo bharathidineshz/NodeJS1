@@ -34,6 +34,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 // ** Actions Imports
 import { addHoliday } from 'src/store/apps/accountSetting/index'
+import subDays from 'date-fns/subDays'
 
 const Header = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -100,6 +101,7 @@ const SidebarAddHoliday = props => {
     }
     setExistError(false)
     dispatch(addHoliday(holidayArray))
+    dispatch(fetchHolidays())
     toggle()
     reset({})
   }
@@ -145,6 +147,8 @@ const SidebarAddHoliday = props => {
                       onChange(date)
                     }}
                     selected={value}
+                    excludeDates={holidays.map(o => subDays(new Date(o.date), 0))}
+                    highlightDates={holidays.map(o => subDays(new Date(o.date), 0))}
                     customInput={
                       <CustomInput label='Holiday Date' fullWidth error={Boolean(errors.date)} />
                     }
@@ -155,10 +159,8 @@ const SidebarAddHoliday = props => {
             {errors.date && (
               <FormHelperText sx={{ color: 'error.main' }}>Holiday date is required</FormHelperText>
             )}
-             {existDateError && (
-              <FormHelperText sx={{ color: 'error.main' }}>
-                This Date already exist
-              </FormHelperText>
+            {existDateError && (
+              <FormHelperText sx={{ color: 'error.main' }}>This Date already exist</FormHelperText>
             )}
           </FormControl>
           <FormControl fullWidth sx={{ mb: 6 }}>

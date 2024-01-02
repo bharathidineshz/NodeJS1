@@ -54,13 +54,14 @@ import {
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import { approvalRequest } from 'src/helpers/requests'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 const Approval = () => {
   // ** States
   const [total, setTotal] = useState(0)
   const [comment, setComment] = useState('')
 
-  const [isLoading, setLoading] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
   const [filteredRows, setFilteredRows] = useState([])
   const [errorComment, setErroComment] = useState(false)
@@ -69,7 +70,8 @@ const Approval = () => {
     isRejected: false,
     isOpenDialog: false,
     isApproved: false.valueOf,
-    rejectData: {}
+    rejectData: {},
+    isLoading: false
   })
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 })
   const dispatch = useDispatch()
@@ -78,7 +80,7 @@ const Approval = () => {
 
   useEffect(() => {
     dispatch(fetchUsers())
-    dispatch(fetchApprovals())
+    dispatch(fetchApprovals()).then(() => setLoading(false))
   }, [dispatch])
 
   const columns = [
@@ -188,7 +190,7 @@ const Approval = () => {
   //handle approval
   const handleApproval = (row, name) => e => {
     if (name === 'Approved' || name === 'Rejected') {
-      setRespond(state => ({ ...state, isOpenDialog: false }))
+      setRespond(state => ({ ...state, isOpenDialog: false, isLoading: true }))
 
       const _row = name == 'Approved' ? row : respond.rejectData
       const _comment = document.getElementById('Comment')?.value
@@ -225,9 +227,10 @@ const Approval = () => {
           } else {
             customErrorToast(res.data)
           }
+          setRespond(state => ({ ...state, isOpenDialog: false, isLoading: false }))
         })
     } else {
-      setRespond(state => ({ ...state, rejectData: row, isOpenDialog: true }))
+      setRespond(state => ({ ...state, rejectData: row, isOpenDialog: true, isLoading: false }))
     }
   }
 
@@ -248,7 +251,7 @@ const Approval = () => {
         o.userName.trim().includes(value.toLowerCase()) ||
         o.requestReason.trim().includes(value.toLowerCase()) ||
         o.email.trim().includes(value.toLowerCase()) ||
-        o.comment.trim().includes(value.toLowerCase()) 
+        o.comment.trim().includes(value.toLowerCase())
     )
     const _data = store.approvals.filter(o => filteredRows.some(f => f.id == o.id))
     setFilteredRows(_data)
@@ -263,6 +266,7 @@ const Approval = () => {
   return (
     <>
       <Card>
+        {respond.isLoading && <SimpleBackdrop />}
         <DataGrid
           autoHeight
           pagination
@@ -273,7 +277,7 @@ const Approval = () => {
           rowSelection={false}
           className='no-border'
           localeText={{ noRowsLabel: 'No Approvals' }}
-          loading={store.approvals == null}
+          loading={isLoading}
           pageSizeOptions={[5, 10, 25, 50, 100]}
           disableColumnMenu
           slots={{

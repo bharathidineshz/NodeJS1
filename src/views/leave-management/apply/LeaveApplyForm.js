@@ -36,6 +36,7 @@ import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInpu
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { useDispatch, useSelector } from 'react-redux'
 import {
+  fetchDashboard,
   fetchMyLeaves,
   fetchPolicies,
   fetchRequestTypes,
@@ -56,6 +57,8 @@ import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import { fetchHolidays } from 'src/store/apps/accountSetting'
+import subDays from 'date-fns/subDays'
 
 const defaultValues = {
   requestType: '',
@@ -75,11 +78,19 @@ const schema = yup.object().shape({
   isToDateHalfDay: yup.boolean().notRequired()
 })
 
+const isWeekday = date => {
+  const day = new Date(date).getDay()
+
+  return day !== 0 && day !== 6
+}
+
 const LeaveApplyForm = ({ isOpen, setOpen }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
   const theme = useTheme()
   const [isLoading, setLoading] = useState(false)
+  const [holidays, setHolidays] = useState([])
+  const [weekOffs, setWeekOffs] = useState([])
 
   const {
     reset,
@@ -99,6 +110,10 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
   useEffect(() => {
     dispatch(fetchPolicies())
     dispatch(fetchUsers())
+    dispatch(fetchHolidays()).then(res => {
+      const { payload } = res
+      setHolidays(payload.map(o => subDays(new Date(o.date), 0)))
+    })
   }, [])
 
   const isWeekday = date => {
@@ -130,9 +145,10 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
           if (res?.status == 200 || res.status == 201) {
             setLoading(false)
             customSuccessToast(res.data)
+            dispatch(fetchDashboard(user.id))
             dispatch(fetchMyLeaves())
           } else {
-           customErrorToast(res.data)
+            customErrorToast(res.data)
           }
         })
     } catch (error) {
@@ -145,13 +161,13 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
     setValue('toDate', selectedDate)
   }
 
-  const currentYear = new Date().getFullYear();
-  const minDate = new Date(currentYear, 0, 1);
-  const maxDate = new Date(currentYear+1, 11, 31);
+  const currentYear = new Date().getFullYear()
+  const minDate = new Date(currentYear, 0, 1)
+  const maxDate = new Date(currentYear + 1, 11, 31)
 
   return (
     <>
-      <Dialog fullWidth open={isOpen}   maxWidth='sm' onClose={() => setOpen(false)}>
+      <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={() => setOpen(false)}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent
             sx={{
@@ -244,6 +260,8 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                           minDate={minDate}
                           maxDate={maxDate}
                           dateFormat={'yyyy-MM-dd'}
+                          excludeDates={[...holidays, ...weekOffs]}
+                          highlightDates={holidays}
                           customInput={
                             <PickersComponent label='From Date' registername='fromDate' />
                           }
@@ -300,6 +318,8 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                           dateFormat={'yyyy-MM-dd'}
                           minDate={watch('fromDate')}
                           maxDate={maxDate}
+                          excludeDates={[...holidays, ...weekOffs]}
+                          highlightDates={holidays}
                           customInput={<PickersComponent label='To Date' registername='toDate' />}
                           onChange={onChange}
                           popperPlacement='auto'
