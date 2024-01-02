@@ -1,24 +1,39 @@
 import { Grid } from '@mui/material'
 import { useRouter } from 'next/router'
-import React from 'react'
-import { useSelector } from 'react-redux'
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import SimpleBackdrop from 'src/@core/components/spinner'
+import { fetchUsers } from 'src/store/apps/user'
 import UserViewLeft from 'src/views/apps/user/view/UserViewLeft'
 import UsersProjectListTable from 'src/views/apps/user/view/UsersProjectListTable'
 
-const UserDetail = ({ id }) => {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+const UserDetail = () => {
   const router = useRouter()
-  const _id = id == null ? router.query : id
-  const store = useSelector(state => state.user)
-  const user = store.users.find(o => o.id === _id)
+  const [user, setUser] = useState(null)
+  const [rpm, setRpm] = useState(null)
+  const [index, setIndex] = useState(0)
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    dispatch(fetchUsers()).then(res => {
+      const id = window.location.pathname.split('/')[3]
+      const _user = isNaN(id) ? null : res.payload.find(o => o.id == id)
+      const _rpm = isNaN(id) ? null : res.payload.find(o => o.id == _user.reportingManagerId)
+      const _index = isNaN(id) ? null : res.payload.findIndex(o => o.id == _user.reportingManagerId)
+      setUser(_user)
+      setRpm(_rpm)
+      setIndex(_index)
+    })
+  }, [])
 
   return (
     <Grid container spacing={6}>
+      {user == null && <SimpleBackdrop />}
       <Grid item xs={12} md={5} lg={4}>
-        <UserViewLeft user={user} />
+        <UserViewLeft user={user} rpm={rpm} index={index} />
       </Grid>
       <Grid item xs={12} md={7} lg={8}>
-        <UsersProjectListTable />
+        {user != null && <UsersProjectListTable />}
       </Grid>
     </Grid>
   )

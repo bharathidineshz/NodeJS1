@@ -70,11 +70,11 @@ const SettingsConfig = () => {
     selectedHRs: []
   })
 
-  useEffect(()=>{
+  useEffect(() => {
     dispatch(fetchUsers())
     dispatch(fetchHRApprovals())
 
-  },[])
+  }, [])
 
   useEffect(() => {
     if (configuration != null && Object.keys(configuration).length > 0) {
@@ -149,6 +149,7 @@ const SettingsConfig = () => {
   // Map Configuration
 
   const handleConfiguration = (name, value) => {
+
     var request
     setLoading(true)
     switch (name?.toLowerCase()) {
@@ -301,12 +302,12 @@ const SettingsConfig = () => {
                 <Grid item xs={12}>
                   <FormControl fullWidth>
                     <Autocomplete
-                      options={filteredTimezones}
+                      options={timezones}
                       id='autocomplete-limit-tags'
                       getOptionLabel={option => option.offset}
                       defaultValue={filteredTimezones[config.timezoneIndex]}
                       value={config.timezone}
-                      onChange={e => handleConfiguration('timezone', e.target.innerText)}
+                      onChange={(e, v) => handleConfiguration('timezone', v)}
                       renderInput={params => (
                         <TextField {...params} label='Timezone' error={config.timezone == null} />
                       )}

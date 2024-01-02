@@ -39,7 +39,7 @@ import UserSubscriptionDialog from 'src/views/apps/user/view/UserSubscriptionDia
 import { getInitials } from 'src/@core/utils/get-initials'
 import { roles } from 'src/helpers/constants'
 import { formatLocalDate } from 'src/helpers/dateFormats'
-import { Chip, FormHelperText } from '@mui/material'
+import { Autocomplete, Chip, FormHelperText } from '@mui/material'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import DatePicker from 'react-datepicker'
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
@@ -51,9 +51,10 @@ import * as yup from 'yup'
 import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
 import { userRequest } from 'src/helpers/requests'
 import { useDispatch, useSelector } from 'react-redux'
-import { activateUser, updateUser } from 'src/store/apps/user'
+import { activateUser, fetchSkills, fetchUsers, updateUser } from 'src/store/apps/user'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
+import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 // const DynamicUserEditDialog = dynamic(() => import('src/views/apps/user/view/UserEditDialog'), {
 //   ssr: false
@@ -101,7 +102,8 @@ const defaultValues = {
   fullName: '',
   email: '',
   costPerHour: 0,
-  role: 0
+  role: 0,
+  reportingManager: {}
 }
 
 const schema = yup.object().shape({
@@ -109,10 +111,11 @@ const schema = yup.object().shape({
   email: yup.string().email().required(),
   costPerHour: yup.number().typeError('Cost field is required').required(),
   role: yup.number().required(),
-  joinedDate: yup.date()
+  joinedDate: yup.date(),
+  reportingManager: yup.object().required('Reporting Manager is required')
 })
 
-const UserViewLeft = ({ user }) => {
+const UserViewLeft = ({ user, rpm, index }) => {
   // ** States
   const [openEdit, setOpenEdit] = useState(false)
   const [openPlans, setOpenPlans] = useState(false)
@@ -122,7 +125,7 @@ const UserViewLeft = ({ user }) => {
   const [isActivated, setisActivated] = useState(false)
 
   const [alertDialog, setalertDialog] = useState(false)
-
+  const [skills, setSkills] = useState([])
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
   const {
@@ -144,9 +147,15 @@ const UserViewLeft = ({ user }) => {
         email: user.email,
         costPerHour: user.costPerHour,
         role: user.roleId,
-        joinedDate: new Date(user.joinedDate)
+        joinedDate: new Date(user.joinedDate),
+        reportingManager: rpm
       })
-  }, [user])
+    dispatch(fetchSkills()).then(res => {
+      const { payload } = res
+      const _skills = payload?.filter(o => user?.userskill.some(s => s === o.id))
+      setSkills(_skills)
+    })
+  }, [user, openEdit])
 
   // Handle Edit dialog
   const handleEditClickOpen = () => setOpenEdit(true)
@@ -156,17 +165,24 @@ const UserViewLeft = ({ user }) => {
   const handlePlansClickOpen = () => setOpenPlans(true)
   const handlePlansClose = () => setOpenPlans(false)
 
-  const onSubmit = () => {
-    const req = { id: user.id, firstName: user?.firstName, lastName: user?.lastName, ...watch() }
+  const onSubmit = data => {
+    handleEditClose()
+    const req = {
+      ...user,
+      ...data,
+      skills: skills.map(o => o.id),
+      reportingManagerId: data.reportingManager?.id
+    }
+
     const request = userRequest(req)
     dispatch(updateUser(request))
       .then(unwrapResult)
       .then(res => {
         if (res.status === 200) {
-          toast.success('Updated User Information')
-          handleEditClose()
+          customSuccessToast(res.data)
+          dispatch(fetchUsers())
         } else {
-          toast.error('Error Occurred')
+          customErrorToast(res.data)
         }
       })
   }
@@ -177,6 +193,10 @@ const UserViewLeft = ({ user }) => {
     } else {
       setActivateDialog(true)
     }
+  }
+
+  const handleSkills = value => {
+    setSkills(value)
   }
 
   const handleActivate = () => {
@@ -194,7 +214,7 @@ const UserViewLeft = ({ user }) => {
       })
   }
 
-  if (user) {
+  if (user != null && Object.keys(user)?.length > 0) {
     return (
       <Grid container spacing={6}>
         <Grid item xs={12}>
@@ -225,13 +245,13 @@ const UserViewLeft = ({ user }) => {
               <CustomChip
                 skin='light'
                 size='small'
-                label={roles[user.roleId].name}
-                color={roleColors[roles[user.roleId].name?.toLowerCase()]}
+                label={roles[user?.roleId]?.name}
+                color={roleColors[roles[user?.roleId]?.name?.toLowerCase()]}
                 sx={{ textTransform: 'capitalize' }}
               />
             </CardContent>
 
-            <CardContent sx={{ my: 1 }}>
+            {/* <CardContent sx={{ my: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Box sx={{ mr: 8, display: 'flex', alignItems: 'center' }}>
                   <CustomAvatar
@@ -260,7 +280,7 @@ const UserViewLeft = ({ user }) => {
                   </div>
                 </Box>
               </Box>
-            </CardContent>
+            </CardContent> */}
 
             <CardContent>
               <Typography variant='h6'>Details</Typography>
@@ -306,6 +326,12 @@ const UserViewLeft = ({ user }) => {
                 </Box>
                 <Box sx={{ display: 'flex', mb: 2 }}>
                   <Typography sx={{ mr: 2, fontWeight: 500, fontSize: '0.875rem' }}>
+                    Reporting Manager :
+                  </Typography>
+                  <Typography variant='body2'>{rpm.fullName}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', mb: 2 }}>
+                  <Typography sx={{ mr: 2, fontWeight: 500, fontSize: '0.875rem' }}>
                     Joined Date:
                   </Typography>
                   <Typography variant='body2'>
@@ -322,9 +348,9 @@ const UserViewLeft = ({ user }) => {
             </CardContent>
 
             <CardActions sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button color='error' variant='outlined' onClick={handleUser}>
+              {/* <Button color='error' variant='outlined' onClick={handleUser}>
                 {user.isActive ? 'Suspend' : 'Activate'}
-              </Button>
+              </Button> */}
               <Button variant='contained' sx={{ mr: 2 }} onClick={handleEditClickOpen}>
                 Edit
               </Button>
@@ -473,6 +499,7 @@ const UserViewLeft = ({ user }) => {
                         </FormHelperText>
                       )}
                     </Grid>
+
                     <Grid item xs={12} sm={6}>
                       <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                         <Controller
@@ -494,7 +521,48 @@ const UserViewLeft = ({ user }) => {
                     </Grid>
 
                     <Grid item xs={12} sm={6}>
-                      {/* <CustomSkillPicker /> */}
+                      <FormControl fullWidth sx={{ mb: 6 }}>
+                        <Controller
+                          name='reportingManager'
+                          control={control}
+                          rules={{ required: store.users?.length > 0 ? true : false }}
+                          render={({ field }) => (
+                            <Autocomplete
+                              options={store.users}
+                              id='autocomplete-limit-tags'
+                              getOptionLabel={option =>
+                                option?.fullName ? option.fullName : option
+                              }
+                              defaultValue={store.users[index]}
+                              value={field.value}
+                              onChange={(e, v) => {
+                                field.onChange(v)
+                              }}
+                              renderInput={params => (
+                                <TextField
+                                  {...params}
+                                  error={Boolean(errors.reportingManager)}
+                                  label='Reporting Manager'
+                                />
+                              )}
+                            />
+                          )}
+                        />
+                        {errors.reportingManager && (
+                          <FormHelperText sx={{ color: 'error.main' }}>
+                            {errors.reportingManager.message}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <CustomSkillPicker
+                        values={skills}
+                        items={store.skills ? store.skills : []}
+                        label='Skills'
+                        setSkills={handleSkills}
+                      />
                     </Grid>
                   </Grid>
                 </DialogContent>

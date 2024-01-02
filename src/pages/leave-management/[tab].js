@@ -12,7 +12,7 @@ const LeaveManagementTab = ({ tab, data }) => {
 export const getStaticPaths = () => {
   return {
     paths: [
-      { params: { tab: 'my leaves' } },
+      { params: { tab: 'leaves' } },
       { params: { tab: 'approval' } },
       { params: { tab: 'reports' } },
       { params: { tab: 'leave_policy' } },

@@ -6,7 +6,7 @@ import instance, { base } from '../endpoints/interceptor'
 
 // Create a Redux-thunk action for signup
 export const signUpUser = createAsyncThunk('auth/signUpUser', async params => {
-  const response = await axios.put(base.url + endpoints.userInvite, params)
+  const response = await axios.post(base.url + endpoints.tenant, params)
 
   return response
 })

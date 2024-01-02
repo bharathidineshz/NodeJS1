@@ -11,7 +11,7 @@ const Home = () => {
     const accessToken = localStorage.getItem('accessToken')
     if (window.location.pathname == '/') {
       if (accessToken != null) {
-        router.replace({ pathname: '/leave-management/my leaves' })
+        router.replace({ pathname: '/leave-management/leaves' })
       } else {
         router.replace({ pathname: '/login' })
       }

@@ -10,13 +10,13 @@ import Icon from 'src/@core/components/icon'
 const TableHeader = props => {
   // ** Props
   const { handleFilter, toggle, value } = props
-  const [role, setRole] = useState('')
+  const [role, setRole] = useState(0)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Perform localStorage action
       const role = localStorage?.getItem('roleId')
-      setRole(role)
+      setRole(Number(role ? role : 0))
     }
   }, [])
 
@@ -48,13 +48,11 @@ const TableHeader = props => {
           onChange={e => handleFilter(e.target.value)}
         />
 
-        {role == 1 ||
-          role == 2 ||
-          (role == 3 && (
-            <Button sx={{ mb: 2 }} onClick={toggle} variant='contained'>
-              Add User
-            </Button>
-          ))}
+        {(role == 1 || role == 2 || role == 3) && (
+          <Button sx={{ mb: 2 }} onClick={toggle} variant='contained'>
+            Add User
+          </Button>
+        )}
       </Box>
     </Box>
   )

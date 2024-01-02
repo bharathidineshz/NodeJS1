@@ -313,7 +313,6 @@ const SidebarAddUser = props => {
               label='Skills'
               setSkills={handleSkills}
             />
-           
           </FormControl>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Button size='large' type='submit' variant='contained' sx={{ mr: 3 }}>

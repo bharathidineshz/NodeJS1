@@ -102,7 +102,7 @@ const navigation = () => {
     {
       title: 'Leave Management',
       icon: 'mdi:calendar-alert-outline',
-      path: '/leave-management/my leaves',
+      path: '/leave-management/leaves',
       auth: false
     },
 

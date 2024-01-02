@@ -161,13 +161,20 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
     setValue('toDate', selectedDate)
   }
 
+  const handleClose = (e, v) => {
+    if (v != 'backdropClick') {
+      setOpen(false)
+      reset()
+    }
+  }
+
   const currentYear = new Date().getFullYear()
   const minDate = new Date(currentYear, 0, 1)
   const maxDate = new Date(currentYear + 1, 11, 31)
 
   return (
     <>
-      <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={() => setOpen(false)}>
+      <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={handleClose} onBlur={handleClose}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent
             sx={{

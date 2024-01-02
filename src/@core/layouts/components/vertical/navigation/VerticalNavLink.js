@@ -20,7 +20,7 @@ import Translations from 'src/layouts/components/Translations'
 import CanViewNavLink from 'src/layouts/components/acl/CanViewNavLink'
 
 // ** Util Import
-import { handleURLQueries } from 'src/@core/layouts/utils'
+import { handleNestedTabs, handleURLQueries } from 'src/@core/layouts/utils'
 
 // ** Styled Components
 const MenuNavLink = styled(ListItemButton)(({ theme }) => ({
@@ -102,8 +102,14 @@ const VerticalNavLink = ({
           sx={{
             py: 2.25,
             ...(item.disabled ? { pointerEvents: 'none' } : { cursor: 'pointer' }),
-            pl: navCollapsed && !navHover ? (collapsedNavWidth - navigationBorderWidth - 24) / 8 : 5.5,
-            pr: navCollapsed && !navHover ? ((collapsedNavWidth - navigationBorderWidth - 24) / 2 - 5) / 4 : 3.5
+            pl:
+              navCollapsed && !navHover
+                ? (collapsedNavWidth - navigationBorderWidth - 24) / 8
+                : 5.5,
+            pr:
+              navCollapsed && !navHover
+                ? ((collapsedNavWidth - navigationBorderWidth - 24) / 2 - 5) / 4
+                : 3.5
           }}
         >
           {isSubToSub ? null : (
@@ -131,7 +137,8 @@ const VerticalNavLink = ({
             }}
           >
             <Typography
-              {...((themeConfig.menuTextTruncate || (!themeConfig.menuTextTruncate && navCollapsed && !navHover)) && {
+              {...((themeConfig.menuTextTruncate ||
+                (!themeConfig.menuTextTruncate && navCollapsed && !navHover)) && {
                 noWrap: true
               })}
             >

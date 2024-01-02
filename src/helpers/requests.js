@@ -56,10 +56,18 @@ export const userRequest = req => {
         id: req.id,
         firstName: req.firstName,
         lastName: req.lastName,
+        invitationStatus: req.invitationStatus,
         email: req.email,
+        password: req.email,
+        isActive: true,
         costPerHour: req.costPerHour,
-        roleId: req.role,
-        joinedDate: req.joinedDate
+        roleId: req.roleId,
+        tenantId: req.tenantId,
+        organizationId: req.organizationId,
+        joinedDate: req.joinedDate?.toISOString(),
+        departmentId: req.departmentId,
+        reportingManagerId: req.reportingManagerId,
+        skillId: req.skills
       }
     : {
         dateJoined: new Date().toISOString(),

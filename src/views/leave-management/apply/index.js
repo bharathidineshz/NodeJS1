@@ -73,17 +73,15 @@ const LeaveApply = () => {
   const store = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
-    dispatch(fetchUsers())
-      .then(unwrapResult)
-      .then(res => {
-        const currentUser = JSON.parse(localStorage.getItem('userData'))
-        const user = res.find(o => currentUser.user === o.email)
-        dispatch(fetchStatus())
-        dispatch(fetchMyLeaves())
-        dispatch(fetchDashboard(user.id))
-      })
-    setLoading(false)
-  }, [dispatch])
+    dispatch(fetchUsers()).then(res => {
+      const currentUser = JSON.parse(localStorage.getItem('userData'))
+      const user = res.payload.find(o => currentUser.user === o.email)
+      dispatch(fetchStatus())
+      dispatch(fetchMyLeaves())
+      dispatch(fetchDashboard(user?.id))
+      setLoading(false)
+    })
+  }, [])
 
   useEffect(() => {
     setOpen(false)

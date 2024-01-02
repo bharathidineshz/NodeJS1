@@ -57,17 +57,17 @@ const TabList = styled(MuiTabList)(({ theme }) => ({
 
 const LeaveManagement = ({ tab, data }) => {
   // ** State
-  const [activeTab, setActiveTab] = useState('my leaves')
+  const [activeTab, setActiveTab] = useState('leaves')
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
   const [role, setRole] = useState('')
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
 
   // ** Hooks
   const router = useRouter()
   const hideText = useMediaQuery(theme => theme.breakpoints.down('sm'))
   const store = useSelector(state => state.user)
-  const _store = useSelector(state=> state.accountSetting)
+  const _store = useSelector(state => state.accountSetting)
 
   const handleChange = (event, value) => {
     setIsLoading(true)
@@ -98,7 +98,7 @@ const LeaveManagement = ({ tab, data }) => {
   const tabContentList =
     role == 1 || role == 2 || role == 3
       ? {
-          'my leaves': <LeaveApply />,
+          leaves: <LeaveApply />,
           // 'all requests': <AllRequests />,
           approval: <Approval />,
           reports: <LeaveReports />,
@@ -106,14 +106,14 @@ const LeaveManagement = ({ tab, data }) => {
           holidays: <Holidays />
         }
       : {
-          'my leaves': <LeaveApply />,
+          leaves: <LeaveApply />,
           approval: <Approval />
         }
 
   const tabs =
     role == 1 || role == 2 || role == 3
       ? [
-          { name: 'my leaves', icon: 'mdi:calendar-alert' },
+          { name: 'leaves', icon: 'mdi:calendar-alert' },
           // { name: 'all requests', icon: 'mdi:calendar-outline' },
           { name: 'approval', icon: 'mdi:check-decagram' },
           { name: 'reports', icon: 'mdi:chart-box' },
@@ -122,7 +122,7 @@ const LeaveManagement = ({ tab, data }) => {
         ]
       : role == 4
       ? [
-          { name: 'my leaves', icon: 'mdi:calendar-alert' },
+          { name: 'leaves', icon: 'mdi:calendar-alert' },
           { name: 'approval', icon: 'mdi:check-decagram' }
         ]
       : []
@@ -167,7 +167,7 @@ const LeaveManagement = ({ tab, data }) => {
                       />
                     ))}
                   </TabList>
-                  {activeTab === 'my leaves' && (
+                  {activeTab === 'leaves' && (
                     <Button variant='contained' onClick={() => setOpen(true)}>
                       Apply Leave
                     </Button>
@@ -205,10 +205,10 @@ const LeaveManagement = ({ tab, data }) => {
             </TabContext>
           </Grid>
           <Grid item xs={12}>
-            {activeTab === 'my leaves' ? (
+            {activeTab === 'leaves' ? (
               <LeaveApplyForm isOpen={isOpen} setOpen={setOpen} />
             ) : activeTab === 'holidays' ? (
-              <SidebarAddHoliday open={isOpen} holidays={_store.holidays ||[]} toggle={setOpen} />
+              <SidebarAddHoliday open={isOpen} holidays={_store.holidays || []} toggle={setOpen} />
             ) : (
               <NewLeavePolicy isOpen={isOpen} setOpen={setOpen} />
             )}

@@ -22,9 +22,6 @@ const navigation = [
   //     }
   //   ]
   // },
-  {
-    sectionTitle: 'Apps & Pages'
-  },
 
   // {
   //   title: 'Email',
@@ -97,9 +94,7 @@ const navigation = [
         ]
       }
     ]
-  },
-
-
+  }
 
   // {
   //   title: 'Roles & Permissions',

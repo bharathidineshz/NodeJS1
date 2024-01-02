@@ -355,7 +355,7 @@ const Register = () => {
                   <LinkStyled href='/login'>Sign in instead</LinkStyled>
                 </Typography>
               </Box>
-              <Divider sx={{ my: theme => `${theme.spacing(5)} !important` }}>or</Divider>
+              {/* <Divider sx={{ my: theme => `${theme.spacing(5)} !important` }}>or</Divider>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconButton
                   href='/'
@@ -389,7 +389,7 @@ const Register = () => {
                 >
                   <Icon icon='mdi:google' />
                 </IconButton>
-              </Box>
+              </Box> */}
             </form>
           </BoxWrapper>
         </Box>

@@ -154,7 +154,7 @@ const LoginPage = () => {
       setLoading(false)
       JSON.parse(userData.org)
         ? router.replace({
-            pathname: '/leave-management/my leaves'
+            pathname: '/leave-management/leaves'
           })
         : router.replace({
             pathname: '/organizational-setup'

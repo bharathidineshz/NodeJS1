@@ -5,12 +5,13 @@ import { Avatar, Box, Chip } from '@mui/material'
 import CustomChip from 'src/@core/components/mui/chip'
 import { getInitials } from 'src/@core/utils/get-initials'
 
-const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete ,originalItems}) => {
+const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete, originalItems }) => {
   const [selectedValues, setSelectedValues] = React.useState([])
   const [fieldValue, setFieldValue] = React.useState([])
   const [options, setOptions] = React.useState([])
   React.useEffect(() => {
-    setOptions(items)
+    setOptions(items.filter((item) => !values.some((value) => value.fullName === item.fullName)));
+    //setOptions(items)
     setSelectedValues(values)
   }, [items, values])
 
@@ -34,6 +35,8 @@ const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete ,o
     setOptions(options)
     onDelete(Hr?.id)
     setSelectedValues(values)
+    onSelect(name, values.flat())
+
   }
 
   return (
