@@ -3,7 +3,7 @@
  */
 const getHomeRoute = role => {
   if (localStorage.getItem('accessToken')) {
-    location.href = '/leave-management/my leaves'
+    location.href = '/absence-management/my leaves'
   } else {
     location.href = '/login'
   }

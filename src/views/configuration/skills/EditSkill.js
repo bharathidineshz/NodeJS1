@@ -35,7 +35,7 @@ import DatePicker, { ReactDatePicker, ReactDatePickerProps } from 'react-datepic
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchPolicies, putPolicy, setApply } from 'src/store/leave-management'
+import { fetchPolicies, putPolicy, setApply } from 'src/store/absence-management'
 import { useEffect } from 'react'
 import { Box } from '@mui/system'
 import { Controller, useForm } from 'react-hook-form'

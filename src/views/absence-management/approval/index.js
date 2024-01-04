@@ -37,8 +37,8 @@ import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import LeaveHeader from 'src/views/leave-management/LeaveHeader'
-import Toolbar from 'src/views/leave-management/toolBar'
+import LeaveHeader from 'src/views/absence-management/LeaveHeader'
+import Toolbar from 'src/views/absence-management/toolBar'
 import { useTheme } from '@emotion/react'
 import toast from 'react-hot-toast'
 import {
@@ -49,12 +49,14 @@ import {
   fetchUsers,
   postLeaveApproval,
   putRequestApproval,
+  setApprovals,
   setLeaveApproval
-} from 'src/store/leave-management'
+} from 'src/store/absence-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import { approvalRequest } from 'src/helpers/requests'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 import SimpleBackdrop from 'src/@core/components/spinner'
+import { handleResponse } from 'src/helpers/helpers'
 
 const Approval = () => {
   // ** States
@@ -187,6 +189,17 @@ const Approval = () => {
     }
   ]
 
+  //UPDATE APPROVAL STATE
+  const updateApprovalState = newApproval => {
+    let approvals = [...store.approvals]
+    const indexToReplace = approvals.findIndex(item => item.id === newApproval.id)
+
+    if (indexToReplace !== -1) {
+      approvals[indexToReplace] = newApproval
+    }
+    dispatch(setApprovals(approvals))
+  }
+
   //handle approval
   const handleApproval = (row, name) => e => {
     if (name === 'Approved' || name === 'Rejected') {
@@ -213,20 +226,21 @@ const Approval = () => {
       dispatch(putRequestApproval(request))
         .then(unwrapResult)
         .then(res => {
-          if (res.status === 200 || res.status === 201) {
-            const rows = [...store.approvals]
-            const index = rows.findIndex(o => o.id == _row.id)
-            rows[index] = {
-              ...rows[index],
-              requestStatusId: name === 'Approved' ? 2 : name === 'Rejected' ? 3 : 1,
-              status: name
-            }
-            dispatch(setLeaveApproval(rows))
+          // if (res.status === 200 || res.status === 201) {
+          //   const rows = [...store.approvals]
+          //   const index = rows.findIndex(o => o.id == _row.id)
+          //   rows[index] = {
+          //     ...rows[index],
+          //     requestStatusId: name === 'Approved' ? 2 : name === 'Rejected' ? 3 : 1,
+          //     status: name
+          //   }
+          //   dispatch(setLeaveApproval(rows))
 
-            name == 'Approved' ? customSuccessToast(res.data) : customErrorToast(res.data)
-          } else {
-            customErrorToast(res.data)
-          }
+          //   name == 'Approved' ? customSuccessToast(res.data) : customErrorToast(res.data)
+          // } else {
+          //   customErrorToast(res.data)
+          // }
+          handleResponse('update', res.data, updateApprovalState)
           setRespond(state => ({ ...state, isOpenDialog: false, isLoading: false }))
         })
     } else {

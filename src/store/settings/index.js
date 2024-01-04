@@ -117,7 +117,7 @@ export const appConfigSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder.addCase(fetchConfig.fulfilled, (state, action) => {
-      state.configuration = action.payload
+      state.configuration = action.payload.result
     })
     builder.addCase(fetchOrgHrApprove.fulfilled, (state, action) => {
       state.OrgHrApprove = action.payload

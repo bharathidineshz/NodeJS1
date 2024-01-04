@@ -35,88 +35,109 @@ import DatePicker, { ReactDatePicker, ReactDatePickerProps } from 'react-datepic
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchPolicies, putPolicy, setApply } from 'src/store/leave-management'
+import { fetchPolicies, postPolicy, setApply, setPolicies } from 'src/store/absence-management'
 import { useEffect } from 'react'
 import { Box } from '@mui/system'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import PickersComponent from 'src/views/forms/form-elements/pickers/PickersCustomInput'
-import { customToast, errorToast, successToast } from 'src/helpers/helpers'
+import { customToast, handleResponse } from 'src/helpers/helpers'
 import { useTheme } from '@emotion/react'
 import { postProject } from 'src/store/apps/projects'
 import { leavePolicyRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { APPROVERS } from 'src/helpers/constants'
+import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+
+const defaultValues = {
+  typeOfLeave: '',
+  allowanceTime: 0,
+  allowanceCount: 0,
+  period: '',
+  isPermission: false,
+  carryForwardCount: 0,
+  level1: 1,
+  level2: 2
+}
 
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
-  period: yup.string().required('Period is Required'),
-  carryForwardCount: yup.number().min(0).typeError('Must be a number'),
+  allowanceCount: yup
+    .number()
+    .positive('Should greater than 0')
+    .required('Allowance Required')
+    .typeError('Must be a number'),
   allowanceTime: yup.number().min(0).typeError('Must be a number'),
-  allowanceCount: yup.number().positive("Should greater than 0").required('Allowance Required').typeError('Must be a number'),
+  period: yup.string().required('Period is Required'),
   isPermission: yup.boolean(),
-  levelOneApprovalLevelId: yup.number().positive().notRequired(),
-  levelTwoApprovalLevelId: yup.number().positive().notRequired()
+  carryForwardCount: yup.number().min(0).typeError('Must be a number'),
+  level1: yup.number().min(0).notRequired(),
+  level2: yup.number().min(0).notRequired()
 })
 
-const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
+const NewLeavePolicy = ({ isOpen, setOpen }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
   const theme = useTheme()
 
   const {
     reset,
+    register,
     control,
+    setValue,
     watch,
+    setError,
     handleSubmit,
     formState: { errors }
   } = useForm({
-    defaultValues:row,
+    defaultValues,
     mode: 'onChange',
     resolver: yupResolver(schema)
   })
 
-  useEffect(() => {
-    reset({
-      typeOfLeave: row?.typeOfLeave,
-      allowanceCount: row?.allowanceCount,
-      allowanceTime: row?.allowanceTime,
-      isPermission: row?.isPermission,
-      period: row?.period,
-      carryForwardCount: row?.carryForwardCount,
-      level1: row?.levelOneApprovalId,
-      level2: row?.levelTwoApprovalId
-    })
-  }, [row])
+  function isExistPolicy(array, value) {
+    return array.some(obj => Object.values(obj).includes(value))
+  }
 
-  const isWeekday = date => {
-    const day = new Date(date).getDay()
-
-    return day !== 0 && day !== 6
+  //UPDATE POLICY STATE
+  const updatePolicyState = newPolicy => {
+    let policies = [...store.policies]
+    policies.push(newPolicy)
+    dispatch(setPolicies(policies))
   }
 
   //submit
 
-  const onSubmit = (data) => {
-    try {
-      const req = { id: row?.id, ...data }
-      dispatch(putPolicy(leavePolicyRequest(req)))
-        .then(unwrapResult)
-        .then(res => {
-          res.status === 200 ? toast.success(res.data) : toast.error(res.data)
-          dispatch(fetchPolicies())
-          setOpen(false)
-          reset()
-        })
-    } catch (error) {
-      toast.error(error)
+  const onSubmit = async formData => {
+    const isExist = isExistPolicy(store.policies, formData.typeOfLeave?.trim())
+
+    if (isExist) {
+      setError('typeOfLeave', { type: 'custom', message: 'Policy already exist' })
+
+      return
     }
+    setOpen(false)
+    reset()
+
+    const req = leavePolicyRequest(formData)
+    dispatch(postPolicy(req))
+      .then(unwrapResult)
+      .then(res => {
+        handleResponse('create', res.data, updatePolicyState)
+      })
   }
 
   return (
-    <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={() => setOpen(false)}>
+    <Dialog
+      fullWidth
+      open={isOpen}
+      maxWidth='sm'
+      scroll='body'
+      onClose={() => setOpen(false)}
+      onBackdropClick={() => setOpen(true)}
+    >
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent
           sx={{
@@ -134,7 +155,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             <Icon icon='mdi:close' />
           </IconButton>
           <Box sx={{ mb: 8, textAlign: 'center' }}>
-            <Typography variant='h5'>Update Leave Policy</Typography>
+            <Typography variant='h5'>Add New Leave Policy</Typography>
           </Box>
           <Grid container spacing={6}>
             <Grid item xs={12}>
@@ -242,7 +263,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   render={({ field: { value, onChange } }) => (
                     <TextField
                       value={value}
-                      type="number"
+                      type='number'
                       label='Carry forward count'
                       onChange={onChange}
                     />
@@ -255,7 +276,6 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                 )}
               </FormControl>
             </Grid>
-          
 
             <Grid item xs={12} sm={4} md={4} lg={4}>
               <FormControl>
@@ -280,7 +300,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}sm={8} md={8} lg={8}>
+            <Grid item xs={12} sm={8} md={8} lg={8}>
               <FormControl fullWidth>
                 <Controller
                   name='allowanceTime'
@@ -340,7 +360,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <Select
-                    value={watch('level1') === 3 ? '' : value}
+                      value={watch('level1') === 3 ? '' : value}
                       label='Level 2'
                       onChange={onChange}
                       defaultValue={2}
@@ -371,21 +391,14 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             variant='outlined'
             color='secondary'
             onClick={() => {
-              reset({
-                typeOfLeave: '',
-                allowanceTime: 0,
-                allowanceCount: 0,
-                period: '',
-                isPermission: false,
-                carryForwardCount: 0
-              })
+              reset()
               setOpen(false)
             }}
           >
             Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
-            Update
+            Add
           </Button>
         </DialogActions>
       </form>
@@ -393,4 +406,4 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
   )
 }
 
-export default EditLeavePolicy
+export default NewLeavePolicy

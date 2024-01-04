@@ -1,4 +1,3 @@
-// ** MUI Imports
 import Card from '@mui/material/Card'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
@@ -42,15 +41,16 @@ import {
   fetchRequestTypes,
   fetchUsers,
   postLeaveRequest,
-  setApply
-} from 'src/store/leave-management'
+  setApply,
+  setMyleaves
+} from 'src/store/absence-management'
 import { useEffect, useState } from 'react'
 import { Box } from '@mui/system'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import PickersComponent from 'src/views/forms/form-elements/pickers/PickersCustomInput'
-import { customToast, errorToast, successToast } from 'src/helpers/helpers'
+import { customToast, errorToast, handleResponse, successToast } from 'src/helpers/helpers'
 import { useTheme } from '@emotion/react'
 import { myLeaveRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
@@ -70,7 +70,7 @@ const defaultValues = {
 }
 
 const schema = yup.object().shape({
-  requestType: yup.string().required('Request Type is Required'),
+  requestType: yup.object().required('Request Type is Required'),
   requestReason: yup.string().required('Reason is Required'),
   fromDate: yup.date().required('From date is Required'),
   toDate: yup.date().required('To date is Required'),
@@ -110,16 +110,30 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
   useEffect(() => {
     dispatch(fetchPolicies())
     dispatch(fetchUsers())
-    dispatch(fetchHolidays()).then(res => {
-      const { payload } = res
-      setHolidays(payload.map(o => subDays(new Date(o.date), 0)))
-    })
+    dispatch(fetchHolidays())
+      .then(unwrapResult)
+      .then(res => {
+        const { result } = res
+        setHolidays(result.map(o => subDays(new Date(o.date), 0)))
+      })
   }, [])
+
+  useEffect(() => {
+    reset()
+  }, [isOpen])
 
   const isWeekday = date => {
     const day = new Date(date).getDay()
 
     return day !== 0 && day !== 6
+  }
+
+  //UPDATE Request STATE
+  const updateRequestsState = newReq => {
+    let myleaves = [...store.myLeaves]
+
+    myleaves.push(newReq)
+    dispatch(setMyleaves(myleaves))
   }
 
   //submit
@@ -132,26 +146,21 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
 
       const currentUser = JSON.parse(localStorage.getItem('userData'))
       const user = store.users.find(o => currentUser.user === o.email)
-      const req = store.policies.find(o => o.typeOfLeave === formData.requestType)
 
       const request = myLeaveRequest({
         submittedUserId: user.id,
-        requestTypeId: req.id,
+        requestTypeId: formData.requestType.id,
         ...formData
       })
       dispatch(postLeaveRequest(request))
         .then(unwrapResult)
         .then(res => {
-          if (res?.status == 200 || res.status == 201) {
-            setLoading(false)
-            customSuccessToast(res.data)
-            dispatch(fetchDashboard(user.id))
-            dispatch(fetchMyLeaves())
-          } else {
-            customErrorToast(res.data)
-          }
+          handleResponse('create', res.data, updateRequestsState)
+          dispatch(fetchDashboard(user.id))
+          setLoading(false)
         })
     } catch (error) {
+      setLoading(false)
       toast.error(error)
     }
   }
@@ -162,11 +171,22 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
   }
 
   const handleClose = (e, v) => {
-    if (v != 'backdropClick') {
-      setOpen(false)
+    if (v == 'backdropClick') {
+      setOpen(true)
       reset()
+    } else {
+      setOpen(false)
     }
   }
+  const handleBlur = (e, v) => {
+    if (v == 'backdropClick') {
+      setOpen(true)
+      reset()
+    } else {
+      setOpen(false)
+    }
+  }
+  console.log(watch('requestType'))
 
   const currentYear = new Date().getFullYear()
   const minDate = new Date(currentYear, 0, 1)
@@ -174,14 +194,14 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
 
   return (
     <>
-      <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={handleClose} onBlur={handleClose}>
+      <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={handleClose}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent
             sx={{
               position: 'relative',
               pb: theme => `${theme.spacing(8)} !important`,
-              px: theme => [`${theme.spacing(5)} !important`, `${theme.spacing(15)} !important`],
-              pt: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
+              px: theme => [`${theme.spacing(5)} !important, ${theme.spacing(15)} !important`],
+              pt: theme => [`${theme.spacing(8)} !important, ${theme.spacing(12.5)} !important`]
             }}
           >
             <IconButton
@@ -208,7 +228,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                         id='autocomplete-limit-tags'
                         getOptionLabel={option => option.typeOfLeave || ''}
                         onChange={(event, value) => {
-                          field.onChange(event.target.innerText)
+                          field.onChange(value)
                         }}
                         renderInput={params => (
                           <TextField
@@ -253,7 +273,15 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                 </FormControl>
               </Grid>
 
-              <Grid item xs={8} sm={8} md={8} lg={8}>
+              <Grid
+                item
+                xs={8}
+                sm={8}
+                md={8}
+                lg={8}
+              // md={watch('requestType') !== 'Permission' ? 8 : 12}
+              //lg={watch('requestType') !== 'Permission' ? 8 : 12}
+              >
                 <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                   <FormControl fullWidth>
                     <Controller
@@ -288,94 +316,105 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                 </DatePickerWrapper>
               </Grid>
 
+              {/* {watch("requestType") !== "Permission" &&
+                <> */}
               <Grid item xs={4} sm={4} md={4} lg={4}>
-                <FormControl fullWidth>
-                  <Controller
-                    name='isFromDateHalfDay'
-                    control={control}
-                    rules={{ required: false }}
-                    render={({ field: { value, onChange } }) => (
-                      <FormControlLabel
-                        label='Half Day'
-                        control={
-                          <Checkbox
-                            checked={value}
-                            defaultChecked={false}
-                            onChange={onChange}
-                            name='halfDay'
-                          />
-                        }
-                      />
-                    )}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={8} sm={8} md={8} lg={8}>
-                <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
+                {watch('requestType')?.isPermission !== true && (
                   <FormControl fullWidth>
                     <Controller
-                      name='toDate'
+                      name='isFromDateHalfDay'
                       control={control}
-                      rules={{ required: true }}
+                      rules={{ required: false }}
                       render={({ field: { value, onChange } }) => (
-                        <DatePicker
-                          id='event-end-date'
-                          selected={watch('fromDate') > value ? watch('fromDate') : value}
-                          dateFormat={'yyyy-MM-dd'}
-                          minDate={watch('fromDate')}
-                          maxDate={maxDate}
-                          excludeDates={[...holidays, ...weekOffs]}
-                          highlightDates={holidays}
-                          customInput={<PickersComponent label='To Date' registername='toDate' />}
-                          onChange={onChange}
-                          popperPlacement='auto'
+                        <FormControlLabel
+                          label='Half Day'
+                          control={
+                            <Checkbox
+                              disabled={watch('requestType')?.isPermission == true}
+                              checked={value}
+                              defaultChecked={false}
+                              onChange={onChange}
+                              name='halfDay'
+                            />
+                          }
                         />
                       )}
                     />
-                    {errors.toDate && (
-                      <FormHelperText sx={{ color: 'error.main' }}>
-                        {errors.toDate.message}
-                      </FormHelperText>
-                    )}
                   </FormControl>
-                </DatePickerWrapper>
+                )}
+              </Grid>
+              <Grid item xs={8} sm={8} md={8} lg={8}>
+                {watch('requestType')?.isPermission !== true && (
+                  <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
+                    <FormControl fullWidth>
+                      <Controller
+                        name='toDate'
+                        control={control}
+                        rules={{ required: true }}
+                        render={({ field: { value, onChange } }) => (
+                          <DatePicker
+                            disabled={watch('requestType')?.isPermission == true}
+                            id='event-end-date'
+                            selected={watch('fromDate') > value ? watch('fromDate') : value}
+                            dateFormat={'yyyy-MM-dd'}
+                            minDate={watch('fromDate')}
+                            maxDate={maxDate}
+                            excludeDates={[...holidays, ...weekOffs]}
+                            highlightDates={holidays}
+                            customInput={<PickersComponent label='To Date' registername='toDate' />}
+                            onChange={onChange}
+                            popperPlacement='auto'
+                          />
+                        )}
+                      />
+                      {errors.toDate && (
+                        <FormHelperText sx={{ color: 'error.main' }}>
+                          {errors.toDate.message}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
+                  </DatePickerWrapper>
+                )}
               </Grid>
 
               <Grid item xs={4} sm={4} md={4} lg={4}>
-                <FormControl fullWidth>
-                  <Controller
-                    name='isToDateHalfDay'
-                    control={control}
-                    rules={{ required: false }}
-                    render={({ field: { value, onChange } }) => (
-                      <FormControlLabel
-                        label='Half Day'
-                        disabled={
-                          watch('fromDate').toDateString() != watch('toDate').toDateString()
-                            ? false
-                            : true
-                        }
-                        control={
-                          <Checkbox
-                            checked={value}
-                            defaultChecked={false}
-                            onChange={onChange}
-                            name='halfDay'
-                          />
-                        }
-                      />
-                    )}
-                  />
-                </FormControl>
+                {watch('requestType')?.isPermission !== true && (
+                  <FormControl fullWidth>
+                    <Controller
+                      name='isToDateHalfDay'
+                      control={control}
+                      rules={{ required: false }}
+                      render={({ field: { value, onChange } }) => (
+                        <FormControlLabel
+                          label='Half Day'
+                          disabled={
+                            watch('fromDate').toDateString() != watch('toDate').toDateString()
+                              ? false
+                              : true
+                          }
+                          control={
+                            <Checkbox
+                              disabled={watch('requestType')?.isPermission == true}
+                              checked={value}
+                              defaultChecked={false}
+                              onChange={onChange}
+                              name='halfDay'
+                            />
+                          }
+                        />
+                      )}
+                    />
+                  </FormControl>
+                )}
               </Grid>
+              {/* </>} */}
             </Grid>
           </DialogContent>
           <DialogActions
             sx={{
               justifyContent: 'center',
-              px: theme => [`${theme.spacing(5)} !important`, `${theme.spacing(15)} !important`],
-              pb: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
+              px: theme => [`${theme.spacing(5)} !important, ${theme.spacing(15)} !important`],
+              pb: theme => [`${theme.spacing(8)} !important, ${theme.spacing(12.5)} !important`]
             }}
           >
             <Button

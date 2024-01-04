@@ -16,8 +16,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Icon } from '@iconify/react'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import Toolbar from 'src/views/leave-management/toolBar'
-import { deletePolicy, fetchPolicies } from 'src/store/leave-management'
+import Toolbar from 'src/views/absence-management/toolBar'
+import { deletePolicy, fetchPolicies } from 'src/store/absence-management'
 import instance, { base } from 'src/store/endpoints/interceptor'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
@@ -25,7 +25,7 @@ import { endpoints } from 'src/store/endpoints/endpoints'
 import axios from 'axios'
 
 const DynamicEditLeavePolicy = dynamic(
-  () => import('src/views/leave-management/leave-policy/EditLeavePolicy'),
+  () => import('src/views/absence-management/leave-policy/EditLeavePolicy'),
   {
     ssr: false,
     loading: () => {
@@ -187,7 +187,7 @@ const DepartmentConfig = ({ data }) => {
       ) : (
         <>
           <Card>
-            <DataGrid
+            {/* <DataGrid
               autoHeight
               pagination
               rows={searchValue ? filteredRows : store.policies}
@@ -218,10 +218,10 @@ const DepartmentConfig = ({ data }) => {
                   onChange: event => handleSearch(event.target.value)
                 }
               }}
-            />
+            /> */}
           </Card>
 
-          <DynamicEditLeavePolicy isOpen={isOpen} row={rowData} setOpen={setOpen} />
+          {/* <DynamicEditLeavePolicy isOpen={isOpen} row={rowData} setOpen={setOpen} />
           <DynamicDeleteAlert
             open={alert}
             setOpen={setOpenAlert}
@@ -229,7 +229,7 @@ const DepartmentConfig = ({ data }) => {
             content='Are you absolutely certain you want to proceed with the deletion?'
             action='Delete'
             handleAction={handleDelete}
-          />
+          /> */}
         </>
       )}
     </>

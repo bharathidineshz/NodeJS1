@@ -28,7 +28,7 @@ import {
   fetchStatus,
   fetchUserReports,
   resetReport
-} from 'src/store/leave-management'
+} from 'src/store/absence-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 
 const LeaveReports = () => {
@@ -157,7 +157,7 @@ const LeaveReports = () => {
     dispatch(setSelectedProject(data.row))
   }
 
-  const getReports = (data,user) => {
+  const getReports = (data, user) => {
     dispatch(fetchUserReports(data)).then(() => {
       setReport(prev => ({ ...prev, start: data.fromDate, end: data.toDate, user: user }))
     })

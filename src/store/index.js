@@ -14,7 +14,7 @@ import clients from 'src/store/clients'
 import timesheets from 'src/store/apps/timesheets'
 import organization from './apps/organization'
 import accountSetting from 'src/store/apps/accountSetting'
-import leaveManagement from 'src/store/leave-management'
+import leaveManagement from 'src/store/absence-management'
 import settings from 'src/store/settings'
 
 export const store = configureStore({

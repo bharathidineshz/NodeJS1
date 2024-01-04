@@ -23,8 +23,8 @@ import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import Toolbar from 'src/views/leave-management/toolBar'
-import LeaveDashboard from 'src/views/leave-management/dashboard/Dashboard'
+import Toolbar from 'src/views/absence-management/toolBar'
+import LeaveDashboard from 'src/views/absence-management/dashboard/Dashboard'
 import LeaveDetails from '../dashboard/LeaveDetails'
 import LeaveApplyForm from './LeaveApplyForm'
 import {
@@ -34,16 +34,19 @@ import {
   fetchUsers,
   fetchUserReports,
   fetchDashboard,
-  deleteRequest
-} from 'src/store/leave-management'
+  deleteRequest,
+  setMyleaves
+} from 'src/store/absence-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import Error404 from 'src/pages/404'
+import { handleResponse } from 'src/helpers/helpers'
 
 const DynamicEditLeaveRequest = dynamic(
-  () => import('src/views/leave-management/apply/EditLeaveRequest'),
+  () => import('src/views/absence-management/apply/EditLeaveRequest'),
   {
     ssr: false,
     loading: () => {
@@ -73,14 +76,15 @@ const LeaveApply = () => {
   const store = useSelector(state => state.leaveManagement)
 
   useEffect(() => {
-    dispatch(fetchUsers()).then(res => {
-      const currentUser = JSON.parse(localStorage.getItem('userData'))
-      const user = res.payload.find(o => currentUser.user === o.email)
-      dispatch(fetchStatus())
-      dispatch(fetchMyLeaves())
-      dispatch(fetchDashboard(user?.id))
-      setLoading(false)
-    })
+    dispatch(fetchUsers())
+      .then(unwrapResult)
+      .then(res => {
+        const currentUser = JSON.parse(localStorage.getItem('userData'))
+        const user = res.result?.find(o => currentUser.user === o.email)
+        dispatch(fetchStatus())
+        dispatch(fetchMyLeaves())
+        dispatch(fetchDashboard(user?.id)).then(res => setLoading(false))
+      })
   }, [])
 
   useEffect(() => {
@@ -229,6 +233,17 @@ const LeaveApply = () => {
     setRow(data.row)
   }
 
+  //UPDATE Request STATE
+  const updateRequestsState = newReq => {
+    let myleaves = [...store.myLeaves]
+    const index = myleaves.findIndex(item => item.id === newReq.id)
+
+    if (index !== -1) {
+      myleaves.splice(index, 1)
+    }
+    dispatch(setMyleaves(myleaves))
+  }
+
   //delete
 
   const handleDelete = () => {
@@ -237,15 +252,11 @@ const LeaveApply = () => {
       dispatch(deleteRequest(row?.id))
         .then(unwrapResult)
         .then(res => {
-          if (res.status === 200) {
-            const currentUser = JSON.parse(localStorage.getItem('userData'))
-            const user = store.users.find(o => currentUser.user === o.email)
-            dispatch(fetchDashboard(user.id))
-            dispatch(fetchMyLeaves())
-            customSuccessToast(res.data)
-          } else {
-            customErrorToast(res.data)
-          }
+          handleResponse('delete', res.data, updateRequestsState, row)
+          const currentUser = JSON.parse(localStorage.getItem('userData'))
+          const user = store.users.find(o => currentUser.user === o.email)
+          dispatch(fetchDashboard(user.id))
+          setLoading(false)
         })
     } catch (error) {
       toast.error(res.data)
@@ -254,7 +265,9 @@ const LeaveApply = () => {
 
   return (
     <>
-      {store?.dashboards != null && store?.myLeaves != null ? (
+      {isLoading ? (
+        <SimpleBackdrop />
+      ) : (
         <Grid container spacing={6}>
           <Grid item xs={12} md={6} lg={6}>
             <LeaveDashboard />
@@ -295,8 +308,6 @@ const LeaveApply = () => {
             </Card>
           </Grid>
         </Grid>
-      ) : (
-        <SimpleBackdrop />
       )}
 
       <DynamicEditLeaveRequest isOpen={isOpen} row={row} setOpen={setOpen} />

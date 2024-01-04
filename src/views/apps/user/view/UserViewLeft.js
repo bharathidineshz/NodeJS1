@@ -51,10 +51,11 @@ import * as yup from 'yup'
 import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
 import { userRequest } from 'src/helpers/requests'
 import { useDispatch, useSelector } from 'react-redux'
-import { activateUser, fetchSkills, fetchUsers, updateUser } from 'src/store/apps/user'
+import { activateUser, fetchSkills, fetchUsers, setUsers, updateUser } from 'src/store/apps/user'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import { handleResponse } from 'src/helpers/helpers'
 
 // const DynamicUserEditDialog = dynamic(() => import('src/views/apps/user/view/UserEditDialog'), {
 //   ssr: false
@@ -115,7 +116,7 @@ const schema = yup.object().shape({
   reportingManager: yup.object().required('Reporting Manager is required')
 })
 
-const UserViewLeft = ({ user, rpm, index }) => {
+const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
   // ** States
   const [openEdit, setOpenEdit] = useState(false)
   const [openPlans, setOpenPlans] = useState(false)
@@ -150,11 +151,8 @@ const UserViewLeft = ({ user, rpm, index }) => {
         joinedDate: new Date(user.joinedDate),
         reportingManager: rpm
       })
-    dispatch(fetchSkills()).then(res => {
-      const { payload } = res
-      const _skills = payload?.filter(o => user?.userskill.some(s => s === o.id))
-      setSkills(_skills)
-    })
+    setSkills(user?.userskill || [])
+    dispatch(fetchSkills())
   }, [user, openEdit])
 
   // Handle Edit dialog
@@ -165,7 +163,19 @@ const UserViewLeft = ({ user, rpm, index }) => {
   const handlePlansClickOpen = () => setOpenPlans(true)
   const handlePlansClose = () => setOpenPlans(false)
 
-  const onSubmit = data => {
+  //UPDATE Request STATE
+  const updateUserState = newUser => {
+    let users = [...store.users]
+    const indexToReplace = users.findIndex(item => item.id === newUser.id)
+
+    if (indexToReplace !== -1) {
+      users[indexToReplace] = newUser
+    }
+    dispatch(setUsers(users))
+  }
+
+  const onSubmit = async data => {
+    setLoading(true)
     handleEditClose()
     const req = {
       ...user,
@@ -178,12 +188,9 @@ const UserViewLeft = ({ user, rpm, index }) => {
     dispatch(updateUser(request))
       .then(unwrapResult)
       .then(res => {
-        if (res.status === 200) {
-          customSuccessToast(res.data)
-          dispatch(fetchUsers())
-        } else {
-          customErrorToast(res.data)
-        }
+        handleResponse('update', res.data, updateUserState)
+        updateUserData()
+        setLoading(false)
       })
   }
 
@@ -332,17 +339,19 @@ const UserViewLeft = ({ user, rpm, index }) => {
                 </Box>
                 <Box sx={{ display: 'flex', mb: 2 }}>
                   <Typography sx={{ mr: 2, fontWeight: 500, fontSize: '0.875rem' }}>
+                    Skills :
+                  </Typography>
+                  <Typography variant='body2'>
+                    {user.userskill.map(o => o.skillName)?.join(',')}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', mb: 2 }}>
+                  <Typography sx={{ mr: 2, fontWeight: 500, fontSize: '0.875rem' }}>
                     Joined Date:
                   </Typography>
                   <Typography variant='body2'>
                     {formatLocalDate(new Date(user.joinedDate))}
                   </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', mb: 2 }}>
-                  <Typography sx={{ mr: 2, fontWeight: 500, fontSize: '0.875rem' }}>
-                    Language:
-                  </Typography>
-                  <Typography variant='body2'>English</Typography>
                 </Box>
               </Box>
             </CardContent>

@@ -32,8 +32,8 @@ import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import Toolbar from 'src/views/leave-management/toolBar'
-import LeaveDashboard from 'src/views/leave-management/dashboard/Dashboard'
+import Toolbar from 'src/views/absence-management/toolBar'
+import LeaveDashboard from 'src/views/absence-management/dashboard/Dashboard'
 import SimpleBackdrop from 'src/@core/components/spinner'
 
 const AllRequests = () => {

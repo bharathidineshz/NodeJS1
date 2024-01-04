@@ -165,7 +165,7 @@ const OrganizationalSetup = () => {
       if (res.payload.status === 201 || res.payload.status === 200) {
         toast.success('Organization Created')
         reset()
-        router.replace({ pathname: '/leave-management/leaves' })
+        router.replace({ pathname: '/absence-management/leaves' })
       } else {
         toast.error('Error Occurred')
       }

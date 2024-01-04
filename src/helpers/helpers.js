@@ -1,6 +1,7 @@
 import { useTheme } from '@emotion/react'
 import { duration } from '@mui/material'
 import toast from 'react-hot-toast'
+import { customErrorToast, customSuccessToast } from './custom-components/toasts'
 
 export function getRandomColor() {
   const letters = '0123456789ABCDEF'
@@ -30,16 +31,34 @@ export function customToast({ theme, message, isSuccess, duration }) {
   })
 }
 
-export function errorToast(message) {
-  return toast.error(message, {
-    position: 'top-right',
-    duration: duration ? duration : 3000
-  })
-}
+export const handleResponse = (name, data, stateAction, deleteRow) => {
+  switch (name) {
+    case 'create':
+      if (data.hasError) {
+        customErrorToast(data.responseMessage)
+      } else {
+        customSuccessToast(data.responseMessage)
+        stateAction(data.result)
+      }
+      break
+    case 'update':
+      if (data.hasError) {
+        customErrorToast(data.responseMessage)
+      } else {
+        customSuccessToast(data.responseMessage)
+        stateAction(data.result)
+      }
+      break
+    case 'delete':
+      if (data.hasError) {
+        customErrorToast(data.responseMessage)
+      } else {
+        customSuccessToast(data.responseMessage)
+        stateAction(deleteRow)
+      }
+      break
 
-export function successToast(message) {
-  return toast.success(message, {
-    position: 'top-right',
-    duration: duration ? duration : 3000
-  })
+    default:
+      break
+  }
 }

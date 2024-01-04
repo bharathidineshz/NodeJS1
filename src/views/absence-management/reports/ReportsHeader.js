@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { setLoading } from 'src/store/authentication/register'
-import { fetchUserReports } from 'src/store/leave-management'
+import { fetchUserReports } from 'src/store/absence-management'
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 
 const ReportsHeader = ({ user, fromDate, toDate, getData }) => {
@@ -30,7 +30,6 @@ const ReportsHeader = ({ user, fromDate, toDate, getData }) => {
   useEffect(() => {
     setReport(prev => ({ ...prev, start: fromDate, end: toDate, user: user }))
     setLoading(false)
-
   }, [user])
 
   const handleOnChange = dates => {

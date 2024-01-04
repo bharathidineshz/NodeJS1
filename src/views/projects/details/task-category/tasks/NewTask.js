@@ -49,7 +49,7 @@ import { unwrapResult } from '@reduxjs/toolkit'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Controller, useForm } from 'react-hook-form'
 import * as yup from 'yup'
-import { fetchStatus } from 'src/store/leave-management'
+import { fetchStatus } from 'src/store/absence-management'
 import { taskRequest } from 'src/helpers/requests'
 import { STATUS, TASK_PRIORITIES } from 'src/helpers/constants'
 
@@ -150,7 +150,11 @@ const NewTask = ({ isOpen, setOpen }) => {
       projectId: projId,
       ...data
     })
-    dispatch((store.editTask || Object.keys(store.editTask).length > 0) ? putTask(request) : postTask(request))
+    dispatch(
+      store.editTask || Object.keys(store.editTask).length > 0
+        ? putTask(request)
+        : postTask(request)
+    )
       .then(unwrapResult)
       .then(res => {
         if (res.status === 200) {

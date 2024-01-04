@@ -61,12 +61,12 @@ const notifications = [
 ]
 
 const shortcuts = [
-  {
-    title: 'Calendar',
-    url: '/apps/calendar',
-    subtitle: 'Appointments',
-    icon: 'mdi:calendar-month-outline'
-  },
+  // {
+  //   title: 'Calendar',
+  //   url: '/apps/calendar',
+  //   subtitle: 'Appointments',
+  //   icon: 'mdi:calendar-month-outline'
+  // },
   {
     title: 'Invoice App',
     url: '/apps/invoice/list',
@@ -75,16 +75,40 @@ const shortcuts = [
   },
   {
     title: 'Users',
-    url: '/apps/user/list',
+    url: '/users/list/',
     subtitle: 'Manage Users',
     icon: 'mdi:account-outline'
   },
   {
-    url: '/apps/roles',
-    title: 'Role Management',
-    subtitle: 'Permissions',
-    icon: 'mdi:shield-check-outline'
+    title: 'Leaves',
+    subtitle: 'Manage Leaves',
+    icon: 'mdi:calendar-alert',
+    url: '/absence-management/leaves/'
   },
+  {
+    title: 'Timesheet',
+    subtitle: 'Timesheets',
+    icon: 'mdi:window-maximize',
+    url: '/apps/timesheets/'
+  },
+  {
+    title: 'Client',
+    subtitle: 'Manage Clients',
+    icon: 'mdi:checkbox-marked-circle-outline',
+    url: '/clients/'
+  },
+  {
+    title: 'Projects',
+    subtitle: 'Manage Prjects',
+    icon: 'mdi:shield-check-outline',
+    url: 'projects/details/task/'
+  },
+  // {
+  //   url: '/apps/roles',
+  //   title: 'Role Management',
+  //   subtitle: 'Permissions',
+  //   icon: 'mdi:shield-check-outline'
+  // },
   {
     url: '/',
     title: 'Dashboard',
@@ -95,20 +119,21 @@ const shortcuts = [
     title: 'Settings',
     icon: 'mdi:cog-outline',
     subtitle: 'Account Settings',
-    url: '/pages/account-settings/account'
-  },
-  {
-    title: 'Help Center',
-    subtitle: 'FAQs & Articles',
-    icon: 'mdi:help-circle-outline',
-    url: '/pages/help-center'
-  },
-  {
-    title: 'Dialogs',
-    subtitle: 'Useful Dialogs',
-    icon: 'mdi:window-maximize',
-    url: '/pages/dialog-examples'
+    url: '/settings/Department/'
   }
+  // {
+  //   title: 'Help Center',
+  //   subtitle: 'FAQs & Articles',
+  //   icon: 'mdi:help-circle-outline',
+  //   url: '/pages/help-center'
+  // },
+
+  // {
+  //   title: 'Dialogs',
+  //   subtitle: 'Useful Dialogs',
+  //   icon: 'mdi:window-maximize',
+  //   url: '/pages/dialog-examples'
+  // },
 ]
 
 const AppBarContent = props => {

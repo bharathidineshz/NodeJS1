@@ -31,8 +31,8 @@ import {
 import { Icon } from '@iconify/react'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import LeaveHeader from 'src/views/leave-management/LeaveHeader'
-import Toolbar from 'src/views/leave-management/toolBar'
+import LeaveHeader from 'src/views/absence-management/LeaveHeader'
+import Toolbar from 'src/views/absence-management/toolBar'
 import { date } from 'yup'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 
@@ -59,8 +59,7 @@ const Files = () => {
       fileName: 'test 3.png',
       uploadedBy: 'Naveenkumar Mounasamy',
       date: formatLocalDate(new Date())
-    },
-
+    }
   ])
   const [isLoading, setLoading] = useState(false)
   const [searchValue, setSearchValue] = useState('')
@@ -120,8 +119,7 @@ const Files = () => {
       minWidth: 120,
       headerName: 'Date',
       field: 'date'
-    },
-
+    }
   ]
 
   const handleSortModel = newModel => {

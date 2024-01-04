@@ -20,14 +20,14 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Icon from 'src/@core/components/icon'
 
 // ** Demo Components
-import Approval from 'src/views/leave-management/approval'
-import LeaveApply from 'src/views/leave-management/apply'
-import LeaveReports from 'src/views/leave-management/reports'
-import LeavePolicy from 'src/views/leave-management/leave-policy'
+import Approval from 'src/views/absence-management/approval'
+import LeaveApply from 'src/views/absence-management/apply'
+import LeaveReports from 'src/views/absence-management/reports'
+import LeavePolicy from 'src/views/absence-management/leave-policy'
 import { Button } from '@mui/material'
-import LeaveApplyForm from 'src/views/leave-management/apply/LeaveApplyForm'
-import NewLeavePolicy from 'src/views/leave-management/leave-policy/NewLeavePolicy'
-import Holidays from 'src/views/leave-management/holidays'
+import LeaveApplyForm from 'src/views/absence-management/apply/LeaveApplyForm'
+import NewLeavePolicy from 'src/views/absence-management/leave-policy/NewLeavePolicy'
+import Holidays from 'src/views/absence-management/holidays'
 import { useDispatch, useSelector } from 'react-redux'
 import FallbackSpinner from 'src/layouts/components/LogoSpinner'
 import SimpleBackdrop from 'src/@core/components/spinner'
@@ -74,7 +74,7 @@ const LeaveManagement = ({ tab, data }) => {
     setActiveTab(value)
     router
       .push({
-        pathname: `/leave-management/${value}`
+        pathname: `/absence-management/${value}`
       })
       .then(() => setIsLoading(false))
   }

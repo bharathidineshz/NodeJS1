@@ -80,11 +80,14 @@ export const appUsersSlice = createSlice({
     },
     setUserRoleId: (state, { payload }) => {
       state.userRoleId = payload ? Number(payload) : 0
+    },
+    setUsers: (state, { payload }) => {
+      state.users = payload
     }
   },
   extraReducers: builder => {
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
-      const users = [...action.payload]
+      const users = [...action.payload.result]
       users.map(u => {
         u.fullName = `${u.firstName} ${u.lastName}`
       })
@@ -96,6 +99,6 @@ export const appUsersSlice = createSlice({
   }
 })
 
-export const { setLoggedInUser, setUserId, setUserRoleId } = appUsersSlice.actions
+export const { setUsers, setLoggedInUser, setUserId, setUserRoleId } = appUsersSlice.actions
 
 export default appUsersSlice.reducer

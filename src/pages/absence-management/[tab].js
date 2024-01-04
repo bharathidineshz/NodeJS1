@@ -1,7 +1,7 @@
 // ** Third Party Imports
 import axios from 'axios'
 import FallbackSpinner from 'src/layouts/components/LogoSpinner'
-import LeaveManagement from 'src/pages/leave-management/'
+import LeaveManagement from 'src/pages/absence-management'
 
 // ** Demo Components Imports
 

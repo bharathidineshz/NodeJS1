@@ -20,7 +20,7 @@ import Icon from 'src/@core/components/icon'
 // ** Context
 import { useDispatch, useSelector } from 'react-redux'
 import { setUser } from 'src/store/authentication/register'
-import { resetLeaves } from 'src/store/leave-management'
+import { resetLeaves } from 'src/store/absence-management'
 
 // ** Styled Components
 const BadgeContentSpan = styled('span')(({ theme }) => ({
@@ -157,7 +157,7 @@ const UserDropdown = props => {
             Profile
           </Box>
         </MenuItem>
-        <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose('/apps/email')}>
+        {/* <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose('/apps/email')}>
           <Box sx={styles}>
             <Icon icon='mdi:email-outline' />
             Inbox
@@ -178,8 +178,8 @@ const UserDropdown = props => {
             <Icon icon='mdi:cog-outline' />
             Settings
           </Box>
-        </MenuItem>
-        <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose('/pages/pricing')}>
+        </MenuItem> */}
+        {/* <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose('/pages/pricing')}>
           <Box sx={styles}>
             <Icon icon='mdi:currency-usd' />
             Pricing
@@ -191,7 +191,7 @@ const UserDropdown = props => {
             FAQ
           </Box>
         </MenuItem>
-        <Divider />
+        <Divider /> */}
         <MenuItem
           onClick={handleLogout}
           sx={{ py: 2, '& svg': { mr: 2, fontSize: '1.375rem', color: 'text.primary' } }}

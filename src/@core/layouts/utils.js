@@ -19,10 +19,10 @@ export const handleURLQueries = (router, path) => {
 
 export const handleNestedTabs = router => {
   const paths = [
-    '/leave-management/approval',
-    '/leave-management/reports',
-    '/leave-management/leave_policy',
-    '/leave-management/holidays',
+    '/absence-management/approval',
+    '/absence-management/reports',
+    '/absence-management/leave_policy',
+    '/absence-management/holidays',
     '/settings/skills',
     '/setting/Settings',
     '/users/view'

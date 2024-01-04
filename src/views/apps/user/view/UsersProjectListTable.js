@@ -27,15 +27,7 @@ const Img = styled('img')(({ theme }) => ({
 
 const columns = [
   {
-    flex: 0.3,
-    minWidth: 230,
-    field: 'projectId',
-    headerName: 'Id'
-  },
-
-  {
-    flex: 0.3,
-    minWidth: 230,
+    flex: 1,
     field: 'projectName',
     headerName: 'Project',
     renderCell: ({ row }) => (
@@ -58,7 +50,6 @@ const InvoiceListTable = () => {
   // ** State
   const [value, setValue] = useState('')
   const [data, setData] = useState([])
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
 
@@ -89,9 +80,6 @@ const InvoiceListTable = () => {
       <CardHeader title='Projects List' />
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <Typography variant='body2' sx={{ mr: 2 }}>
-            Search:
-          </Typography>
           <TextField
             size='small'
             placeholder='Search Project'
@@ -105,10 +93,10 @@ const InvoiceListTable = () => {
         rows={filteredData || []}
         columns={columns}
         disableRowSelectionOnClick
-        pageSizeOptions={[7, 10, 25, 50]}
-        paginationModel={paginationModel}
-        onPaginationModelChange={setPaginationModel}
+        pageSizeOptions={[5, 10, 25, 50]}
         getRowId={row => row.projectId}
+        disableColumnMenu
+        localeText={{ noRowsLabel: 'No Projects' }}
       />
     </Card>
   )

@@ -33,8 +33,10 @@ import Icon from 'src/@core/components/icon'
 import { useDispatch, useSelector } from 'react-redux'
 
 // ** Actions Imports
-import { addHoliday } from 'src/store/apps/accountSetting/index'
+import { addHoliday, setHolidays } from 'src/store/apps/accountSetting/index'
 import subDays from 'date-fns/subDays'
+import { unwrapResult } from '@reduxjs/toolkit'
+import { handleResponse } from 'src/helpers/helpers'
 
 const Header = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -80,6 +82,13 @@ const SidebarAddHoliday = props => {
     return array.some(obj => Object.values(obj).includes(value))
   }
 
+  //UPDATE Holiday STATE
+  const updateHolidayState = newHoliday => {
+    let _holidays = [...holidays]
+    _holidays.push(newHoliday)
+    dispatch(setHolidays(_holidays))
+  }
+
   const onSubmit = data => {
     var date = dayjs(data.date).format('YYYY-MM-DD')
     data.date = date
@@ -101,9 +110,12 @@ const SidebarAddHoliday = props => {
     }
     setExistError(false)
     dispatch(addHoliday(holidayArray))
-    dispatch(fetchHolidays())
+      .then(unwrapResult)
+      .then(res => {
+        handleResponse('create', res.data, updateHolidayState)
+      })
     toggle()
-    reset({})
+    reset()
   }
 
   const handleClose = () => {

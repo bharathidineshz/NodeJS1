@@ -51,6 +51,7 @@ import { base } from 'src/store/endpoints/interceptor'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserRoleId } from 'src/store/apps/user'
 import SimpleBackdrop from 'src/@core/components/spinner'
+import { customErrorToast } from 'src/helpers/custom-components/toasts'
 
 // ** Styled Components
 const LoginIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -104,8 +105,8 @@ const FormControlLabel = styled(MuiFormControlLabel)(({ theme }) => ({
 }))
 
 const schema = yup.object().shape({
-  email: yup.string().email().required(),
-  password: yup.string().min(5).required()
+  email: yup.string().email().required('Email is required').typeError('Please enter valid email'),
+  password: yup.string().required('Password is required')
 })
 
 const defaultValues = {
@@ -117,6 +118,7 @@ const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [disable, setDisable] = useState(false)
 
   // ** Hooks
   const theme = useTheme()
@@ -143,25 +145,35 @@ const LoginPage = () => {
 
   const onSubmit = async data => {
     setLoading(true)
-    const response = await axios.post(base.url + endpoints.login, data)
+    setDisable(true)
+    try {
+      const response = await axios.post(base.url + endpoints.login, data)
+      const { result } = response.data
 
-    if (response.data.accessToken) {
-      window.localStorage.setItem('accessToken', response.data.accessToken)
-      const userData = jwt.decode(response.data.accessToken, { complete: true }).payload
-      window.localStorage.setItem('userData', JSON.stringify(userData))
-      window.localStorage.setItem('roleId', userData?.roleId)
-      dispatch(setUserRoleId(userData?.roleId))
+      if (result.accessToken) {
+        window.localStorage.setItem('accessToken', result.accessToken)
+        const userData = jwt.decode(result.accessToken, { complete: true }).payload
+        window.localStorage.setItem('userData', JSON.stringify(userData))
+        window.localStorage.setItem('roleId', userData?.roleId)
+        dispatch(setUserRoleId(userData?.roleId))
+        setLoading(false)
+        JSON.parse(userData.org)
+          ? router.replace({
+              pathname: '/absence-management/leaves'
+            })
+          : router.replace({
+              pathname: '/organizational-setup'
+            })
+      } else {
+        setLoading(false)
+        setDisable(false)
+        toast.error('Login Failed')
+      }
+    } catch (error) {
+      const { data } = error.response
+      customErrorToast(data.responseMessage)
       setLoading(false)
-      JSON.parse(userData.org)
-        ? router.replace({
-            pathname: '/leave-management/leaves'
-          })
-        : router.replace({
-            pathname: '/organizational-setup'
-          })
-    } else {
-      setLoading(false)
-      toast.error('Login Failed')
+      setDisable(false)
     }
   }
 
@@ -318,7 +330,14 @@ const LoginPage = () => {
                 />
                 <LinkStyled href='/forgot-password'>Forgot Password?</LinkStyled>
               </Box>
-              <Button fullWidth size='large' type='submit' variant='contained' sx={{ mb: 7 }}>
+              <Button
+                fullWidth
+                size='large'
+                type='submit'
+                variant='contained'
+                disabled={disable}
+                sx={{ mb: 7 }}
+              >
                 Login
               </Button>
               <Box

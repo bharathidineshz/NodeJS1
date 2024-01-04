@@ -42,19 +42,19 @@ import {
   fetchUsers,
   postLeaveRequest,
   setApply
-} from 'src/store/leave-management'
+} from 'src/store/absence-management'
 import { useEffect } from 'react'
 import { Box, minHeight } from '@mui/system'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import PickersComponent from 'src/views/forms/form-elements/pickers/PickersCustomInput'
-import { customToast, errorToast, successToast } from 'src/helpers/helpers'
+import { customToast, errorToast, handleResponse, successToast } from 'src/helpers/helpers'
 import { useTheme } from '@emotion/react'
 import { myLeaveRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
-import { fetchHolidays, updateHoliday } from 'src/store/apps/accountSetting'
+import { fetchHolidays, setHolidays, updateHoliday } from 'src/store/apps/accountSetting'
 import { formatDateToYYYYMMDD } from 'src/helpers/dateFormats'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 import subDays from 'date-fns/subDays'
@@ -104,6 +104,17 @@ const HolidayForm = ({ isOpen, row, setOpen }) => {
     return day !== 0 && day !== 6
   }
 
+  //UPDATE Holiday STATE
+  const updateHolidayState = newHoliday => {
+    let _holidays = [...holidays]
+    const indexToReplace = _holidays.findIndex(item => item.id === newHoliday.id)
+
+    if (indexToReplace !== -1) {
+      _holidays[indexToReplace] = newHoliday
+    }
+    dispatch(setHolidays(_holidays))
+  }
+
   //submit
 
   const onSubmit = async formData => {
@@ -118,12 +129,7 @@ const HolidayForm = ({ isOpen, row, setOpen }) => {
       )
         .then(unwrapResult)
         .then(res => {
-          if (res?.status == 200 || res.status == 201) {
-            customSuccessToast(res.data)
-            dispatch(fetchHolidays())
-          } else {
-            customErrorToast(res.data)
-          }
+          handleResponse('update', res.data, updateHolidayState)
         })
     } catch (error) {
       toast.error(error)

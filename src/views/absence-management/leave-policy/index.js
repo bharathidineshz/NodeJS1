@@ -16,17 +16,18 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Icon } from '@iconify/react'
 import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
-import Toolbar from 'src/views/leave-management/toolBar'
-import { deletePolicy, fetchPolicies } from 'src/store/leave-management'
+import Toolbar from 'src/views/absence-management/toolBar'
+import { deletePolicy, fetchPolicies, setPolicies } from 'src/store/absence-management'
 import instance, { base } from 'src/store/endpoints/interceptor'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import { endpoints } from 'src/store/endpoints/endpoints'
 import axios from 'axios'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import { handleResponse } from 'src/helpers/helpers'
 
 const DynamicEditLeavePolicy = dynamic(
-  () => import('src/views/leave-management/leave-policy/EditLeavePolicy'),
+  () => import('src/views/absence-management/leave-policy/EditLeavePolicy'),
   {
     ssr: false,
     loading: () => {
@@ -62,7 +63,7 @@ const LeavePolicy = ({ data }) => {
 
   const columns = [
     {
-      flex: 0.35,
+      flex: 0.3,
       field: 'typeOfLeave',
       headerName: 'Policy',
       renderCell: params => <div style={{ fontWeight: 'bold' }}>{params.value}</div>
@@ -125,20 +126,26 @@ const LeavePolicy = ({ data }) => {
     }
   ]
 
+  //UPDATE POLICY STATE
+  const updatePolicyState = newPolicy => {
+    let policies = [...store.policies]
+    const index = policies.findIndex(item => item.id === newPolicy.id)
+
+    if (index !== -1) {
+      policies.splice(index, 1)
+    }
+    dispatch(setPolicies(policies))
+  }
+
   //delete
 
   const handleDelete = () => {
     try {
+      setOpenAlert(!alert)
       dispatch(deletePolicy(rowData?.id))
         .then(unwrapResult)
         .then(res => {
-          if (res.status === 200) {
-            setOpenAlert(!alert)
-            dispatch(fetchPolicies())
-            customSuccessToast(res.data)
-          } else {
-            customErrorToast(res.data)
-          }
+          handleResponse('delete', res.data, updatePolicyState, rowData)
         })
     } catch (error) {
       customErrorToast(res.data)
@@ -199,6 +206,11 @@ const LeavePolicy = ({ data }) => {
                   return (
                     <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Policy' />
                   )
+                }
+              }}
+              sx={{
+                '&:hover': {
+                  cursor: 'pointer'
                 }
               }}
               initialState={{

@@ -100,9 +100,9 @@ const navigation = () => {
     },
 
     {
-      title: 'Leave Management',
+      title: 'Absence Management',
       icon: 'mdi:calendar-alert-outline',
-      path: '/leave-management/leaves',
+      path: '/absence-management/leaves',
       auth: false
     },
 

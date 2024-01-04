@@ -35,7 +35,12 @@ import SidebarAddHoliday from 'src/views/pages/account-settings/holiday/AddHolid
 // ** Apimethod and Endpoints
 import { endpointURL, endpoints } from 'src/store/endpoints/endpoints'
 
-import { fetchHolidays, deleteHoliday, updateHoliday } from 'src/store/apps/accountSetting/index'
+import {
+  fetchHolidays,
+  deleteHoliday,
+  updateHoliday,
+  setHolidays
+} from 'src/store/apps/accountSetting/index'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import { formatDateToYYYYMMDD, formatLocalDate } from 'src/helpers/dateFormats'
 import HolidayForm from './HolidayForm'
@@ -44,6 +49,7 @@ import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import { unwrapResult } from '@reduxjs/toolkit'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
+import { handleResponse } from 'src/helpers/helpers'
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
   ssr: false,
@@ -135,9 +141,23 @@ const Holidays = ({ popperPlacement }) => {
   const handleSearch = value => {
     setSearchValue(value)
     const data = rows.map(o => ({ ...o, leaveDescription: o.leaveDescription.toLowerCase() }))
-    const filteredRows = data.filter(o => o.leaveDescription.trim().includes(value.toLowerCase()) || formatLocalDate(o.date).includes(value))
+    const filteredRows = data.filter(
+      o =>
+        o.leaveDescription.trim().includes(value.toLowerCase()) ||
+        formatLocalDate(o.date).includes(value)
+    )
     const _data = rows.filter(o => filteredRows.some(f => f.id == o.id))
     setFilteredRows(_data)
+  }
+
+  //UPDATE Holiday STATE
+  const updateHolidayState = holiday => {
+    let holidays = [...rows]
+    const index = holidays.findIndex(item => item.id === holiday.id)
+    if (index != -1) {
+      holidays.splice(index, 1)
+    }
+    dispatch(setHolidays(holidays))
   }
 
   const handleDelete = () => {
@@ -154,12 +174,7 @@ const Holidays = ({ popperPlacement }) => {
       )
         .then(unwrapResult)
         .then(res => {
-          if (res?.status == 200 || res.status == 201) {
-            customSuccessToast(res.data)
-            dispatch(fetchHolidays())
-          } else {
-            customErrorToast(res.data)
-          }
+          handleResponse('delete', res.data, updateHolidayState, row)
         })
     } catch (error) {
       customErrorToast(res.data)

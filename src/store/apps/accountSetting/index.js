@@ -23,13 +23,9 @@ export const addHoliday = createAsyncThunk(
   async (event, { dispatch }) => {
     try {
       const response = await instance.post(endpoints.addHolidayRequests, event)
-      await dispatch(fetchHolidays())
-      toast.success('Holiday Entry created succesfully')
 
-      return response.data.event
+      return response
     } catch (error) {
-      toast.error(error.message)
-
       return error.message
     }
   }
@@ -70,19 +66,23 @@ export const appAccountSettingsSlice = createSlice({
     taskData: [],
     projectData: []
   },
-  reducers: {},
+  reducers: {
+    setHolidays: (state, { payload }) => {
+      state.holidays = payload
+    }
+  },
   extraReducers: builder => {
     builder.addCase(fetchHolidays.fulfilled, (state, action) => {
-      let sortedArray = action.payload != null ? action.payload.sort((a, b) => {
-        return new Date(a.date) - new Date(b.date)
-      }): []
+      let sortedArray =
+        action.payload != null
+          ? action.payload.result.sort((a, b) => {
+              return new Date(a.date) - new Date(b.date)
+            })
+          : []
       state.holidays = sortedArray
     })
-
-    // .addCase(fetchTaskData.fulfilled, (state, action) => {
-    //   state.taskData = action.payload
-    // })
   }
 })
 
+export const { setHolidays } = appAccountSettingsSlice.actions
 export default appAccountSettingsSlice.reducer
