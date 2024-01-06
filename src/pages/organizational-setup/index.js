@@ -38,6 +38,7 @@ import FooterIllustrationsV2 from 'src/views/pages/auth/FooterIllustrationsV2'
 
 import * as yup from 'yup'
 import { Autocomplete, FormHelperText, Grid } from '@mui/material'
+import { handleResponse } from 'src/helpers/helpers'
 
 // import { error } from '@babel/eslint-parser/lib/convert/index.cjs'
 import { signUpUser } from 'src/store/authentication/register'
@@ -47,9 +48,10 @@ import { Controller, useForm } from 'react-hook-form'
 import countries from 'src/helpers/countries.json'
 import states from 'src/helpers/states.json'
 import currencies from 'src/helpers/currencies.json'
-import { addOrgs } from 'src/store/apps/organization'
+import { addOrgs, updateOrgs } from 'src/store/apps/organization'
 import { organizationRequest } from 'src/helpers/requests'
 import toast from 'react-hot-toast'
+import { unwrapResult } from '@reduxjs/toolkit'
 
 // ** Styled Components
 const RegisterIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -112,7 +114,6 @@ const defaultValues = {
   state: '',
   city: '',
   zipcode: '',
-  currency: ''
 }
 
 const phoneRegExp =
@@ -133,7 +134,6 @@ const schema = yup.object().shape({
   city: yup.object().required('City is required'),
   state: yup.object().required('State is required'),
   zipcode: yup.string().max(6, 'Invalid Zipcode').required('ZIP code is required'),
-  currency: yup.string().required('Currency required')
 })
 
 const OrganizationalSetup = () => {
@@ -155,24 +155,28 @@ const OrganizationalSetup = () => {
     resolver: yupResolver(schema)
   })
 
+
+  const updateorg = newReq => {
+
+    router.replace({ pathname: '/absence-management/leaves' })
+  }
+
   const dispatch = useDispatch()
   const router = useRouter()
 
   const onSubmit = data => {
     const req = { ...data }
     const request = organizationRequest(req)
-    dispatch(addOrgs(request)).then(res => {
-      if (res.payload.status === 201 || res.payload.status === 200) {
-        toast.success('Organization Created')
-        reset()
-        router.replace({ pathname: '/absence-management/leaves' })
-      } else {
-        toast.error('Error Occurred')
-      }
-    })
-  }
-  console.log(watch('country'), watch('state'))
 
+
+    dispatch(addOrgs(request)).then(unwrapResult)
+      .then(res => {
+        handleResponse('create', res.data, updateorg)
+      })
+  }
+
+
+  console.log(watch('country'), watch('state'))
   console.log([].filter(item => item.state_code === watch('state').state_code))
 
   // ** Vars
@@ -502,36 +506,7 @@ const OrganizationalSetup = () => {
                     </FormControl>
                   </Grid>
 
-                  <Grid item md={6} sm={6} xs={12}>
-                    <FormControl fullWidth>
-                      <Controller
-                        name='currency'
-                        control={control}
-                        render={({ field: { value, onChange } }) => (
-                          <Autocomplete
-                            options={currencies}
-                            getOptionLabel={o => o.cc || o}
-                            id='autocomplete-limit-tags'
-                            value={value}
-                            onChange={(e, data) => onChange(data.cc)}
-                            renderInput={params => (
-                              <TextField
-                                {...params}
-                                error={Boolean(errors.currency)}
-                                label='Currency'
-                                placeholder='Currency'
-                              />
-                            )}
-                          />
-                        )}
-                      />
-                      {errors.currency && (
-                        <FormHelperText sx={{ color: 'error.main' }}>
-                          {errors.currency.message}
-                        </FormHelperText>
-                      )}
-                    </FormControl>
-                  </Grid>
+
 
                   <Grid item xs={12} className='flex-right'>
                     <Button type='submit' variant='contained' color='primary'>

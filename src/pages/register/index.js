@@ -47,6 +47,7 @@ import jwt from 'jsonwebtoken'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import { useRouter } from 'next/router'
 import { unwrapResult } from '@reduxjs/toolkit'
+import user from 'src/store/apps/user'
 
 // ** Styled Components
 const RegisterIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -170,10 +171,16 @@ const Register = () => {
               const userData = jwt.decode(data?.result.accessToken, { complete: true }).payload
               window.localStorage.setItem('userData', JSON.stringify(userData))
               window.localStorage.setItem('roleId', userData?.roleId)
-
-              router.replace({
-                pathname: '/absence-management/leaves'
-              })
+              if (userData.org == null || userData.org == 'false') {
+                router.replace({
+                  pathname: '/organizational-setup'
+                })
+              }
+              else {
+                router.replace({
+                  pathname: '/absence-management/leaves'
+                })
+              }
               setLoading(false)
             } else {
               setLoading(false)

@@ -158,7 +158,7 @@ export const endpoints = {
   //HR Approval
 
   HRApprovals: 'api/OrganizationLeaveHRApproval',
-  deleteHRApproval: id => `api/OrganizationLeaveHRApproval?id=${id}`,
+  deleteHRApproval: 'api/OrganizationLeaveHRApproval',
 
   //leave Management
 

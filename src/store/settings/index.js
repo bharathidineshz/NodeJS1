@@ -65,9 +65,11 @@ export const putConfig = createAsyncThunk(
     try {
       const response = await instance.put(endpoints.updateConfig, data)
 
-      return response
+      return response.data
     } catch (error) {
-      throw error
+      const { response } = error
+
+      return response
     }
   }
 )
@@ -101,9 +103,15 @@ export const deleteSkill = createAsyncThunk(
 export const deleteHRApproval = createAsyncThunk(
   'appConfig/deleteSkill',
   async (data, { getState, dispatch }) => {
-    const response = await instance.delete(endpoints.deleteHRApproval(data))
+    try {
+      const response = await instance.delete(endpoints.deleteHRApproval, { data: data })
 
-    return response
+      return response
+    } catch (error) {
+      const { response } = error
+
+      return response
+    }
   }
 )
 
@@ -114,7 +122,14 @@ export const appConfigSlice = createSlice({
     OrgHrApprove: {},
     HrApprovals: []
   },
-  reducers: {},
+  reducers: {
+    setConfigs: (state, { payload }) => {
+      state.configuration = payload
+    },
+    setHRApprovals: (state, { payload }) => {
+      state.HrApprovals = payload
+    }
+  },
   extraReducers: builder => {
     builder.addCase(fetchConfig.fulfilled, (state, action) => {
       state.configuration = action.payload.result
@@ -123,9 +138,10 @@ export const appConfigSlice = createSlice({
       state.OrgHrApprove = action.payload
     })
     builder.addCase(fetchHRApprovals.fulfilled, (state, action) => {
-      state.HrApprovals = action.payload
+      state.HrApprovals = action.payload.result
     })
   }
 })
+export const { setConfigs, setHRApprovals } = appConfigSlice.actions
 
 export default appConfigSlice.reducer

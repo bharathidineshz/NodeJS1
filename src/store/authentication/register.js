@@ -2,11 +2,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import axios from 'axios'
 import { baseURL, endpointURL, endpoints } from '../endpoints/endpoints'
-import instance, { base } from '../endpoints/interceptor'
+import instance, { base, identifyURL } from '../endpoints/interceptor'
 
 // Create a Redux-thunk action for signup
 export const signUpUser = createAsyncThunk('auth/signUpUser', async params => {
-  const response = await axios.post(base.url + endpoints.tenant, params)
+  const response = await axios.post(identifyURL() + endpoints.tenant, params)
 
   return response
 })

@@ -10,8 +10,10 @@ const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete, o
   const [fieldValue, setFieldValue] = React.useState([])
   const [options, setOptions] = React.useState([])
   React.useEffect(() => {
-    setOptions(items.filter((item) => !values.some((value) => value.fullName === item.fullName)));
-    //setOptions(items)
+    // setOptions(items.filter((item) => !values?.some((value) => value.fullName === item.fullName)));
+    // // //setOptions(items)
+    // // setSelectedValues(values)
+    setOptions(items)
     setSelectedValues(values)
   }, [items, values])
 
@@ -22,7 +24,7 @@ const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete, o
     const index = _options.findIndex(o => o.fullName === newValue[0].fullName)
     _options.splice(index, 1)
     setOptions(_options)
-    onSelect(name, values.flat())
+    onSelect(values.flat())
   }
 
   const handleDelete = selectedValue => {
@@ -33,10 +35,8 @@ const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete, o
     values.splice(indx, 1)
     !options.includes(person) && options.push(person)
     setOptions(options)
-    onDelete(Hr?.id)
+    onDelete(person)
     setSelectedValues(values)
-    onSelect(name, values.flat())
-
   }
 
   return (
@@ -54,7 +54,7 @@ const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete, o
         renderInput={params => <TextField {...params} label={label} />}
       />
       <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 3 }}>
-        {selectedValues.map((selectedValue, key) => {
+        {selectedValues?.map((selectedValue, key) => {
           return (
             <Chip
               key={key}

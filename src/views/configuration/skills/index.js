@@ -18,7 +18,7 @@ import FallbackSpinner from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import Toolbar from 'src/views/absence-management/toolBar'
 import { deletePolicy, fetchPolicies } from 'src/store/absence-management'
-import instance, { base } from 'src/store/endpoints/interceptor'
+import instance, { base, identifyURL } from 'src/store/endpoints/interceptor'
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 import { endpoints } from 'src/store/endpoints/endpoints'
@@ -187,7 +187,7 @@ const SkillsConfig = ({ data }) => {
 
 export async function getStaticProps() {
   // Use Axios to fetch data from an API with headers
-  const response = await axios.get(base.url + endpoints.getLeavePolicy, {
+  const response = await axios.get(identifyURL() + endpoints.getLeavePolicy, {
     headers: {
       Authorization: `Bearer ${window.localStorage.getItem('accessToken')}`
     }

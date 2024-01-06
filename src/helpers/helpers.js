@@ -32,33 +32,35 @@ export function customToast({ theme, message, isSuccess, duration }) {
 }
 
 export const handleResponse = (name, data, stateAction, deleteRow) => {
-  switch (name) {
-    case 'create':
-      if (data.hasError) {
-        customErrorToast(data.responseMessage)
-      } else {
-        customSuccessToast(data.responseMessage)
-        stateAction(data.result)
-      }
-      break
-    case 'update':
-      if (data.hasError) {
-        customErrorToast(data.responseMessage)
-      } else {
-        customSuccessToast(data.responseMessage)
-        stateAction(data.result)
-      }
-      break
-    case 'delete':
-      if (data.hasError) {
-        customErrorToast(data.responseMessage)
-      } else {
-        customSuccessToast(data.responseMessage)
-        stateAction(deleteRow)
-      }
-      break
+  if (data != null) {
+    switch (name) {
+      case 'create':
+        if (data?.hasError) {
+          customErrorToast(data.responseMessage)
+        } else {
+          customSuccessToast(data.responseMessage)
+          stateAction(data.result)
+        }
+        break
+      case 'update':
+        if (data.hasError) {
+          customErrorToast(data.responseMessage)
+        } else {
+          customSuccessToast(data.responseMessage)
+          stateAction(data.result)
+        }
+        break
+      case 'delete':
+        if (data.hasError) {
+          customErrorToast(data.responseMessage)
+        } else {
+          customSuccessToast(data.responseMessage)
+          stateAction(deleteRow)
+        }
+        break
 
-    default:
-      break
+      default:
+        break
+    }
   }
 }

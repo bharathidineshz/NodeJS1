@@ -47,7 +47,7 @@ import FooterIllustrationsV2 from 'src/views/pages/auth/FooterIllustrationsV2'
 import axios from 'axios'
 import { endpointURL, endpoints } from 'src/store/endpoints/endpoints'
 import toast from 'react-hot-toast'
-import { base } from 'src/store/endpoints/interceptor'
+import { base, identifyURL } from 'src/store/endpoints/interceptor'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUserRoleId } from 'src/store/apps/user'
 import SimpleBackdrop from 'src/@core/components/spinner'
@@ -147,7 +147,7 @@ const LoginPage = () => {
     setLoading(true)
     setDisable(true)
     try {
-      const response = await axios.post(base.url + endpoints.login, data)
+      const response = await axios.post(identifyURL() + endpoints.login, data)
       const { result } = response.data
 
       if (result.accessToken) {

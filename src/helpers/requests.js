@@ -30,7 +30,6 @@ export const organizationRequest = req => {
     website: req.website,
     phone: req.phone,
     isActive: true,
-    currency: req.currency
   }
 
   return request
@@ -42,7 +41,7 @@ export const settingsRequest = req => {
   const request = {
     currency: req.currency?.cc,
     workingdays: [req.startWeekDay, req.endWeekDay].join('-'),
-    timeZone: req.timezone?.offset
+    timeZone: `${req.timezone.name} - ${req.timezone?.offset}`
   }
 
   return request

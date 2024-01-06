@@ -34,7 +34,9 @@ import {
   putConfig,
   postHRApproval,
   fetchHRApprovals,
-  deleteHRApproval
+  deleteHRApproval,
+  setConfigs,
+  setHRApprovals
 } from 'src/store/settings'
 
 import { WEEKDAYS } from 'src/helpers/constants'
@@ -49,128 +51,36 @@ import toast from 'react-hot-toast'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import CustomPeoplePicker from 'src/views/components/autocomplete/CustomPeoplePicker'
 import CustomHRPicker from 'src/views/components/autocomplete/CustomHRPicker'
-import { fetchUsers } from 'src/store/apps/user'
+import { addUser, fetchUsers } from 'src/store/apps/user'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { handleResponse } from 'src/helpers/helpers'
 
+const defaultValues = {
+  startWeekDay: '',
+  endWeekDay: '',
+  currency: '',
+  timezone: ''
+}
 
+const schema = yup.object().shape({
+  startWeekDay: yup.string().required('Start day is required'),
+  endWeekDay: yup.string().required('End day is required'),
+  currency: yup.object().required('Currency is required'),
+  timezone: yup.object().required('Timezone is required')
+})
 
 const SettingsConfig = () => {
   const { configuration, OrgHrApprove, HrApprovals } = useSelector(state => state.settings)
   const dispatch = useDispatch()
   const _userStore = useSelector(state => state.user)
 
-  const theme = useTheme()
-  const hidden = useMediaQuery(theme.breakpoints.down('md'))
-  const [isLoading, setLoading] = useState(false)
-  const [config, setConfig] = useState({
-    startWeekDay: '',
-    endWeekDay: '',
-    currency: 'INR',
-    currencyIndex: 0,
-    timezone: '',
-    timezoneIndex: 0,
-    HR: '',
-    hrIndex: 0,
+  const [HRs, setHRs] = useState({
     users: [],
-    selectedHRs: []
+    selectedHRs: [],
+    newHRs: [],
+    deleteHRs: []
   })
-
-  const defaultValues = {
-    startWeekDay: '',
-    endWeekDay: '',
-    currency: 'INR',
-    // currencyIndex: 0,
-    timezone: '',
-    // timezoneIndex: 0,
-    HR: '',
-    // hrIndex: 0,
-    // users: [],
-    // selectedHRs: []
-  }
-
-  const schema = yup.object().shape({
-    startWeekDay: yup.string().required('Start day is required'),
-    endWeekDay: yup.string().required('End day is required'),
-    currency: yup.string().required('Currency is required'),
-    timeZone: yup.string().required('Timezone is required'),
-    HR: yup.string().required('HR is required')
-  })
-
-  useEffect(() => {
-    dispatch(fetchUsers())
-    dispatch(fetchHRApprovals())
-  }, [])
-
-  useEffect(() => {
-    if (configuration != null && Object.keys(configuration).length > 0) {
-      const currency = currencies.findIndex(o => o.cc == configuration.currency)
-      const time = timezones.findIndex(o => o.offset == configuration.timeZone)
-      const HRs = _userStore.users.filter(u => HrApprovals.some(o => o.userId === u.id))
-      setConfig(state => ({
-        ...state,
-        users: _userStore.users,
-        startWeekDay: configuration.workingdays?.split('-')[0],
-        endWeekDay: configuration.workingdays?.split('-')[1],
-        currency: currencies[currency],
-        currencyIndex: currency,
-        timezone: timezones[time],
-        timezoneIndex: time,
-        selectedHRs: HRs,
-        newHR: {}
-      }))
-    } else {
-      setConfig(state => ({
-        ...state,
-        users: _userStore.users
-      }))
-    }
-  }, [HrApprovals, _userStore.users, configuration])
-
-  //Save Configure
-  const handleSaveSettings = request => {
-    if (configuration != null && Object.keys(configuration).length > 0) {
-      dispatch(putConfig({ id: configuration.id, ...request }))
-        .then(unwrapResult)
-        .then(res => {
-          setLoading(false)
-          if (res.status === 200) {
-            dispatch(fetchConfig())
-            toast.success(res.data)
-          } else {
-            toast.error(res.data)
-          }
-        })
-    } else {
-      dispatch(addConfig(request))
-        .then(unwrapResult)
-        .then(res => {
-          setLoading(false)
-          if (res.status === 200 || res.status == 201) {
-            dispatch(fetchConfig())
-            toast.success(res.data)
-          } else {
-            toast.error(res.data)
-          }
-        })
-    }
-  }
-
-  //Handle HR Approval
-
-  const handleHRApproval = request => {
-    dispatch(postHRApproval(request))
-      .then(unwrapResult)
-      .then(res => {
-        setLoading(false)
-        if (res.status === 200) {
-          dispatch(fetchHRApprovals())
-          toast.success(res.data)
-        } else {
-          toast.error(res.data)
-        }
-      })
-  }
 
   const {
     register,
@@ -185,37 +95,138 @@ const SettingsConfig = () => {
     resolver: yupResolver(schema)
   })
 
-  console.log(useForm({
-    defaultValues,
-    mode: 'onChange',
-    resolver: yupResolver(schema)
-  }))
+  const theme = useTheme()
+  const hidden = useMediaQuery(theme.breakpoints.down('md'))
+  const [isLoading, setLoading] = useState(true)
 
-  // Map Configuration
+  useEffect(() => {
+    const fetchDatum = async () => {
+      dispatch(await fetchConfig())
+      dispatch(await fetchHRApprovals())
+      dispatch(await fetchUsers()).then(res => setLoading(false))
+    }
 
-  const handleConfiguration = (name, value) => {
-    var request
-    setLoading(true)
+    fetchDatum()
+  }, [])
 
+  useEffect(() => {
+    if (configuration != null && Object.keys(configuration).length > 0) {
+      const currency = currencies.findIndex(o => o.cc == configuration.currency)
+      const time = timezones.findIndex(o => o.offset == configuration.timeZone?.split(' - ')[1])
+      const HRs = _userStore.users.filter(u => HrApprovals.some(o => o.userId === u.id))
+      const users = _userStore.users.filter(u => !HRs.includes(u))
+      setHRs(state => ({ ...state, selectedHRs: HRs, users: users }))
+      reset({
+        currency: currency == -1 ? '' : currencies[currency],
+        timezone: time == -1 ? '' : timezones[time],
+        endWeekDay: configuration.workingdays?.split('-')[1],
+        startWeekDay: configuration.workingdays?.split('-')[0]
+      })
+    }
+  }, [HrApprovals, _userStore.users, configuration])
+
+  const updateOrgSettings = newConfig => {
+    dispatch(setConfigs(newConfig))
   }
 
-  const filteredTimezones = timezones.filter(
-    (item, index, self) => index === self.findIndex(i => i.offset === item.offset)
-  )
+  //Save Configure
 
-  //handle delete
-
-  const handleDelete = id => {
-    if (id != 0 && id != null) {
-      dispatch(deleteHRApproval(id))
+  const handleSaveSettings = request => {
+    setLoading(true)
+    if (configuration != null && Object.keys(configuration).length > 0) {
+      const req = settingsRequest(request)
+      dispatch(putConfig({ id: configuration.id, ...req }))
         .then(unwrapResult)
         .then(res => {
-          if (res.status === 200) {
+          handleResponse('update', res, updateOrgSettings)
+          setLoading(false)
+        })
+    } else {
+      dispatch(addConfig(request))
+        .then(unwrapResult)
+        .then(res => {
+          setLoading(false)
+          if (res.status === 200 || res.status == 201) {
+            dispatch(fetchConfig())
             toast.success(res.data)
-            dispatch(fetchHRApprovals())
           } else {
             toast.error(res.data)
           }
+        })
+    }
+
+    handleHRApproval()
+  }
+
+  const updateHRApprovalState = data => {
+    const approvals = [...HRs.selectedHRs]
+    setHRs(state => ({ ...state, newHRs: [], selectedHRs: approvals }))
+  }
+
+  //Handle HR Approval
+
+  const handleHRApproval = () => {
+    if (HRs.newHRs.length > 0) {
+      const id = HRs.newHRs.map(o => o.id)
+      dispatch(postHRApproval(id))
+        .then(unwrapResult)
+        .then(res => {
+          handleResponse('create', res.data, updateHRApprovalState)
+          setLoading(false)
+        })
+    }
+
+    if (HRs.deleteHRs.length > 0) handleDelete()
+  }
+
+  // Map Configuration
+
+  const collectDeletingHRs = data => {
+    const restHRs = [...HRs.selectedHRs]
+    const deleteHRs = HRs.deleteHRs.length > 0 ? [...HRs.deleteHRs, data] : [data]
+    const index = restHRs.findIndex(o => o.id == data.id)
+    index != -1 && restHRs.splice(index, 1)
+    // HRs.users.push(data)
+    setHRs(state => ({ ...state, users: HRs.users, deleteHRs: deleteHRs, selectedHRs: restHRs }))
+  }
+
+  const collectNewHRs = data => {
+    let newUsers = []
+    const deleted = [...HRs.deleteHRs]
+    const addedUser = data[data.length - 1]
+
+    const updatedUsers = HRs.users.filter(o => o.id != addedUser.id)
+
+    if (!HRs.selectedHRs.includes(addedUser) && !deleted.includes(addedUser)) {
+      if (HRs.newHRs.length > 0) newUsers = [...HRs.newHRs, addedUser]
+      else newUsers.push(addedUser)
+    }
+
+    if (deleted.includes(addedUser)) {
+      const index = deleted.findIndex(o => o.id == addedUser.id)
+      deleted.splice(index, 1)
+    }
+
+    setHRs({ newHRs: newUsers, users: updatedUsers, deleteHRs: deleted, selectedHRs: data })
+  }
+
+  const deleteHRState = data => {
+    // const approvals = HrApprovals.filter(u => data.some(t => t == u.id))
+    // const users = _userStore.users.filter(u => approvals.some(t => t.userId != u.id))
+    // setHRs(state => ({ ...state, users: users, selectedHRs: approvals }))
+  }
+
+  //handle delete
+  const handleDelete = () => {
+    const approvals = HrApprovals.filter(o => HRs.deleteHRs.some(d => d.id == o.userId))
+    const ids = approvals.map(o => o.id)
+    if (ids != null) {
+      dispatch(deleteHRApproval(ids))
+        .then(unwrapResult)
+        .then(res => {
+          handleResponse('delete', res.data, deleteHRState, ids)
+          setHRs(state => ({ ...state, deleteHRs: [] }))
+          setLoading(false)
         })
     }
   }
@@ -241,19 +252,17 @@ const SettingsConfig = () => {
                     <InputLabel id='demo-simple-select'>Start Date *</InputLabel>
                     <Controller
                       control={control}
-                      name='startWeekDay'  // assuming 'startWeekDay' is the name you want to use
+                      name='startWeekDay'
                       render={({ field }) => (
                         <Select
                           labelId='demo-simple-select-label'
                           id='demo-simple-select'
-                          value={config.startWeekDay}
                           label='Start Date *'
                           {...field}
-                          onChange={(e) => handleConfiguration('start', e.target.value)}
                           error={Boolean(errors.startWeekDay)}
                         >
                           {WEEKDAYS.map((day, i) => (
-                            <MenuItem key={i} value={day} disabled={config.endWeekDay === day}>
+                            <MenuItem key={i} value={day} disabled={watch('endWeekDay') === day}>
                               {day}
                             </MenuItem>
                           ))}
@@ -269,7 +278,6 @@ const SettingsConfig = () => {
                   </FormControl>
                 </Grid>
 
-
                 <Grid item xs={6} sm={6} md={6} lg={6}>
                   <FormControl fullWidth>
                     <InputLabel id='demo-simple-select'>End Date *</InputLabel>
@@ -280,14 +288,12 @@ const SettingsConfig = () => {
                         <Select
                           labelId='demo-simple-select-label'
                           id='demo-simple-select'
-                          value={config.endWeekDay}
                           label='End Date *'
                           {...field}
-                          onChange={(e) => handleConfiguration('end', e.target.value)}
                           error={Boolean(errors.endWeekDay)}
                         >
                           {WEEKDAYS.map((day, i) => (
-                            <MenuItem key={i} value={day} disabled={config.startWeekDay === day}>
+                            <MenuItem key={i} value={day} disabled={watch('startWeekDay') === day}>
                               {day}
                             </MenuItem>
                           ))}
@@ -303,7 +309,6 @@ const SettingsConfig = () => {
                   </FormControl>
                 </Grid>
 
-
                 {/* currency */}
                 <Grid item md={12} xs={12}>
                   <Typography variant='body1' fontWeight='500' color='primary'>
@@ -315,18 +320,15 @@ const SettingsConfig = () => {
                     <Controller
                       control={control}
                       name='currency'
-                      defaultValue={currencies[config.currencyIndex]}
                       render={({ field }) => (
                         <Autocomplete
                           options={currencies}
                           id='autocomplete-limit-tags'
-                          getOptionLabel={option => option.cc}
-                          value={config.currency}
-                          onChange={(e, v) => handleConfiguration('currency', v)}
+                          getOptionLabel={o => `${o.name} - ${o.cc}`}
+                          onChange={(e, data) => field.onChange(data)}
+                          value={field.value}
                           error={Boolean(errors.currency)}
-                          renderInput={params => (
-                            <TextField {...params} label='Currency' error={config.currency == null} />
-                          )}
+                          renderInput={params => <TextField {...params} label='Currency' />}
                         />
                       )}
                     />
@@ -338,7 +340,6 @@ const SettingsConfig = () => {
                   </FormControl>
                 </Grid>
 
-
                 {/* Timezone */}
 
                 <Grid item md={12} xs={12}>
@@ -348,57 +349,19 @@ const SettingsConfig = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
-                    <Controller>
-                      <Autocomplete
-                        options={timezones}
-                        id='autocomplete-limit-tags'
-                        getOptionLabel={option => option.offset}
-                        defaultValue={filteredTimezones[config.timezoneIndex]}
-                        value={config.timezone}
-                        onChange={(e, v) => handleConfiguration('timezone', v)}
-                        error={Boolean(errors.timezone)}
-                        renderInput={params => (
-                          <TextField {...params} label='Timezone' error={config.timezone == null} />
-                        )}
-                      />
-                    </Controller>
-                    {errors.timezone && (
-                      <FormHelperText sx={{ color: 'error.main' }}>
-                        {errors.timezone.message}
-                      </FormHelperText>
-                    )}
-                  </FormControl>
-
-                </Grid>
-
-                {/* HR */}
-
-                <Grid item md={12} xs={12}>
-                  <Typography variant='body1' fontWeight='500' color='primary'>
-                    HR Approval <span style={{ color: 'red' }}>*</span>
-                  </Typography>
-                </Grid>
-                <Grid item md={12} xs={12}>
-                  <Typography variant='body1' fontWeight='500' color='primary'>
-                    Timezone <span style={{ color: 'red' }}>*</span>
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
                     <Controller
                       control={control}
-                      name='timezone'  // assuming 'timezone' is the name you want to use
-                      defaultValue={filteredTimezones[config.timezoneIndex]}
+                      name='timezone'
                       render={({ field }) => (
                         <Autocomplete
                           options={timezones}
                           id='autocomplete-limit-tags'
-                          getOptionLabel={option => option.offset}
-                          value={config.timezone}
-                          onChange={(e, v) => handleConfiguration('timezone', v)}
+                          getOptionLabel={o => `${o.name} - ${o.offset}`}
+                          value={field.value}
+                          onChange={(e, data) => field.onChange(data)}
                           error={Boolean(errors.timezone)}
                           renderInput={params => (
-                            <TextField {...params} label='Timezone' error={config.timezone == null} />
+                            <TextField {...params} label='Timezone' error={errors.timezone} />
                           )}
                         />
                       )}
@@ -411,6 +374,39 @@ const SettingsConfig = () => {
                   </FormControl>
                 </Grid>
 
+                {/* HR */}
+
+                <Grid item md={12} xs={12}>
+                  <Typography variant='body1' fontWeight='500' color='primary'>
+                    HR Approval <span style={{ color: 'red' }}>*</span>
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <CustomHRPicker
+                      items={HRs.users}
+                      values={HRs.selectedHRs}
+                      label='Users'
+                      name='hr'
+                      HRs={HrApprovals}
+                      onDelete={collectDeletingHRs}
+                      onSelect={collectNewHRs}
+                      originalItems={_userStore.users}
+                    />
+
+                    {errors.hr && (
+                      <FormHelperText sx={{ color: 'error.main' }}>
+                        {errors.hr.message}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} className='flex-right'>
+                  <Button type='submit' variant='contained' color='primary'>
+                    Submit
+                  </Button>
+                </Grid>
               </Grid>
             </form>
           </CardContent>
