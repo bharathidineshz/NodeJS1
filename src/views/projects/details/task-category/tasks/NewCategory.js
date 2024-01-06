@@ -10,7 +10,22 @@ import CustomChip from 'src/@core/components/mui/chip'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
-import { Avatar, Checkbox, Chip, Drawer, FormControl, FormControlLabel, FormHelperText, InputLabel, MenuItem, Radio, RadioGroup, Select, Switch, Typography } from '@mui/material'
+import {
+  Avatar,
+  Checkbox,
+  Chip,
+  Drawer,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  Switch,
+  Typography
+} from '@mui/material'
 
 //** Third Party */
 import DatePicker, { ReactDatePickerProps } from 'react-datepicker'
@@ -19,85 +34,88 @@ import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { Box } from '@mui/system'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchTasks, postCategory, setCategories, setEditTask, setEmpty, setNewTask, setTaskLists } from 'src/store/apps/projects'
+import {
+  fetchTasks,
+  postCategory,
+  setCategories,
+  setEditTask,
+  setEmpty,
+  setNewTask,
+  setTaskLists
+} from 'src/store/apps/projects'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import toast from 'react-hot-toast'
 import { categoryRequest } from 'src/helpers/requests'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useForm } from 'react-hook-form'
-
-
+import { handleResponse } from 'src/helpers/helpers'
+import { unwrapResult } from '@reduxjs/toolkit'
+import { setLoading } from 'src/store/authentication/register'
+import { customErrorToast } from 'src/helpers/custom-components/toasts'
 
 const NewTaskCategory = ({ isOpen, setOpen }) => {
-
-  const [categoryName, setCategoryName] = useState('')
+  const [categoryName, setCategoryName] = useState(null)
   const [isBillable, setBillable] = useState(true)
-  const dispatch = useDispatch();
-  const store = useSelector(state => state.projects);
+  const dispatch = useDispatch()
+  const store = useSelector(state => state.projects)
 
-  const STATUS = ["Completed", "Not Started", "Working on it", "Due"]
-  const STATUS_COLOR = ["success", "warning", "info", "error"]
+  const STATUS = ['Completed', 'Not Started', 'Working on it', 'Due']
+  const STATUS_COLOR = ['success', 'warning', 'info', 'error']
 
+  //update state
 
+  const updateTaskCategoryState = newCategory => {
+    let taskList = [...store.taskLists]
+    taskList.push({
+      taskCategoryId: newCategory.id,
+      taskCategory: newCategory.name,
+      tasks: []
+    })
+    dispatch(setTaskLists(taskList))
+  }
 
   //CREATE
   const createNewCategory = () => {
     try {
-
-      if (categoryName || categoryName?.length > 0) {
-        const projectId = Number(localStorage.getItem("projectId"));
-        const request = categoryRequest(categoryName, isBillable,projectId )
-        dispatch(postCategory(request)).then(({ payload }) => {
-          if (payload.status === 200 || payload.status === 201) {
-            dispatch(fetchTasks(projectId))
-            dispatch(setEmpty(false))
-            setOpen(false)
-            toast.success("Task Category Created", { duration: 3000, position: "top-right" })
-            setCategoryName('')
-          } else {
-            toast.error('Error Occurred', { duration: 3000, position: "top-right" })
-          }
-        })
+      if (categoryName) {
+        setOpen(false)
+        const projectId = Number(localStorage.getItem('projectId'))
+        const request = categoryRequest(categoryName, isBillable, projectId)
+        dispatch(postCategory(request))
+          .then(unwrapResult)
+          .then(res => {
+            handleResponse('create', res, updateTaskCategoryState)
+          })
       }
-
     } catch (error) {
-      toast.error(error, { duration: 3000, position: "top-right" })
+      customErrorToast(error.message)
     }
   }
 
   //UPDATE
   const updateTask = () => {
     try {
-      const tasks = [...store.taskLists];
+      const tasks = [...store.taskLists]
       let index = tasks.findIndex(o => o.id === localNewTask.id)
-      if (index != -1) tasks[index] = { ...localNewTask, dueDate: formatLocalDate(localNewTask.dueDate), }
+      if (index != -1)
+        tasks[index] = { ...localNewTask, dueDate: formatLocalDate(localNewTask.dueDate) }
       dispatch(setTaskLists(tasks))
       dispatch(setEditTask({}))
       setOpen(false)
-      toast.success("Task Updated", { duration: 3000, position: "top-right" })
+      toast.success('Task Updated', { duration: 3000, position: 'top-right' })
     } catch (error) {
-      toast.error(error, { duration: 3000, position: "top-right" })
+      toast.error(error, { duration: 3000, position: 'top-right' })
     }
   }
 
-
-
-
   return (
-    <Box >
-
-      <Drawer
-        anchor="right"
-        open={isOpen}
-        onClose={() => setOpen(false)}
-
-      >
+    <Box>
+      <Drawer anchor='right' open={isOpen} onClose={() => setOpen(false)}>
         <form onSubmit={e => e.preventDefault()}>
           <Grid container spacing={5} sx={{ p: 8, width: 420 }}>
-
-            <Grid item xs={12} className='gap-1' justifyContent="space-between" alignItems="center">
-              <Typography color="secondary">Add New Category</Typography>
+            <Grid item xs={12} className='gap-1' justifyContent='space-between' alignItems='center'>
+              <Typography color='secondary'>Add New Category</Typography>
             </Grid>
 
             <Grid item xs={12}>
@@ -106,7 +124,7 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
                 label='Category'
                 value={categoryName}
                 placeholder='Category Name'
-                onChange={(e) => setCategoryName(e.target.value)}
+                onChange={e => setCategoryName(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
@@ -115,19 +133,32 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
                   )
                 }}
               />
-              {(!categoryName || categoryName?.length == 0) && (
-                <FormHelperText sx={{ color: 'error.main' }}>
-                  Category is required
-                </FormHelperText>
+              {categoryName == '' && (
+                <FormHelperText sx={{ color: 'error.main' }}>Category is required</FormHelperText>
               )}
             </Grid>
 
             <Grid item xs={12}>
-              <FormControlLabel label='Billable' control={<Checkbox defaultChecked={isBillable} value={isBillable} onChange={() => setBillable(!isBillable)} name='color-primary' />} />
+              <FormControlLabel
+                label='Billable'
+                control={
+                  <Checkbox
+                    defaultChecked={isBillable}
+                    value={isBillable}
+                    onChange={() => setBillable(!isBillable)}
+                    name='color-primary'
+                  />
+                }
+              />
             </Grid>
 
             <Grid columnGap={2} item xs={12} className='flex-right' sx={{ mt: 5 }}>
-              <Button size='large' variant='outlined' color="secondary" onClick={() => setOpen(false)}>
+              <Button
+                size='large'
+                variant='outlined'
+                color='secondary'
+                onClick={() => setOpen(false)}
+              >
                 Close
               </Button>
               <Button size='large' variant='contained' onClick={createNewCategory}>
@@ -137,8 +168,6 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
           </Grid>
         </form>
       </Drawer>
-
-
     </Box>
   )
 }

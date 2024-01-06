@@ -50,16 +50,14 @@ const TableServerSide = () => {
   // ** States
   const [sort, setSort] = useState('asc')
   const [filteredRows, setRows] = useState([])
-  const [isLoading, setLoading] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
   const [sortColumn, setSortColumn] = useState('name')
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
   const router = useRouter()
 
   useEffect(() => {
-    setLoading(true)
     dispatch(fetchUsers())
     dispatch(fetchClients())
       .then(unwrapResult)
@@ -191,6 +189,7 @@ const TableServerSide = () => {
   }
 
   const handleProjectSelection = data => {
+    setLoading(true)
     dispatch(setSelectedProject(data.row))
     localStorage.setItem('project', JSON.stringify(data.row))
     localStorage.setItem('projectId', data.row.id)
@@ -198,6 +197,7 @@ const TableServerSide = () => {
     router.push({
       pathname: '/projects/details/task'
     })
+    setLoading(false)
   }
 
   return (
@@ -210,30 +210,27 @@ const TableServerSide = () => {
           <DataGrid
             autoHeight
             pagination
-            // rows={store.allProjects}
             rows={searchValue ? filteredRows : store.allProjects || []}
             columns={columns}
-            sortingMode='server'
-            paginationMode='server'
+            sortingMode='client'
             rowSelection={false}
             onRowClick={handleProjectSelection}
             pageSizeOptions={[5, 10, 25, 50, 100]}
-            paginationModel={paginationModel}
-            onSortModelChange={handleSortModel}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 25
+                }
+              }
+            }}
             slots={{
               toolbar: () => {
                 return <Toolbar searchValue={searchValue} handleFilter={handleSearch} />
               }
             }}
-            onPaginationModelChange={setPaginationModel}
-            slotProps={{
-              baseButton: {
-                variant: 'outlined'
-              },
-              toolbar: {
-                value: searchValue,
-                clearSearch: () => handleSearch(''),
-                onChange: event => handleSearch(event.target.value)
+            sx={{
+              '&:hover': {
+                cursor: 'pointer'
               }
             }}
           />

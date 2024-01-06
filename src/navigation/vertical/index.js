@@ -41,21 +41,21 @@ const navigation = () => {
     {
       title: 'Timesheets',
       icon: 'mdi:clock-time-four-outline',
-      path: '/apps/timesheets'
+      path: '/apps/timesheets',
 
-      // auth: false
+      auth: false
     },
     {
       title: 'Clients',
       icon: 'mdi:account-group-outline',
-      path: '/clients'
+      path: '/clients',
 
-      // auth: false
+      auth: false
     },
     {
       title: 'Projects',
       icon: 'mdi:clipboard-text',
-      // auth: false,
+      auth: false,
       path: '/projects/list'
     },
     {

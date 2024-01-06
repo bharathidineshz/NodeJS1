@@ -32,6 +32,7 @@ import toast from 'react-hot-toast'
 import { unwrapResult } from '@reduxjs/toolkit'
 import FallbackSpinner from 'src/layouts/components/LogoSpinner'
 import dynamic from 'next/dynamic'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
   ssr: false,
@@ -45,7 +46,7 @@ const TaskLists = () => {
   const [openAlert, setAlert] = useState(false)
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
-  const [categories, setCategories] = useState(store.taskLists)
+  const [categories, setCategories] = useState([])
   const [expanded, setExpanded] = useState(store.taskLists[0])
   const [row, setRow] = useState({})
 
@@ -197,7 +198,9 @@ const TaskLists = () => {
 
   return (
     <Fragment>
-      {categories &&
+      {categories.length == 0 ? (
+        <SimpleBackdrop />
+      ) : (
         categories.map((category, key) => (
           <Fragment key={key}>
             <Accordion
@@ -241,7 +244,8 @@ const TaskLists = () => {
               </AccordionDetails>
             </Accordion>
           </Fragment>
-        ))}
+        ))
+      )}
       <NewTask isOpen={isOpen} setOpen={setOpen} />
 
       <DynamicDeleteAlert

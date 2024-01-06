@@ -11,22 +11,24 @@ export const base = {
 }
 
 export const identifyURL = () => {
-  const isDev =
-    location.origin.toLowerCase().includes('localhost') ||
-    location.origin.toLowerCase().includes('dev')
-  const isUat = window.location.origin.toLowerCase().includes('uat')
-
-  if (isDev) {
+  if (process.env.NODE_ENV === 'development') {
     return base.dev
-  }
-  if (isUat) {
+  } else {
     return base.uat
   }
 }
 
+let apiUrl
+
+if (process.env.NODE_ENV === 'development') {
+  apiUrl = process.env.NEXT_PUBLIC_API_URL_DEV // Development environment
+} else {
+  apiUrl = process.env.NEXT_PUBLIC_API_URL_UAT // UAT environment
+}
+
 const instance = axios.create({
   // Your API base URL
-  baseURL: base.dev
+  baseURL: apiUrl
 })
 
 const jwtConfig = {

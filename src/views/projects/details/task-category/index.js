@@ -12,9 +12,11 @@ const TaskCategory = () => {
   const [isEmpty, setIsEmpty] = useState(false)
 
   useEffect(() => {
-    dispatch(fetchTasks(localStorage.getItem("projectId"))).then(unwrapResult).then((res)=>{
-      res?.tasksByCategory?.length > 0  ? setIsEmpty(false) : setIsEmpty(true)
-    })
+    dispatch(fetchTasks(localStorage.getItem('projectId')))
+      .then(unwrapResult)
+      .then(res => {
+        res?.result.tasksByCategory?.length > 0 ? setIsEmpty(false) : setIsEmpty(true)
+      })
   }, [dispatch])
 
   return <Grid>{isEmpty ? <EmptyTask /> : <TaskLists />}</Grid>

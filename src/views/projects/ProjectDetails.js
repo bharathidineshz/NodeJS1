@@ -285,6 +285,7 @@ const ProjectDetails = ({ tab, data }) => {
                     color='secondary'
                     startIcon={<Icon icon='mdi:chart-box' fontSize={20} />}
                     onClick={handleReports({ vertical: 'top', horizontal: 'center' })}
+                    disabled={store.taskLists.length == 0}
                   >
                     Reports
                   </Button>

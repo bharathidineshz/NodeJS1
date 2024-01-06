@@ -113,7 +113,7 @@ export const postProject = createAsyncThunk('projects/postProject', async params
 export const postCategory = createAsyncThunk('projects/postCategory', async params => {
   const response = await instance.post(endpoints.createCategory, params)
 
-  return response
+  return response.data
 })
 
 export const postMileStone = createAsyncThunk('projects/postMileStone', async params => {
@@ -207,7 +207,6 @@ export const appProjects = createSlice({
     users: [],
     allProjects: [],
     client: {},
-    allCategories: [],
     allTasks: [],
     editProject: {},
     projectDetails: {},
@@ -249,28 +248,28 @@ export const appProjects = createSlice({
   },
   reducers: {
     setClient: (state, action) => {
-      state.client = action.payload
+      state.client = action.payload?.result
     },
     setProject: (state, action) => {
-      state.project = action.payload
+      state.project = action.payload?.result
     },
     setProjectsDetails: (state, action) => {
-      state.projectDetails = action.payload
+      state.projectDetails = action.payload?.result
     },
     setCategory: (state, action) => {
-      state.category = action.payload
+      state.category = action.payload?.result
     },
-    setTasks: (state, action) => {
-      state.tasks = action.payload
+    setTasks: (state, { payload }) => {
+      state.tasks = payload
     },
     setAssignees: (state, action) => {
-      state.assignees = action.payload
+      state.assignees = action.payload?.result
     },
     setEditProject: (state, action) => {
-      state.editProject = action.payload
+      state.editProject = action.payload?.result
     },
     setSelectedProject: (state, action) => {
-      state.selectedProject = action.payload
+      state.selectedProject = action.payload?.result
     },
     setEditTask: (state, { payload }) => {
       state.editTask =
@@ -283,6 +282,9 @@ export const appProjects = createSlice({
     },
     setCategories: (state, { payload }) => {
       state.categories = payload
+    },
+    setTaskLists: (state, { payload }) => {
+      state.taskLists = payload
     },
     setProjectMembers: (state, { payload }) => {
       state.projectMembers = payload
@@ -301,7 +303,7 @@ export const appProjects = createSlice({
   },
   extraReducers: builder => {
     builder.addCase(fetchClients.fulfilled, (state, action) => {
-      state.allClients = action.payload
+      state.allClients = action.payload?.result
     })
     // builder.addCase(fetchProjectsReport.fulfilled, (state, action) => {
     //   const userMap = {}
@@ -309,7 +311,7 @@ export const appProjects = createSlice({
     //     userMap[user.email] = user.userName
     //   })
 
-    //   const tasksWithUsernames = action.payload.tasks.map((task, i) => ({
+    //   const tasksWithUsernames = action.payload?.result.tasks.map((task, i) => ({
     //     ...task,
     //     id: i,
     //     userName: userMap[task.userId]
@@ -317,50 +319,50 @@ export const appProjects = createSlice({
     //   state.projectReport = tasksWithUsernames
     // })
     builder.addCase(postProject.fulfilled, (state, action) => {
-      const { data } = action.payload
-      if (action.payload.isSuccess) state.project.uniqueId = data
+      const { data } = action.payload?.result
+      if (action.payload?.result.isSuccess) state.project.uniqueId = data
     })
     builder.addCase(fetchProjects.fulfilled, (state, action) => {
-      action.payload?.forEach(project => {
+      action.payload?.result?.forEach(project => {
         const client = state.allClients.find(c => c.id === project.clientId)
         project.clientName = client ? client.companyName : ''
       })
-      state.allProjects = action.payload
+      state.allProjects = action.payload?.result
     })
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
-      const users = action.payload.map(user => ({
+      const users = action.payload?.result?.map(user => ({
         ...user,
         userName: `${user.firstName} ${user.lastName}`
       }))
       state.users = users
     })
     builder.addCase(fetchCategories.fulfilled, (state, action) => {
-      const categories = action.payload?.filter(
+      const categories = action.payload?.result?.filter(
         o => o.projectId === localStorage.getItem('projectId')
       )
       state.categories = categories || []
     })
     builder.addCase(fetchTasks.fulfilled, (state, action) => {
-      state.taskLists = action.payload?.tasksByCategory || []
+      state.taskLists = action.payload?.result?.tasksByCategory || []
     })
     builder.addCase(getProjectDetails.fulfilled, (state, action) => {
-      state.projectDetails = action.payload
+      state.projectDetails = action.payload.result
     })
     builder.addCase(fetchMileStones.fulfilled, (state, action) => {
-      var mileStones = action.payload.filter(o => o.projectId === state.selectedProject?.id)
+      var mileStones = action.payload.result.filter(o => o.projectId === state.selectedProject?.id)
       mileStones = mileStones.sort((start, end) => {
         return new Date(start.startDate) - new Date(end.endDate)
       })
       state.mileStones = mileStones || []
     })
     builder.addCase(fetchRequiredSkills.fulfilled, (state, action) => {
-      state.requiredSkills = action.payload || []
+      state.requiredSkills = action.payload?.result || []
     })
     builder.addCase(fetchProjectMembers.fulfilled, (state, action) => {
-      state.projectMembers = action.payload?.members || []
+      state.projectMembers = action.payload?.result?.members || []
     })
     builder.addCase(fetchProjectsByUser.fulfilled, (state, action) => {
-      state.userProjects = action.payload || []
+      state.userProjects = action.payload?.result || []
     })
     builder.addCase(fetchProjectAssignees.fulfilled, (state, action) => {
       const assignees = action.payload.filter(o => o.projectId == localStorage.getItem('projectId'))
@@ -376,7 +378,7 @@ export const appProjects = createSlice({
       state.assignees = tempUsers
     })
     builder.addCase(fetchProjectsReport.fulfilled, (state, action) => {
-      state.projectReport = action.payload
+      state.projectReport = action.payload?.result
     })
   }
 })
@@ -392,10 +394,10 @@ export const {
   setProject,
   setFeedbacks,
   setMileStones,
-  setTaskLists,
   setEditTask,
   setSelectedCategory,
   setCategories,
+  setTaskLists,
   setEmpty,
   setProjectMembers
 } = appProjects.actions

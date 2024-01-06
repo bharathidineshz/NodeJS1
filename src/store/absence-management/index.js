@@ -165,7 +165,7 @@ export const LeaveManagement = createSlice({
       state.policies = result
     })
     builder.addCase(fetchStatus.fulfilled, (state, action) => {
-      state.statuses = action.payload
+      state.statuses = action.payload.result
     })
     builder.addCase(fetchApprovals.fulfilled, (state, action) => {
       const approvals = [...action.payload.result]
@@ -185,8 +185,8 @@ export const LeaveManagement = createSlice({
       let sortedArray =
         _approvals.length > 0
           ? _approvals.sort((a, b) => {
-            return new Date(b.fromDate).getTime() - new Date(a.toDate).getTime()
-          })
+              return new Date(b.fromDate).getTime() - new Date(a.toDate).getTime()
+            })
           : []
 
       state.approvals = sortedArray
@@ -214,8 +214,8 @@ export const LeaveManagement = createSlice({
       let sortedArray =
         _reports.length > 0
           ? _reports.sort((a, b) => {
-            return new Date(a.fromDate) - new Date(b.toDate)
-          })
+              return new Date(a.fromDate) - new Date(b.toDate)
+            })
           : []
       state.reports = sortedArray
     })

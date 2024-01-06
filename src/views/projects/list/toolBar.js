@@ -10,7 +10,7 @@ import { GridToolbarExport } from '@mui/x-data-grid'
 import Icon from 'src/@core/components/icon'
 
 const Toolbar = props => {
-  const {isExport, handleFilter, searchValue}= props;
+  const { isExport, handleFilter, searchValue } = props
 
   return (
     <Box
@@ -19,18 +19,18 @@ const Toolbar = props => {
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        justifyContent: isExport ? 'space-between' :'flex-end',
+        justifyContent: isExport ? 'space-between' : 'flex-end',
         p: theme => theme.spacing(2, 5, 4, 5)
       }}
     >
-      {
-        isExport &&  <GridToolbarExport
-        color='secondary'
-        size='normal'
-        printOptions={{ disableToolbarButton: true }}
-      />
-      }
-     
+      {isExport && (
+        <GridToolbarExport
+          color='secondary'
+          size='normal'
+          printOptions={{ disableToolbarButton: true }}
+        />
+      )}
+
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size='small'
