@@ -59,6 +59,14 @@ export const appClientSlice = createSlice({
     builder.addCase(fetchClients.fulfilled, (state, action) => {
       state.clients = action.payload
     })
+    builder.addCase(addClients.fulfilled, (state, action) => {
+      state.clients = [...state.clients, action.payload.data.result]
+    })
+    builder.addCase(updateClient.fulfilled, (state, action) => {
+      state.clients = state.clients.map(x =>
+        x.id === action.payload.data.result.id ? action.payload.data.result : x
+      )
+    })
     builder.addCase(fetchClientById.fulfilled, (state, action) => {
       state.client = action.payload
     })

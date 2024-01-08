@@ -210,6 +210,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                         id='autocomplete-limit-tags'
                         getOptionLabel={option => option.typeOfLeave || option}
                         defaultValue={store.policies[index]}
+                        value={field.value}
                         onChange={(event, value) => {
                           field.onChange(value)
                         }}
@@ -290,88 +291,93 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                 </DatePickerWrapper>
               </Grid>
 
-              <Grid item xs={12} sm={4} md={4} lg={4}>
-                <FormControl fullWidth>
-                  <Controller
-                    name='isFromDateHalfDay'
-                    control={control}
-                    rules={{ required: false }}
-                    render={({ field: { value, onChange } }) => (
-                      <FormControlLabel
-                        label='Half Day'
-                        control={
-                          <Checkbox
-                            checked={value}
-                            defaultChecked={false}
-                            onChange={onChange}
-                            name='halfDay'
+              {!watch('requestType')?.isPermission && (
+                <>
+                  {' '}
+                  <Grid item xs={12} sm={4} md={4} lg={4}>
+                    <FormControl fullWidth>
+                      <Controller
+                        name='isFromDateHalfDay'
+                        control={control}
+                        rules={{ required: false }}
+                        render={({ field: { value, onChange } }) => (
+                          <FormControlLabel
+                            label='Half Day'
+                            control={
+                              <Checkbox
+                                checked={value}
+                                defaultChecked={false}
+                                onChange={onChange}
+                                name='halfDay'
+                              />
+                            }
                           />
-                        }
+                        )}
                       />
-                    )}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={8} md={8} lg={8}>
-                <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
-                  <FormControl fullWidth>
-                    <Controller
-                      name='toDate'
-                      control={control}
-                      rules={{ required: true }}
-                      render={({ field: { value, onChange } }) => (
-                        <DatePicker
-                          id='event-end-date'
-                          selected={watch('fromDate') > value ? watch('fromDate') : value}
-                          dateFormat={'yyyy-MM-dd'}
-                          minDate={watch('fromDate')}
-                          maxDate={maxDate}
-                          excludeDates={holidays}
-                          highlightDates={holidays}
-                          filterDate={filterWeekDays}
-                          customInput={<PickersComponent label='To Date' registername='toDate' />}
-                          onChange={onChange}
-                          popperPlacement='auto'
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={8} md={8} lg={8}>
+                    <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
+                      <FormControl fullWidth>
+                        <Controller
+                          name='toDate'
+                          control={control}
+                          rules={{ required: true }}
+                          render={({ field: { value, onChange } }) => (
+                            <DatePicker
+                              id='event-end-date'
+                              selected={watch('fromDate') > value ? watch('fromDate') : value}
+                              dateFormat={'yyyy-MM-dd'}
+                              minDate={watch('fromDate')}
+                              maxDate={maxDate}
+                              excludeDates={holidays}
+                              highlightDates={holidays}
+                              filterDate={filterWeekDays}
+                              customInput={
+                                <PickersComponent label='To Date' registername='toDate' />
+                              }
+                              onChange={onChange}
+                              popperPlacement='auto'
+                            />
+                          )}
                         />
-                      )}
-                    />
-                    {errors.toDate && (
-                      <FormHelperText sx={{ color: 'error.main' }}>
-                        {errors.toDate.message}
-                      </FormHelperText>
-                    )}
-                  </FormControl>
-                </DatePickerWrapper>
-              </Grid>
-
-              <Grid item xs={12} sm={4} md={4} lg={4}>
-                <FormControl fullWidth>
-                  <Controller
-                    name='isToDateHalfDay'
-                    control={control}
-                    rules={{ required: false }}
-                    render={({ field: { value, onChange } }) => (
-                      <FormControlLabel
-                        label='Half Day'
-                        disabled={
-                          watch('fromDate').toDateString() != watch('toDate').toDateString()
-                            ? false
-                            : true
-                        }
-                        control={
-                          <Checkbox
-                            checked={value}
-                            defaultChecked={false}
-                            onChange={onChange}
-                            name='halfDay'
+                        {errors.toDate && (
+                          <FormHelperText sx={{ color: 'error.main' }}>
+                            {errors.toDate.message}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
+                    </DatePickerWrapper>
+                  </Grid>
+                  <Grid item xs={12} sm={4} md={4} lg={4}>
+                    <FormControl fullWidth>
+                      <Controller
+                        name='isToDateHalfDay'
+                        control={control}
+                        rules={{ required: false }}
+                        render={({ field: { value, onChange } }) => (
+                          <FormControlLabel
+                            label='Half Day'
+                            disabled={
+                              watch('fromDate').toDateString() != watch('toDate').toDateString()
+                                ? false
+                                : true
+                            }
+                            control={
+                              <Checkbox
+                                checked={value}
+                                defaultChecked={false}
+                                onChange={onChange}
+                                name='halfDay'
+                              />
+                            }
                           />
-                        }
+                        )}
                       />
-                    )}
-                  />
-                </FormControl>
-              </Grid>
+                    </FormControl>
+                  </Grid>
+                </>
+              )}
             </Grid>
           </DialogContent>
           <DialogActions

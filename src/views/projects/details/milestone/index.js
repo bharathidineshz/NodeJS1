@@ -60,7 +60,7 @@ const MileStone = () => {
 
   useEffect(() => {
     dispatch(fetchCategories()).then(()=>{
-      dispatch(fetchMileStones())
+      dispatch(fetchMileStones(localStorage.getItem('projectId')))
     })
   }, [dispatch])
 

@@ -147,7 +147,7 @@ const LoginPage = () => {
     setLoading(true)
     setDisable(true)
     try {
-      const response = await axios.post(base.dev + endpoints.login, data)
+      const response = await axios.post(identifyURL() + endpoints.login, data)
       const { result } = response.data
 
       if (result.accessToken) {

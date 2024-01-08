@@ -101,6 +101,7 @@ const NewMileStone = ({ isOpen, setOpen }) => {
     reset,
     handleSubmit,
     control,
+    setValue,
     watch,
     formState: { errors }
   } = useForm({
@@ -172,6 +173,16 @@ const NewMileStone = ({ isOpen, setOpen }) => {
   const handleItems = items => {
     setMilestone(ms => ({ ...ms, categoryList: items }))
   }
+
+  const handleFromDateChange = selectedDate => {
+    // Set the "to date" value when "from date" changes
+    setValue('endDate', selectedDate)
+  }
+
+  const currentYear = new Date().getFullYear()
+  //const minDate = new Date(currentYear, 0, 1)
+  const minDate = new Date(JSON.parse(localStorage.getItem('category'))) //Project start date
+  const maxDate = new Date(JSON.parse(localStorage.getItem('category'))) //Project ENd date
 
   return (
     <Box>
@@ -258,8 +269,12 @@ const NewMileStone = ({ isOpen, setOpen }) => {
                         id='picker-filter-from-date'
                         selected={value}
                         popperPlacement='bottom'
-                        onChange={onChange}
-                        minDate={new Date()}
+                       
+                        minDate={minDate}
+                        maxDate={maxDate}
+                        onChange={e => {
+                          onChange(e), handleFromDateChange(e)
+                        }}
                         customInput={
                           <CustomInput
                             label='Start Date'
@@ -298,7 +313,8 @@ const NewMileStone = ({ isOpen, setOpen }) => {
                         selected={value}
                         popperPlacement='bottom'
                         onChange={onChange}
-                        minDate={new Date()}
+                        minDate={watch('startDate')}
+                        maxDate={maxDate}
                         customInput={
                           <CustomInput
                             label='End Date'

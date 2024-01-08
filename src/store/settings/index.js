@@ -23,18 +23,30 @@ export const fetchHRApprovals = createAsyncThunk('appConfig/fetchHRApprovals', a
 export const addConfig = createAsyncThunk(
   'appConfig/addConfig',
   async (data, { getState, dispatch }) => {
-    const response = await instance.post(endpoints.createConfig, data)
+    try {
+      const response = await instance.post(endpoints.createConfig, data)
 
-    return response.data
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
 export const postHRApproval = createAsyncThunk(
   'appConfig/postHRApproval',
   async (data, { getState, dispatch }) => {
-    const response = await instance.post(endpoints.HRApprovals, data)
+    try {
+      const response = await instance.post(endpoints.HRApprovals, data)
 
-    return response
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
@@ -69,7 +81,7 @@ export const putConfig = createAsyncThunk(
     } catch (error) {
       const { response } = error
 
-      return response
+      return response.data
     }
   }
 )
@@ -101,16 +113,16 @@ export const deleteSkill = createAsyncThunk(
 )
 
 export const deleteHRApproval = createAsyncThunk(
-  'appConfig/deleteSkill',
+  'appConfig/deleteHRApproval',
   async (data, { getState, dispatch }) => {
     try {
       const response = await instance.delete(endpoints.deleteHRApproval, { data: data })
 
-      return response
+      return response.data
     } catch (error) {
       const { response } = error
 
-      return response
+      return response.data
     }
   }
 )

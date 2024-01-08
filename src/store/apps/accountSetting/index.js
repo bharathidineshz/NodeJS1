@@ -24,9 +24,11 @@ export const addHoliday = createAsyncThunk(
     try {
       const response = await instance.post(endpoints.addHolidayRequests, event)
 
-      return response
+      return response.data
     } catch (error) {
-      return error.message
+      const { response } = error
+
+      return response.data
     }
   }
 )
@@ -54,9 +56,11 @@ export const deleteHoliday = createAsyncThunk(
     try {
       const response = await instance.delete(endpoints.deleteHolidayRequests, { data: event })
 
-      return response
+      return response.data
     } catch (error) {
-      return error.message
+      const { response } = error
+
+      return response.data
     }
   }
 )

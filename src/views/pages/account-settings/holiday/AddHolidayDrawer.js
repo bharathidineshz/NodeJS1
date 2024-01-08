@@ -120,7 +120,6 @@ const SidebarAddHoliday = props => {
 
   const handleClose = () => {
     toggle()
-    setExistError(false)
     reset()
   }
 

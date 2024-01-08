@@ -1,4 +1,5 @@
 import { Grid } from '@mui/material'
+import { unwrapResult } from '@reduxjs/toolkit'
 import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -20,19 +21,19 @@ const UserDetail = () => {
   }, [])
 
   const updateUser = () => {
-    dispatch(fetchUsers()).then(res => {
-      const id = window.location.pathname.split('/')[3]
-      const _user = isNaN(id) ? null : res.payload.result?.find(o => o.id == id)
-      const _rpm = isNaN(id)
-        ? null
-        : res.payload.result?.find(o => o.id == _user.reportingManagerId)
-      const _index = isNaN(id)
-        ? null
-        : res.payload.result?.findIndex(o => o.id == _user.reportingManagerId)
-      setUser(_user)
-      setRpm(_rpm)
-      setIndex(_index)
-    })
+    dispatch(fetchUsers())
+      .then(unwrapResult)
+      .then(res => {
+        const id = window.location.pathname.split('/')[3]
+        const _user = isNaN(id) ? null : res.result?.find(o => o.id == id)
+        const _rpm = isNaN(id) ? null : res.result?.find(o => o.id == _user.reportingManagerId)
+        const _index = isNaN(id)
+          ? null
+          : res.result?.findIndex(o => o.id == _user.reportingManagerId)
+        setUser(_user)
+        setRpm(_rpm)
+        setIndex(_index)
+      })
   }
 
   return (

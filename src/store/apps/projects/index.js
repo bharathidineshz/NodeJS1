@@ -73,7 +73,7 @@ export const fetchTasks = createAsyncThunk('projects/fetchTasks', async params =
 })
 
 export const fetchMileStones = createAsyncThunk('projects/fetchMileStones', async params => {
-  const response = await instance.get(endpoints.mileStones)
+  const response = await instance.get(endpoints.getMilestone(params))
 
   return response.data
 })
@@ -118,7 +118,8 @@ export const postCategory = createAsyncThunk('projects/postCategory', async para
 
 export const postMileStone = createAsyncThunk('projects/postMileStone', async params => {
   const response = await instance.post(endpoints.mileStones, params)
-
+  
+  //dispatch(fetchMileStones(localStorage.getItem('projectId')))
   return response
 })
 
@@ -357,7 +358,9 @@ export const appProjects = createSlice({
       state.projectDetails = action.payload.result
     })
     builder.addCase(fetchMileStones.fulfilled, (state, action) => {
-      var mileStones = action.payload.result.filter(o => o.projectId === state.selectedProject?.id)
+      var mileStones = action.payload.result
+      //.filter(o => o.projectId === state.selectedProject?.id)
+      debugger;
       mileStones = mileStones.sort((start, end) => {
         return new Date(start.startDate) - new Date(end.endDate)
       })
@@ -367,7 +370,7 @@ export const appProjects = createSlice({
       state.requiredSkills = action.payload?.result || []
     })
     builder.addCase(fetchProjectMembers.fulfilled, (state, action) => {
-      state.projectMembers = action.payload?.result?.members || []
+      state.projectMembers = action.payload?.result || []
     })
     builder.addCase(fetchProjectsByUser.fulfilled, (state, action) => {
       state.userProjects = action.payload?.result || []

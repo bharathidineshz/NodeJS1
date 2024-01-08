@@ -27,7 +27,7 @@ import Icon from 'src/@core/components/icon'
 import { useDispatch, useSelector } from 'react-redux'
 
 // ** Actions Imports
-import { addUser } from 'src/store/apps/user'
+import { addUser, setUsers } from 'src/store/apps/user'
 import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
 import { SKILLS, roles } from 'src/helpers/constants'
 import { Autocomplete } from '@mui/material'
@@ -35,6 +35,7 @@ import { userRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { fetchSkills } from 'src/store/apps/user'
+import { handleResponse } from 'src/helpers/helpers'
 
 const showErrors = (field, valueLen, min) => {
   if (valueLen === 0) {
@@ -114,27 +115,27 @@ const SidebarAddUser = props => {
     resolver: yupResolver(schema)
   })
 
-  const onSubmit = () => {
-    console.log(watch())
-    console.log(skills)
-    const user = store.users.find(o => o.fullName === watch('reportingManager'))
+  const updateUsersList = user => {
+    const users = [...store.users]
+    users.unshift(user)
+    dispatch(setUsers(users))
+  }
+
+  const onSubmit = data => {
+    handleClose()
+    const user = store.users.find(o => o.fullName == data.reportingManager)
     const _skills = skills.map(o => o.id)
     const req = {
+      ...data,
       reportingManagerId: user ? user.id : 0,
       departmentId: null,
-      skills: _skills,
-      ...watch()
+      skills: _skills
     }
     const request = userRequest(req)
     dispatch(addUser(request))
       .then(unwrapResult)
       .then(res => {
-        if (res.status === 200 || res.status === 201) {
-          toast.success('User Created')
-        } else {
-          toast.error('Error Occurred')
-        }
-        handleClose()
+        handleResponse('create', res, updateUsersList)
       })
   }
 

@@ -48,10 +48,11 @@ import { Controller, useForm } from 'react-hook-form'
 import countries from 'src/helpers/countries.json'
 import states from 'src/helpers/states.json'
 import currencies from 'src/helpers/currencies.json'
-import { addOrgs, updateOrgs } from 'src/store/apps/organization'
+import { addOrgs } from 'src/store/apps/organization'
 import { organizationRequest } from 'src/helpers/requests'
 import toast from 'react-hot-toast'
 import { unwrapResult } from '@reduxjs/toolkit'
+import SimpleBackdrop from 'src/@core/components/spinner'
 
 // ** Styled Components
 const RegisterIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -125,13 +126,14 @@ const schema = yup.object().shape({
   phone: yup
     .string()
     .required('required')
+    .typeError('Enter valid phone number')
     .matches(phoneRegExp, 'Phone number is not valid')
     .min(10, 'too short')
     .max(10, 'too long'),
   orgSize: yup.number().min(0, 'Size should greater than 0').notRequired(),
   address: yup.string().required('Address is required'),
   country: yup.object().required('Country is required'),
-  city: yup.object().required('City is required'),
+  city: yup.string().required('City is required'),
   state: yup.object().required('State is required'),
   zipcode: yup.string().max(6, 'Invalid Zipcode').required('ZIP code is required')
 })
@@ -141,6 +143,7 @@ const OrganizationalSetup = () => {
   const theme = useTheme()
   const { settings } = useSettings()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
+  const [isLoading, setLoading] = useState(false)
 
   const {
     register,
@@ -163,18 +166,23 @@ const OrganizationalSetup = () => {
   const router = useRouter()
 
   const onSubmit = data => {
-    const req = { ...data }
-    const request = organizationRequest(req)
+    try {
+      setLoading(true)
+      const req = { ...data }
+      const request = organizationRequest(req)
 
-    dispatch(addOrgs(request))
-      .then(unwrapResult)
-      .then(res => {
-        handleResponse('create', res, updateorg)
-      })
+      dispatch(addOrgs(request))
+        .then(unwrapResult)
+        .then(res => {
+          handleResponse('create', res, updateorg)
+          setLoading(false)
+        })
+    } catch (error) {
+      setLoading(false)
+
+      return error.message
+    }
   }
-
-  console.log(watch('country'), watch('state'))
-  console.log([].filter(item => item.state_code === watch('state').state_code))
 
   // ** Vars
   const { skin } = settings
@@ -184,6 +192,7 @@ const OrganizationalSetup = () => {
 
   return (
     <Box className='content-right'>
+      {isLoading && <SimpleBackdrop />}
       {!hidden ? (
         <Box
           sx={{
@@ -446,28 +455,13 @@ const OrganizationalSetup = () => {
                       <Controller
                         name='city'
                         control={control}
-                        render={({ field: { value, onChange } }) => (
-                          <Autocomplete
-                            options={[
-                              {
-                                id: 1,
-                                name: 'Coimbatore'
-                              }
-                            ]}
-                            getOptionLabel={o => o.name || o}
-                            id='autocomplete-limit-tags'
-                            value={value}
-                            onChange={(e, data) => onChange(data)}
+                        render={({ field }) => (
+                          <TextField
                             disabled={!watch('state')}
-                            renderInput={params => (
-                              <TextField
-                                {...params}
-                                disabled={!watch('state')}
-                                error={Boolean(errors.city)}
-                                label='City'
-                                placeholder='City'
-                              />
-                            )}
+                            error={Boolean(errors.city)}
+                            label='City'
+                            placeholder='City'
+                            {...field}
                           />
                         )}
                       />

@@ -101,16 +101,21 @@ const SettingsConfig = () => {
 
   useEffect(() => {
     const fetchDatum = async () => {
-      dispatch(await fetchConfig())
-      dispatch(await fetchHRApprovals())
-      dispatch(await fetchUsers())
-        .then(unwrapResult)
-        .then(res => {
-          const HRs = res.result.filter(u => HrApprovals.some(o => o.userId === u.id))
-          const users = res.result.filter(u => !HRs.includes(u))
-          setHRs(state => ({ ...state, selectedHRs: HRs, users: users }))
-          setLoading(false)
-        })
+      dispatch(fetchConfig())
+      dispatch(fetchHRApprovals()).then(response => {
+        dispatch(fetchUsers())
+          .then(unwrapResult)
+          .then(res => {
+            if (HRs.selectedHRs == 0) {
+              const _HRs = res.result.filter(u =>
+                response.payload.result.some(o => o.userId === u.id)
+              )
+              const users = res.result.filter(u => !_HRs.includes(u))
+              setHRs(state => ({ ...state, selectedHRs: _HRs, users: users }))
+            }
+            setLoading(false)
+          })
+      })
     }
     reset()
 
@@ -137,6 +142,7 @@ const SettingsConfig = () => {
 
   const updateOrgSettings = newConfig => {
     dispatch(setConfigs(newConfig))
+    // handleHRApproval()
   }
 
   //Save Configure
@@ -159,40 +165,27 @@ const SettingsConfig = () => {
           setLoading(false)
         })
     }
-
-    handleHRApproval()
-  }
-
-  const updateHRApprovalState = data => {
-    const approvals = [...HRs.selectedHRs]
-    setHRs(state => ({ ...state, newHRs: [], selectedHRs: approvals }))
   }
 
   //Handle HR Approval
 
-  const handleHRApproval = () => {
-    if (HRs.newHRs.length > 0) {
-      const id = HRs.newHRs.map(o => o.id)
+  const handleHRApproval = users => {
+    if (users.length > 0) {
+      const id = users.map(o => o.id)
       dispatch(postHRApproval(id))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('create', res, updateHRApprovalState)
+          handleResponse('create', res, updateState)
           setLoading(false)
         })
     }
-
-    if (HRs.deleteHRs.length > 0) handleDelete()
   }
 
   // Map Configuration
 
   const collectDeletingHRs = data => {
-    const restHRs = [...HRs.selectedHRs]
-    const deleteHRs = HRs.deleteHRs.length > 0 ? [...HRs.deleteHRs, data] : [data]
-    const index = restHRs.findIndex(o => o.id == data.id)
-    index != -1 && restHRs.splice(index, 1)
-    // HRs.users.push(data)
-    setHRs(state => ({ ...state, users: HRs.users, deleteHRs: deleteHRs, selectedHRs: restHRs }))
+    handleDelete([data])
+    // setHRs(state => ({ ...state, users: HRs.users, deleteHRs: deleteHRs, selectedHRs: restHRs }))
   }
 
   const collectNewHRs = data => {
@@ -212,25 +205,31 @@ const SettingsConfig = () => {
       deleted.splice(index, 1)
     }
 
-    setHRs({ newHRs: newUsers, users: updatedUsers, deleteHRs: deleted, selectedHRs: data })
+    // setHRs({ newHRs: , users: updatedUsers, deleteHRs: deleted, selectedHRs: data })
+    handleHRApproval([addedUser])
   }
 
+  const updateState = data => {
+    const approvals = [...HrApprovals]
+    approvals.push(data[0])
+    dispatch(setHRApprovals(approvals))
+  }
   const deleteHRState = data => {
-    // const approvals = HrApprovals.filter(u => data.some(t => t == u.id))
-    // const users = _userStore.users.filter(u => approvals.some(t => t.userId != u.id))
-    // setHRs(state => ({ ...state, users: users, selectedHRs: approvals }))
+    const approvals = [...HrApprovals]
+    const index = approvals.findIndex(o => o.id == data[0])
+    approvals.splice(index, 1)
+    dispatch(setHRApprovals(approvals))
   }
 
   //handle delete
-  const handleDelete = () => {
-    const approvals = HrApprovals.filter(o => HRs.deleteHRs.some(d => d.id == o.userId))
-    const ids = approvals.map(o => o.id)
+  const handleDelete = deleteUsers => {
+    const approvals = HrApprovals.find(o => o.userId == deleteUsers[0].id)
+    const ids = [approvals.id]
     if (ids != null) {
       dispatch(deleteHRApproval(ids))
         .then(unwrapResult)
         .then(res => {
           handleResponse('delete', res, deleteHRState, ids)
-          setHRs(state => ({ ...state, deleteHRs: [] }))
           setLoading(false)
         })
     }
@@ -393,8 +392,6 @@ const SettingsConfig = () => {
                       items={HRs.users}
                       values={HRs.selectedHRs}
                       label='Users'
-                      name='hr'
-                      HRs={HrApprovals}
                       onDelete={collectDeletingHRs}
                       onSelect={collectNewHRs}
                       originalItems={_userStore.users}

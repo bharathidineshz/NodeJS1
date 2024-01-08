@@ -5,35 +5,30 @@ import authConfig from 'src/configs/auth'
 import jwt from 'jsonwebtoken'
 
 export const base = {
-  // uat: 'https://lp-webapi-uat.azurewebsites.net/',
+  uat: 'https://lp-webapi-uat.azurewebsites.net/',
   dev: 'https://lp-webapi-dev.azurewebsites.net/',
   local: 'http://localhost:3000/'
 }
 
-// export const identifyURL = () => {
-//   if (process.env.NODE_ENV === 'development') {
-//     return base.dev
-//   } else {
-//     return base.uat
-//   }
-// }
+export const identifyURL = () => {
+  if (process.env.NODE_ENV === 'development') {
+    return base.dev
+  } else {
+    return base.uat
+  }
+}
 
-// let apiUrl
+let apiUrl
 
-// if (process.env.NODE_ENV === 'development') {
-//   apiUrl = process.env.NEXT_PUBLIC_API_URL_DEV // Development environment
-// } else {
-//   apiUrl = process.env.NEXT_PUBLIC_API_URL_UAT // UAT environment
-// }
-
-// const instance = axios.create({
-//   // Your API base URL
-//   baseURL: apiUrl
-// })
+if (process.env.NODE_ENV === 'development') {
+  apiUrl = process.env.NEXT_PUBLIC_API_URL_DEV // Development environment
+} else {
+  apiUrl = process.env.NEXT_PUBLIC_API_URL_UAT // UAT environment
+}
 
 const instance = axios.create({
   // Your API base URL
-  baseURL: base.dev
+  baseURL: apiUrl
 })
 
 const jwtConfig = {

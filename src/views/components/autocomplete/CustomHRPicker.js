@@ -5,14 +5,11 @@ import { Avatar, Box, Chip } from '@mui/material'
 import CustomChip from 'src/@core/components/mui/chip'
 import { getInitials } from 'src/@core/utils/get-initials'
 
-const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete, originalItems }) => {
+const CustomHRPicker = ({ items, values, label, onSelect, onDelete, originalItems }) => {
   const [selectedValues, setSelectedValues] = React.useState([])
   const [fieldValue, setFieldValue] = React.useState([])
   const [options, setOptions] = React.useState([])
   React.useEffect(() => {
-    // setOptions(items.filter((item) => !values?.some((value) => value.fullName === item.fullName)));
-    // // //setOptions(items)
-    // // setSelectedValues(values)
     setOptions(items)
     setSelectedValues(values)
   }, [items, values])
@@ -30,7 +27,6 @@ const CustomHRPicker = ({ items, values, label, name, HRs, onSelect, onDelete, o
   const handleDelete = selectedValue => {
     const values = [...selectedValues]
     const person = originalItems.find(o => o.fullName === selectedValue.fullName)
-    const Hr = HRs.find(o => o.userId === selectedValue.id)
     const indx = values.findIndex(o => o.fullName === selectedValue.fullName)
     values.splice(indx, 1)
     !options.includes(person) && options.push(person)

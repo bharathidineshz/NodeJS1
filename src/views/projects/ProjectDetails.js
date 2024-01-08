@@ -289,7 +289,7 @@ const ProjectDetails = ({ tab, data }) => {
                   >
                     Reports
                   </Button>
-                  {tab !== 'settings' && tab != 'members' ? (
+                  {tab !== 'settings'  ? (
                     <Button
                       variant='contained'
                       startIcon={<Icon icon='mdi:add' fontSize={20} />}

@@ -335,7 +335,9 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
                   <Typography sx={{ mr: 2, fontWeight: 500, fontSize: '0.875rem' }}>
                     Reporting Manager :
                   </Typography>
-                  <Typography variant='body2'>{rpm.fullName}</Typography>
+                  <Typography variant='body2'>
+                    {rpm && `${rpm.firstName} ${rpm.lastName}`}
+                  </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', mb: 2 }}>
                   <Typography sx={{ mr: 2, fontWeight: 500, fontSize: '0.875rem' }}>

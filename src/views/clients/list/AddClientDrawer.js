@@ -1,3 +1,4 @@
+
 // ** React Imports
 import { useEffect, useState } from 'react'
 
@@ -87,7 +88,7 @@ const defaultValues = {
 }
 const SidebarAddClient = props => {
   // ** Props
-  const { open, toggle, editedRowData, handleEdit, editTrigger } = props
+  const { open, toggle, editedRowData, handleEdit, setEditedRowData } = props
 
   // ** State
   const [plan, setPlan] = useState('basic')
@@ -134,7 +135,7 @@ const SidebarAddClient = props => {
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editedRowData, editTrigger])
+  }, [editedRowData])
 
   const onSubmit = data => {
     const profilePhoto = profile == null ? '' : profile[0].base64String
@@ -142,8 +143,9 @@ const SidebarAddClient = props => {
     delete data.primaryContactName
 
     const successFunction = () => {
-      dispatch(fetchClients())
+      // dispatch(fetchClients())
       // toast.success(editedRowData ? 'Client Updated' : 'Client Created')
+      setEditedRowData(null)
       toggle()
       handleEdit(null)
       reset(defaultValues)

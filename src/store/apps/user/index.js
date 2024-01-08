@@ -36,7 +36,6 @@ export const addUser = createAsyncThunk(
   async (data, { getState, dispatch }) => {
     try {
       const response = await instance.post(endpoints.adduser, data)
-      dispatch(fetchUsers(getState().user.params))
 
       return response.data
     } catch (error) {
@@ -130,7 +129,7 @@ export const appUsersSlice = createSlice({
       state.users = users
     })
     builder.addCase(fetchSkills.fulfilled, (state, action) => {
-      state.skills = action.payload
+      state.skills = action.payload.result
     })
   }
 })

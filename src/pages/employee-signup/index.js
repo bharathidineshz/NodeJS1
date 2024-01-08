@@ -40,7 +40,7 @@ import * as yup from 'yup'
 import { FormHelperText, Grid } from '@mui/material'
 
 // import { error } from '@babel/eslint-parser/lib/convert/index.cjs'
-import { signUpUser } from 'src/store/authentication/register'
+import { UserInvite, signUpUser } from 'src/store/authentication/register'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { signupRequest } from 'src/helpers/requests'
@@ -52,6 +52,8 @@ import { base } from 'src/store/endpoints/interceptor'
 import axios from 'axios'
 import { endpoints } from 'src/store/endpoints/endpoints'
 import jwt from 'jsonwebtoken'
+import SimpleBackdrop from 'src/@core/components/spinner'
+import { customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 // ** Styled Components
 const EmployeeSignupIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -136,6 +138,7 @@ const EmployeeSignup = ({ data }) => {
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [isLoading, setLoading] = useState(false)
   const [isDisabled, setDisabled] = useState(true)
   const [user, setData] = useState({})
   const dispatch = useDispatch()
@@ -179,8 +182,9 @@ const EmployeeSignup = ({ data }) => {
     skin === 'bordered' ? 'auth-v2-register-illustration-bordered' : 'auth-v2-register-illustration'
 
   console.log(watch())
-
   const onSubmit = () => {
+    setLoading(true)
+
     const req = { tenantId: user?.tenantId, ...watch() }
     const payload = {
       firstName: req.firstName,
@@ -190,38 +194,44 @@ const EmployeeSignup = ({ data }) => {
       password: req.password
     }
 
-    dispatch(signUpUser(payload))
+    dispatch(UserInvite(payload))
       .then(unwrapResult)
       .then(res => {
-        if (res.status === 200) {
+        if (!res.hasError) {
           console.log(res)
           toast.success('Sign Up Completed')
           Login({ email: req.email, password: req.password })
         } else {
-          toast.error('Error Occurred')
+          setLoading(false)
+          toast.error(res.responseMessage)
         }
       })
   }
 
   const Login = async data => {
-    const response = await axios.post(base.url + endpoints.login, data)
+    const response = await axios.post(base.dev + endpoints.login, data)
+    const { result } = response.data
 
-    if (response.data.accessToken) {
-      window.localStorage.setItem('accessToken', response.data.accessToken)
-      const userData = jwt.decode(response.data.accessToken, { complete: true }).payload
+    if (result.accessToken && !response.data.hasError) {
+      window.localStorage.setItem('accessToken', result.accessToken)
+      const userData = jwt.decode(result.accessToken, { complete: true }).payload
       window.localStorage.setItem('userData', JSON.stringify(userData))
       window.localStorage.setItem('roleId', userData?.roleId)
 
       router.replace({
         pathname: '/timesheets'
       })
+      setLoading(false)
+      customSuccessToast('Signup Completed')
     } else {
+      setLoading(false)
       toast.error('Login Failed')
     }
   }
 
   return (
     <Box className='content-right'>
+      {isLoading && <SimpleBackdrop />}
       {!hidden ? (
         <Box
           sx={{

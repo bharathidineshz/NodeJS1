@@ -76,7 +76,6 @@ const ClientList = ({ apiData }) => {
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
   const [editedRowData, setEditedRowData] = useState(null)
-  const [editTrigger, seteditTrigger] = useState(false)
   const [filteredData, setFilteredData] = useState([])
 
   // ** Hooks
@@ -198,7 +197,7 @@ const ClientList = ({ apiData }) => {
 
   const handleEdit = rowData => e => {
     setEditedRowData(rowData)
-    seteditTrigger(!editTrigger)
+
     toggleAddUserDrawer() // Open the drawer
   }
 
@@ -246,7 +245,7 @@ const ClientList = ({ apiData }) => {
         toggle={toggleAddUserDrawer}
         handleEdit={handleEdit}
         editedRowData={editedRowData}
-        editTrigger={editTrigger}
+        setEditedRowData={setEditedRowData}
       />
     </Grid>
   )

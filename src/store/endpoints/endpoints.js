@@ -131,6 +131,7 @@ export const endpoints = {
   projects: 'api/Project',
   getProjects: 'api/Project/GetProject',
   deleteProject: id => `api/Project?id=${id}`,
+
   projectMembers: id => `api/ProjectAssignee/GetProjectAssigneesByID?projectId=${id}`,
 
   projectAssignees: 'api/ProjectAssignee',
@@ -145,6 +146,7 @@ export const endpoints = {
   //milestone
 
   mileStones: 'api/Milestone',
+  getMilestone :projectId => `api/Milestone?ProjectId=${projectId}`,
 
   //skills
   skills: 'api/MasterSkill',
@@ -160,6 +162,12 @@ export const endpoints = {
 
   HRApprovals: 'api/OrganizationLeaveHRApproval',
   deleteHRApproval: 'api/OrganizationLeaveHRApproval',
+
+  //Projet Assignee 
+
+  AddMember: '/api/ProjectAssignee',
+  getMembers: '/api/ProjectAssignee',
+
 
   //leave Management
 
