@@ -49,7 +49,6 @@ import { leavePolicyRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { APPROVERS } from 'src/helpers/constants'
-import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 
 const schema = yup.object().shape({
   typeOfLeave: yup.string().required('Request Type is Required'),
@@ -96,12 +95,6 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
     })
   }, [row])
 
-  const isWeekday = date => {
-    const day = new Date(date).getDay()
-
-    return day !== 0 && day !== 6
-  }
-
   //UPDATE POLICY STATE
   const updatePolicyState = newPolicy => {
     let policies = [...store.policies]
@@ -123,7 +116,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
       dispatch(putPolicy(leavePolicyRequest(req)))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('update', res.data, updatePolicyState)
+          handleResponse('update', res, updatePolicyState)
         })
     } catch (error) {
       toast.error(error)

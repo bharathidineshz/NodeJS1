@@ -67,7 +67,8 @@ import {
   fetchCategories,
   fetchSkills,
   fetchRequiredSkills,
-  postAssignee
+  postAssignee,
+  fetchDepartment
 } from 'src/store/apps/projects'
 import { Stack } from '@mui/system'
 import { unwrapResult } from '@reduxjs/toolkit'
@@ -81,6 +82,7 @@ import CustomPeoplePicker from 'src/views/components/autocomplete/CustomPeoplePi
 import { projectAssigneeRequest, projectRequest } from 'src/helpers/requests'
 import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
 import CustomChip from 'src/@core/components/mui/chip'
+import { handleResponse } from 'src/helpers/helpers'
 
 const steps = [
   {
@@ -111,7 +113,7 @@ const defaultClientValues = {
 }
 
 const defaultProjectValues = {
-  type: 2,
+  type: 1,
   name: '',
   plannedBudget: '',
   plannedHours: null,
@@ -169,6 +171,7 @@ const ProjectsStepper = ({ isEdit, id }) => {
     dispatch(fetchClients())
     dispatch(fetchUsers())
     dispatch(fetchRequiredSkills())
+    dispatch(fetchDepartment())
   }, [dispatch])
 
   const {
@@ -242,7 +245,6 @@ const ProjectsStepper = ({ isEdit, id }) => {
   }
 
   const onSaveAssignee = () => {
-    // console.log(taskWatch())
     assignUsers()
   }
 
@@ -298,19 +300,14 @@ const ProjectsStepper = ({ isEdit, id }) => {
     dispatch(setTasks(tasks))
   }
 
-  // const onChangeAssignees = (params, assignees) => {
-  //   dispatch(setAssignees(assignees))
-  // }
-
-  const onChangeAssignees = (event, newValue) => {
+  const onChangeAssignees = (event, newValue, reason) => {
     dispatch(setAssignees(newValue))
+    setManagerAssignments(newValue)
   }
 
   //CLIENT
   const onSaveClient = () => {
-    console.log(clientWatch('client'))
     clientWatch('client') && dispatch(setClient(clientWatch('client')))
-    onSubmit()
   }
 
   // PROEJCT
@@ -321,8 +318,6 @@ const ProjectsStepper = ({ isEdit, id }) => {
 
   //CATEGORY
   const onSaveCategory = async () => {
-    console.log(store.project.uniqueId)
-
     const request = {
       projectUid: createdProjectId,
       taskCategory: store.category.map(c => ({
@@ -387,12 +382,10 @@ const ProjectsStepper = ({ isEdit, id }) => {
     dispatch(postProject(request))
       .then(unwrapResult)
       .then(response => {
-        if (response.status === 200 || response.status === 201) {
-          toast.success('Project Created', { position: 'top-right', duration: 3000 })
+        handleResponse('create', response.data, data => {
+          localStorage.setItem('projectId', data.id)
           handleNext()
-        } else {
-          toast.error('Error Occurred', { position: 'top-right', duration: 3000 })
-        }
+        })
       })
       .catch(error => {
         toast.error(error.message, { position: 'top-right', duration: 3000 })
@@ -400,33 +393,41 @@ const ProjectsStepper = ({ isEdit, id }) => {
   }
 
   const assignUsers = () => {
-    const request = []
     const projectId = Number(localStorage.getItem('projectId'))
-    managerAssignments.forEach(mg => {
-      const user = store.users.find(o => o.email === mg.email)
-      request.push(
-        projectAssigneeRequest(
-          mg.allocatedProjectCost,
-          projectId,
-          user?.id,
-          mg.projectRoleId === 0 ? 4 : mg.projectRoleId
-        )
-      )
-    })
+
+    // managerAssignments.forEach(mg => {
+    //   const user = store.users.find(o => o.email === mg.email)
+    //   request.push(
+    //     projectAssigneeRequest(
+    //       mg.allocatedProjectCost,
+    //       projectId,
+    //       user?.id,
+    //       mg.projectRoleId === 0 ? 4 : mg.projectRoleId
+    //     )
+    //   )
+    // })
+
+    const request = managerAssignments.map(item => ({
+      allocatedProjectCost: item.allocatedProjectCost,
+      projectId: projectId,
+      userId: store.users.find(o => o.email === item.email).id,
+      projectRoleId: item.projectRoleId === 0 ? 4 : item.projectRoleId,
+      availablePercentage: 0
+    }))
+
     dispatch(postAssignee(request))
       .then(unwrapResult)
       .then(response => {
-        setcreatedProjectId('')
-        toast.success('Users Assigned', { position: 'top-right', duration: 3000 })
-        toast.success('All Steps Completed', { position: 'top-right', duration: 4000 })
-        router.push('/projects/list')
+        handleResponse('create', response.data, () => {
+          setcreatedProjectId('')
+          toast.success('All Steps Completed', { position: 'top-right', duration: 4000 })
+          router.push('/projects/list')
+        })
       })
       .catch(error => {
         toast.error(error.message, { position: 'top-right', duration: 3000 })
       })
   }
-
-  console.log(store.users)
 
   const handleDepartments = value => {
     setDepartments(value)
@@ -484,6 +485,7 @@ const ProjectsStepper = ({ isEdit, id }) => {
               <Button
                 size='small'
                 variant='contained'
+                type='sumbit'
                 onClick={() => {
                   clientWatch('client') && handleNext()
                 }}
@@ -660,12 +662,12 @@ const ProjectsStepper = ({ isEdit, id }) => {
                         value={value}
                         onChange={onChange}
                       >
-                        {store.requiredSkills != null &&
-                          store.requiredSkills.map((dept, i) => (
-                            <MenuItem key={i} className='gap-1' value={dept.id}>
+                        {store.departments != null &&
+                          store.departments.map((dept, i) => (
+                            <MenuItem key={dept.id} className='gap-1' value={dept.id}>
                               <CustomChip
                                 key={dept.id}
-                                label={dept.skillName}
+                                label={dept.name}
                                 skin='light'
                                 color='primary'
                               />
@@ -755,7 +757,7 @@ const ProjectsStepper = ({ isEdit, id }) => {
               >
                 Back
               </Button>
-              <Button size='small' variant='contained' onClick={onSaveProject} sx={{ ml: 4 }}>
+              <Button size='small' variant='contained' sx={{ ml: 4 }} type='submit'>
                 {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
               </Button>
             </div>
@@ -789,6 +791,7 @@ const ProjectsStepper = ({ isEdit, id }) => {
                   <Autocomplete
                     multiple
                     fullWidth
+                    value={managerAssignments}
                     limitTags={3}
                     options={
                       store.users.map(item => ({
@@ -810,7 +813,7 @@ const ProjectsStepper = ({ isEdit, id }) => {
                         sx={{ width: '40%' }}
                       />
                     )}
-                    onChange={onChangeAssignees}
+                    onChange={(e, data, reason) => onChangeAssignees(e, data, reason)}
                   />
                   <UserTable
                     selectedUsers={store.assignees}
@@ -831,7 +834,13 @@ const ProjectsStepper = ({ isEdit, id }) => {
               >
                 Back
               </Button>
-              <Button size='small' variant='contained' onClick={assignUsers} sx={{ ml: 4 }}>
+              <Button
+                size='small'
+                variant='contained'
+                // onClick={assignUsers}
+                sx={{ ml: 4 }}
+                type='sumbmit'
+              >
                 {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
               </Button>
             </div>

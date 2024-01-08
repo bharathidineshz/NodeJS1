@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import AppTimeSheets from './apps/timesheets'
 import AnalyticsDashboard from './dashboards/analytics'
 import { useRouter } from 'next/router'
 import BlankLayout from 'src/@core/layouts/BlankLayout'
@@ -11,7 +10,7 @@ const Home = () => {
     const accessToken = localStorage.getItem('accessToken')
     if (window.location.pathname == '/') {
       if (accessToken != null) {
-        router.replace({ pathname: '/absence-management/leaves' })
+        router.replace({ pathname: '/timesheets' })
       } else {
         router.replace({ pathname: '/login' })
       }

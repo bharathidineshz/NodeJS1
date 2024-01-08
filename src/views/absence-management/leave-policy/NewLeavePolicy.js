@@ -97,6 +97,10 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
     resolver: yupResolver(schema)
   })
 
+  useEffect(() => {
+    reset()
+  }, [])
+
   function isExistPolicy(array, value) {
     return array.some(obj => Object.values(obj).includes(value))
   }
@@ -125,19 +129,21 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
     dispatch(postPolicy(req))
       .then(unwrapResult)
       .then(res => {
-        handleResponse('create', res.data, updatePolicyState)
+        handleResponse('create', res, updatePolicyState)
       })
   }
 
+  const handleClose = (e, v) => {
+    if (v == 'backdropClick') {
+      setOpen(true)
+      reset()
+    } else {
+      setOpen(false)
+    }
+  }
+
   return (
-    <Dialog
-      fullWidth
-      open={isOpen}
-      maxWidth='sm'
-      scroll='body'
-      onClose={() => setOpen(false)}
-      onBackdropClick={() => setOpen(true)}
-    >
+    <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={handleClose}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent
           sx={{

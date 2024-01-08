@@ -45,7 +45,7 @@ import { Box, display } from '@mui/system'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { errorToast, handleResponse, successToast } from 'src/helpers/helpers'
+import { errorToast, getWeekNumbers, handleResponse, successToast } from 'src/helpers/helpers'
 import { useTheme } from '@emotion/react'
 import { LOGGEDUSER, myLeaveRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
@@ -69,6 +69,8 @@ const schema = yup.object().shape({
 const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
+  const _settingsStore = useSelector(state => state.settings)
+
   const [index, setIndex] = useState(0)
   const [holidays, setHolidays] = useState([])
   const [weekOffs, setWeekOffs] = useState([])
@@ -87,26 +89,29 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
   })
 
   useEffect(() => {
-    if (row != null) {
+    if (row != null && Object.keys(row).length > 0) {
       const _index = store.policies.findIndex(o => o.id === row.requestTypeId)
       _index != -1 && setIndex(_index)
 
       reset({
-        requestType: row?.requestType,
+        requestType: store.policies[_index],
         requestReason: row?.requestReason,
         fromDate: new Date(row?.fromDate),
         toDate: new Date(row?.toDate),
         isFromDateHalfDay: row.isFromDateHalfDay,
         isToDateHalfDay: row.isToDateHalfDay
       })
-      dispatch(fetchHolidays())
-        .then(unwrapResult)
-        .then(res => {
-          const { result } = res
-          setHolidays(result?.map(o => subDays(new Date(o.date), 0)))
-        })
     }
-  }, [row])
+  }, [isOpen])
+
+  useEffect(() => {
+    dispatch(fetchHolidays())
+      .then(unwrapResult)
+      .then(res => {
+        const { result } = res
+        setHolidays(result?.map(o => subDays(new Date(o.date), 0)))
+      })
+  }, [])
 
   //UPDATE Request STATE
   const updateRequestsState = newReq => {
@@ -127,7 +132,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
       setLoading(true)
       reset()
       const currentUser = JSON.parse(localStorage.getItem('userData'))
-      const user = store.users.find(o => currentUser.user === o.email)
+      const user = currentUser && store.users.find(o => currentUser.user === o.email)
       const request = myLeaveRequest({
         id: row?.id,
         submittedUserId: user.id,
@@ -137,7 +142,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
       dispatch(putRequest(request))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('update', res.data, updateRequestsState)
+          handleResponse('update', res, updateRequestsState)
           dispatch(fetchDashboard(user.id))
           setLoading(false)
         })
@@ -160,10 +165,12 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
   const minDate = new Date(currentYear, 0, 1)
   const maxDate = new Date(currentYear + 1, 11, 31)
 
-  const isWeekday = date => {
+  const filterWeekDays = date => {
+    const inputDays = _settingsStore.configuration?.workingdays?.split('-')
+    const weekNumbers = getWeekNumbers(inputDays[0], inputDays[1])
     const day = new Date(date).getDay()
 
-    return day !== 0 && day !== 6
+    return day >= weekNumbers.start && day <= weekNumbers.end
   }
 
   return (
@@ -203,7 +210,6 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                         id='autocomplete-limit-tags'
                         getOptionLabel={option => option.typeOfLeave || option}
                         defaultValue={store.policies[index]}
-                        value={store.policies[index]}
                         onChange={(event, value) => {
                           field.onChange(value)
                         }}
@@ -266,7 +272,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                           maxDate={maxDate}
                           excludeDates={holidays}
                           highlightDates={holidays}
-                          filterDate={isWeekday}
+                          filterDate={filterWeekDays}
                           customInput={
                             <PickersComponent label='From Date' registername='fromDate' />
                           }
@@ -323,7 +329,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                           maxDate={maxDate}
                           excludeDates={holidays}
                           highlightDates={holidays}
-                          filterDate={isWeekday}
+                          filterDate={filterWeekDays}
                           customInput={<PickersComponent label='To Date' registername='toDate' />}
                           onChange={onChange}
                           popperPlacement='auto'

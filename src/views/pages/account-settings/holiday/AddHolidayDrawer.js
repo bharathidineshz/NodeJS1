@@ -112,7 +112,7 @@ const SidebarAddHoliday = props => {
     dispatch(addHoliday(holidayArray))
       .then(unwrapResult)
       .then(res => {
-        handleResponse('create', res.data, updateHolidayState)
+        handleResponse('create', res, updateHolidayState)
       })
     toggle()
     reset()

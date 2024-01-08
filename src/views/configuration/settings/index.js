@@ -103,8 +103,16 @@ const SettingsConfig = () => {
     const fetchDatum = async () => {
       dispatch(await fetchConfig())
       dispatch(await fetchHRApprovals())
-      dispatch(await fetchUsers()).then(res => setLoading(false))
+      dispatch(await fetchUsers())
+        .then(unwrapResult)
+        .then(res => {
+          const HRs = res.result.filter(u => HrApprovals.some(o => o.userId === u.id))
+          const users = res.result.filter(u => !HRs.includes(u))
+          setHRs(state => ({ ...state, selectedHRs: HRs, users: users }))
+          setLoading(false)
+        })
     }
+    reset()
 
     fetchDatum()
   }, [])
@@ -122,6 +130,8 @@ const SettingsConfig = () => {
         endWeekDay: configuration.workingdays?.split('-')[1],
         startWeekDay: configuration.workingdays?.split('-')[0]
       })
+    } else {
+      reset()
     }
   }, [HrApprovals, _userStore.users, configuration])
 
@@ -133,8 +143,8 @@ const SettingsConfig = () => {
 
   const handleSaveSettings = request => {
     setLoading(true)
+    const req = settingsRequest(request)
     if (configuration != null && Object.keys(configuration).length > 0) {
-      const req = settingsRequest(request)
       dispatch(putConfig({ id: configuration.id, ...req }))
         .then(unwrapResult)
         .then(res => {
@@ -142,16 +152,11 @@ const SettingsConfig = () => {
           setLoading(false)
         })
     } else {
-      dispatch(addConfig(request))
+      dispatch(addConfig(req))
         .then(unwrapResult)
         .then(res => {
+          handleResponse('create', res, updateOrgSettings)
           setLoading(false)
-          if (res.status === 200 || res.status == 201) {
-            dispatch(fetchConfig())
-            toast.success(res.data)
-          } else {
-            toast.error(res.data)
-          }
         })
     }
 
@@ -171,7 +176,7 @@ const SettingsConfig = () => {
       dispatch(postHRApproval(id))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('create', res.data, updateHRApprovalState)
+          handleResponse('create', res, updateHRApprovalState)
           setLoading(false)
         })
     }
@@ -224,7 +229,7 @@ const SettingsConfig = () => {
       dispatch(deleteHRApproval(ids))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('delete', res.data, deleteHRState, ids)
+          handleResponse('delete', res, deleteHRState, ids)
           setHRs(state => ({ ...state, deleteHRs: [] }))
           setLoading(false)
         })
@@ -324,8 +329,9 @@ const SettingsConfig = () => {
                         <Autocomplete
                           options={currencies}
                           id='autocomplete-limit-tags'
-                          getOptionLabel={o => `${o.name} - ${o.cc}`}
+                          getOptionLabel={o => (o ? `${o.name} - ${o.cc}` : '')}
                           onChange={(e, data) => field.onChange(data)}
+                          defaultValue={field.value}
                           value={field.value}
                           error={Boolean(errors.currency)}
                           renderInput={params => <TextField {...params} label='Currency' />}
@@ -356,7 +362,7 @@ const SettingsConfig = () => {
                         <Autocomplete
                           options={timezones}
                           id='autocomplete-limit-tags'
-                          getOptionLabel={o => `${o.name} - ${o.offset}`}
+                          getOptionLabel={o => (o ? `${o.name} - ${o.offset}` : '')}
                           value={field.value}
                           onChange={(e, data) => field.onChange(data)}
                           error={Boolean(errors.timezone)}

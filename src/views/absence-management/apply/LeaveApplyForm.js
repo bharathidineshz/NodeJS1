@@ -50,7 +50,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import PickersComponent from 'src/views/forms/form-elements/pickers/PickersCustomInput'
-import { customToast, errorToast, handleResponse, successToast } from 'src/helpers/helpers'
+import { getWeekNumbers, handleResponse, successToast } from 'src/helpers/helpers'
 import { useTheme } from '@emotion/react'
 import { myLeaveRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
@@ -59,6 +59,7 @@ import SimpleBackdrop from 'src/@core/components/spinner'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 import { fetchHolidays } from 'src/store/apps/accountSetting'
 import subDays from 'date-fns/subDays'
+import { fetchConfig } from 'src/store/settings'
 
 const defaultValues = {
   requestType: '',
@@ -70,7 +71,10 @@ const defaultValues = {
 }
 
 const schema = yup.object().shape({
-  requestType: yup.object().required('Request Type is Required'),
+  requestType: yup
+    .object()
+    .required('Request Type is Required')
+    .typeError('Request Type is Required'),
   requestReason: yup.string().required('Reason is Required'),
   fromDate: yup.date().required('From date is Required'),
   toDate: yup.date().required('To date is Required'),
@@ -87,6 +91,7 @@ const isWeekday = date => {
 const LeaveApplyForm = ({ isOpen, setOpen }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
+  const _settingsStore = useSelector(state => state.settings)
   const theme = useTheme()
   const [isLoading, setLoading] = useState(false)
   const [holidays, setHolidays] = useState([])
@@ -110,6 +115,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
   useEffect(() => {
     dispatch(fetchPolicies())
     dispatch(fetchUsers())
+    dispatch(fetchConfig())
     dispatch(fetchHolidays())
       .then(unwrapResult)
       .then(res => {
@@ -145,7 +151,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
       reset()
 
       const currentUser = JSON.parse(localStorage.getItem('userData'))
-      const user = store.users.find(o => currentUser.user === o.email)
+      const user = currentUser && store.users.find(o => currentUser.user === o.email)
 
       const request = myLeaveRequest({
         submittedUserId: user.id,
@@ -155,7 +161,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
       dispatch(postLeaveRequest(request))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('create', res.data, updateRequestsState)
+          handleResponse('create', res, updateRequestsState)
           dispatch(fetchDashboard(user.id))
           setLoading(false)
         })
@@ -163,6 +169,14 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
       setLoading(false)
       toast.error(error)
     }
+  }
+
+  const filterWeekDays = date => {
+    const inputDays = _settingsStore.configuration?.workingdays?.split('-')
+    const weekNumbers = getWeekNumbers(inputDays[0], inputDays[1])
+    const day = new Date(date).getDay()
+
+    return day >= weekNumbers.start && day <= weekNumbers.end
   }
 
   const handleFromDateChange = selectedDate => {
@@ -279,8 +293,8 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                 sm={8}
                 md={8}
                 lg={8}
-              // md={watch('requestType') !== 'Permission' ? 8 : 12}
-              //lg={watch('requestType') !== 'Permission' ? 8 : 12}
+                // md={watch('requestType') !== 'Permission' ? 8 : 12}
+                //lg={watch('requestType') !== 'Permission' ? 8 : 12}
               >
                 <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
                   <FormControl fullWidth>
@@ -295,7 +309,8 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                           minDate={minDate}
                           maxDate={maxDate}
                           dateFormat={'yyyy-MM-dd'}
-                          excludeDates={[...holidays, ...weekOffs]}
+                          excludeDates={[...holidays]}
+                          filterDate={filterWeekDays}
                           highlightDates={holidays}
                           customInput={
                             <PickersComponent label='From Date' registername='fromDate' />
@@ -359,7 +374,8 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                             dateFormat={'yyyy-MM-dd'}
                             minDate={watch('fromDate')}
                             maxDate={maxDate}
-                            excludeDates={[...holidays, ...weekOffs]}
+                            excludeDates={[...holidays]}
+                            filterDate={filterWeekDays}
                             highlightDates={holidays}
                             customInput={<PickersComponent label='To Date' registername='toDate' />}
                             onChange={onChange}

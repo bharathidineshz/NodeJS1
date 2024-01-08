@@ -99,9 +99,10 @@ const App = props => {
           query: { returnUrl: router.asPath }
         })
       }
-    } else if (!router.pathname.includes('employee-signup'.toLowerCase())) {
-      router.push('/login')
     }
+    //  else if (!router.pathname.includes('employee-signup'.toLowerCase())) {
+    //   router.push('/login')
+    // }
   }, [])
 
   return (

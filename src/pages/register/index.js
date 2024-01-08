@@ -175,10 +175,9 @@ const Register = () => {
                 router.replace({
                   pathname: '/organizational-setup'
                 })
-              }
-              else {
+              } else {
                 router.replace({
-                  pathname: '/absence-management/leaves'
+                  pathname: '/timesheets'
                 })
               }
               setLoading(false)

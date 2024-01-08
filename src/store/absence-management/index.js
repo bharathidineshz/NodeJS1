@@ -7,54 +7,102 @@ import instance from 'src/store/endpoints/interceptor'
 
 //fetch
 export const fetchMyLeaves = createAsyncThunk('fetchMyLeaves/LeaveRequest', async params => {
-  const response = await instance.get(endpoints.myLeaves)
+  try {
+    const response = await instance.get(endpoints.myLeaves)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchPolicies = createAsyncThunk('fetchPolicy/LeavePolicy', async params => {
-  const response = await instance.get(endpoints.getLeavePolicy)
+  try {
+    const response = await instance.get(endpoints.getLeavePolicy)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchStatus = createAsyncThunk('fetchStatus/Status', async params => {
-  const response = await instance.get(endpoints.getStatus)
+  try {
+    const response = await instance.get(endpoints.getStatus)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchRequests = createAsyncThunk('fetchRequestTypes/RequestTypes', async params => {
-  const response = await instance.get(endpoints.requests)
+  try {
+    const response = await instance.get(endpoints.requests)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchUsers = createAsyncThunk('fetchUsers/users', async params => {
-  const response = await instance.get(endpoints.allUsers)
+  try {
+    const response = await instance.get(endpoints.allUsers)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchApprovals = createAsyncThunk('fetchApprovals/Approvals', async params => {
-  const response = await instance.get(endpoints.getApprovals)
+  try {
+    const response = await instance.get(endpoints.getApprovals)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchUserReports = createAsyncThunk(
   'fetchUserReports/Reports',
   async ({ userId, fromDate, toDate }) => {
-    const response = await instance.get(endpoints.getUserReports(userId, fromDate, toDate))
+    try {
+      const response = await instance.get(endpoints.getUserReports(userId, fromDate, toDate))
 
-    return response.data
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
 export const fetchDashboard = createAsyncThunk('fetchDashboard/Reports', async params => {
-  const response = await instance.get(endpoints.getDashboard(params))
+  try {
+    const response = await instance.get(endpoints.getDashboard(params))
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 //post
@@ -62,59 +110,101 @@ export const postLeaveRequest = createAsyncThunk('postLeaveRequest/LeaveRequest'
   try {
     const response = await instance.post(endpoints.myLeaves, params)
 
-    return response
+    return response.data
   } catch (error) {
     const { response } = error
 
-    return response
+    return response.data
   }
 })
 
 export const postLeaveApproval = createAsyncThunk('postApproval/LeaveApproval', async params => {
-  const response = await instance.post(endpoints.createApproval, params)
+  try {
+    const response = await instance.post(endpoints.createApproval, params)
 
-  return response
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const postPolicy = createAsyncThunk('postPolicy/LeavePolicy', async params => {
-  const response = await instance.post(endpoints.createLeavePolicy, params)
+  try {
+    const response = await instance.post(endpoints.createLeavePolicy, params)
 
-  return response
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 //put
 export const putRequest = createAsyncThunk('putRequest/LeaveRequest', async params => {
-  const response = await instance.put(endpoints.myLeaves, params)
+  try {
+    const response = await instance.put(endpoints.myLeaves, params)
 
-  return response
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const putPolicy = createAsyncThunk('putPolicy/LeavePolicy', async params => {
-  const response = await instance.put(endpoints.updateLeavePolicy, params)
+  try {
+    const response = await instance.put(endpoints.updateLeavePolicy, params)
 
-  return response
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const putRequestApproval = createAsyncThunk(
   'putRequestApproval/LeaveApproval',
   async params => {
-    const response = await instance.put(endpoints.updateApproval, params)
+    try {
+      const response = await instance.put(endpoints.updateApproval, params)
 
-    return response
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
 //delete
 export const deleteRequest = createAsyncThunk('deleteRequest/LeaveRequest', async params => {
-  const response = await instance.delete(endpoints.deleteRequest(params))
+  try {
+    const response = await instance.delete(endpoints.deleteRequest(params))
 
-  return response
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const deletePolicy = createAsyncThunk('deletePolicy/LeavePolicy', async params => {
-  const response = await instance.delete(endpoints.deleteLeavePolicy(params))
+  try {
+    const response = await instance.delete(endpoints.deleteLeavePolicy(params))
 
-  return response
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 const initialStates = {
@@ -179,6 +269,7 @@ export const LeaveManagement = createSlice({
           email: user.email,
           request: approval.requestApprovals.typeOfLeave,
           comment: approval.requestApprovals.comment,
+          currentStatusId: approval.requestApprovals.statusId,
           status: approval.requestApprovals.status
         })
       })

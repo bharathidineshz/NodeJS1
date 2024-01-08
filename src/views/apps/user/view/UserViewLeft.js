@@ -188,7 +188,7 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
     dispatch(updateUser(request))
       .then(unwrapResult)
       .then(res => {
-        handleResponse('update', res.data, updateUserState)
+        handleResponse('update', res, updateUserState)
         updateUserData()
         setLoading(false)
       })

@@ -38,9 +38,11 @@ export const updateHoliday = createAsyncThunk(
     try {
       const response = await instance.put(endpoints.updateHolidayRequests, event)
 
-      return response
+      return response.data
     } catch (error) {
-      return error
+      const { response } = error
+
+      return response.data
     }
   }
 )

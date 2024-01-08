@@ -80,7 +80,7 @@ const LeaveApply = () => {
       .then(unwrapResult)
       .then(res => {
         const currentUser = JSON.parse(localStorage.getItem('userData'))
-        const user = res.result?.find(o => currentUser.user === o.email)
+        const user = currentUser && res.result?.find(o => currentUser.user === o.email)
         dispatch(fetchStatus())
         dispatch(fetchMyLeaves())
         dispatch(fetchDashboard(user?.id)).then(res => setLoading(false))
@@ -252,9 +252,9 @@ const LeaveApply = () => {
       dispatch(deleteRequest(row?.id))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('delete', res.data, updateRequestsState, row)
+          handleResponse('delete', res, updateRequestsState, row)
           const currentUser = JSON.parse(localStorage.getItem('userData'))
-          const user = store.users.find(o => currentUser.user === o.email)
+          const user = currentUser && store.users.find(o => currentUser.user === o.email)
           dispatch(fetchDashboard(user.id))
           setLoading(false)
         })

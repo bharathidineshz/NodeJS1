@@ -129,7 +129,7 @@ const HolidayForm = ({ isOpen, row, setOpen }) => {
       )
         .then(unwrapResult)
         .then(res => {
-          handleResponse('update', res.data, updateHolidayState)
+          handleResponse('update', res, updateHolidayState)
         })
     } catch (error) {
       toast.error(error)

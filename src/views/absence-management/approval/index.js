@@ -57,6 +57,7 @@ import { approvalRequest } from 'src/helpers/requests'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import { handleResponse } from 'src/helpers/helpers'
+import { LEAVE_STATUS } from 'src/helpers/constants'
 
 const Approval = () => {
   // ** States
@@ -66,7 +67,7 @@ const Approval = () => {
   const [isLoading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
   const [filteredRows, setFilteredRows] = useState([])
-  const [errorComment, setErroComment] = useState(false)
+  const [errorComment, setErrorComment] = useState(false)
 
   const [respond, setRespond] = useState({
     isRejected: false,
@@ -82,6 +83,7 @@ const Approval = () => {
 
   useEffect(() => {
     dispatch(fetchUsers())
+    // dispatch(fetchStatus())
     dispatch(fetchApprovals()).then(() => setLoading(false))
   }, [dispatch])
 
@@ -122,8 +124,7 @@ const Approval = () => {
       renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
-      flex: 0.175,
-      minWidth: 110,
+      flex: 0.16,
       field: 'fromDate',
       headerName: 'From Date',
       renderCell: params => {
@@ -131,8 +132,7 @@ const Approval = () => {
       }
     },
     {
-      flex: 0.175,
-      minWidth: 110,
+      flex: 0.16,
       field: 'toDate',
       headerName: 'To Date',
       renderCell: params => {
@@ -147,19 +147,17 @@ const Approval = () => {
       renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
-      flex: 0.23,
+      flex: 0.26,
       sortable: false,
-      field: 'status',
+      field: 'currentStatusId',
       headerName: 'Status',
       align: 'left',
       renderCell: params => {
+        const status = LEAVE_STATUS.find(o => o.id == params.value)
+
         return (
           <Box columnGap={2} sx={{ display: 'flex' }}>
-            {params.row.requestStatusId === 2 ? (
-              <CustomChip size='small' label='Approved' skin='light' color='success' />
-            ) : params.row.requestStatusId === 3 ? (
-              <CustomChip size='small' label='Rejected' skin='light' color='error' />
-            ) : (
+            {status.id === 1 ? (
               <Box className='gap-1' sx={{ display: 'flex', alignItems: 'center' }}>
                 <>
                   <Button
@@ -182,6 +180,8 @@ const Approval = () => {
                   </Button>
                 </>
               </Box>
+            ) : (
+              <CustomChip size='small' label={status.name} skin='light' color={status.color} />
             )}
           </Box>
         )
@@ -192,12 +192,21 @@ const Approval = () => {
   //UPDATE APPROVAL STATE
   const updateApprovalState = newApproval => {
     let approvals = [...store.approvals]
-    const indexToReplace = approvals.findIndex(item => item.id === newApproval.id)
+    const indexToReplace = approvals.findIndex(
+      item => item.leaveRequestApprovalId === newApproval.id
+    )
+
+    const status = store.statuses?.find(o => o.id == newApproval.statusId)
 
     if (indexToReplace !== -1) {
-      approvals[indexToReplace] = newApproval
+      approvals[indexToReplace] = {
+        ...approvals[indexToReplace],
+        comment: newApproval.comment,
+        status: status && status.statusName,
+        currentStatusId: newApproval.statusId
+      }
     }
-    dispatch(setApprovals(approvals))
+    dispatch(setLeaveApproval(approvals))
   }
 
   //handle approval
@@ -211,16 +220,16 @@ const Approval = () => {
         : ''
 
       if ((_comment == null || _comment == '') && name == 'Rejected') {
-        setErroComment(true)
+        setErrorComment(true)
 
         return
       }
-      setErroComment(false)
+      setErrorComment(false)
       const req = {
         ..._row,
         comment: _comment,
         leaveStatusId: name == 'Approved' ? 2 : name == 'Rejected' ? 3 : 1,
-        approvalLevelId: _row.currentLevelId === 1 ? 2 : 1
+        approvalLevelId: _row.currentLevelId
       }
       const request = approvalRequest(req)
       dispatch(putRequestApproval(request))
@@ -240,8 +249,8 @@ const Approval = () => {
           // } else {
           //   customErrorToast(res.data)
           // }
-          handleResponse('update', res.data, updateApprovalState)
           setRespond(state => ({ ...state, isOpenDialog: false, isLoading: false }))
+          handleResponse('update', res, updateApprovalState)
         })
     } else {
       setRespond(state => ({ ...state, rejectData: row, isOpenDialog: true, isLoading: false }))

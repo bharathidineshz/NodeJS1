@@ -31,6 +31,12 @@ export const STATUS = [
   { id: 4, name: 'Due', color: 'error' }
 ]
 
+export const LEAVE_STATUS = [
+  { id: 1, name: 'Pending', color: 'warning' },
+  { id: 2, name: 'Approved', color: 'success' },
+  { id: 3, name: 'Rejected', color: 'error' }
+]
+
 export const APPROVERS = [
   { id: 1, name: 'Reporting Manager' },
   { id: 2, name: 'Human Resource' },

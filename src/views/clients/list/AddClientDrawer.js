@@ -53,7 +53,8 @@ const Header = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.default
 }))
 
-const phoneRegExp = /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
+const phoneRegExp =
+  /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
 
 const schema = yup.object().shape({
   address: yup.string().required(),
@@ -110,7 +111,6 @@ const SidebarAddClient = props => {
   })
 
   useEffect(() => {
-    debugger
     if (editedRowData) {
       const {
         companyName,
@@ -153,7 +153,7 @@ const SidebarAddClient = props => {
     dispatch(editedRowData ? updateClient({ id: editedRowData?.id, ...req }) : addClients(req))
       .then(unwrapResult)
       .then(res => {
-        handleResponse(editedRowData ? 'update' : 'create', res.data, successFunction)
+        handleResponse(editedRowData ? 'update' : 'create', res, successFunction)
       })
       .catch(error => {
         toast.error(error.message)
@@ -359,7 +359,6 @@ const SidebarAddClient = props => {
                 />
               )}
             />
-
           </FormControl>
 
           <Box sx={{ display: 'flex', gap: 5, alignItems: 'center', justifyContent: 'flex-end' }}>

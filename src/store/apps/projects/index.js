@@ -197,7 +197,13 @@ export const getProjectDetails = createAsyncThunk('projects/getProjectDetails', 
 export const deleteTask = createAsyncThunk('projects/deleteTask', async params => {
   const response = await instance.delete(endpoints.deleteTask(params))
 
-  return response
+  return response.data
+})
+
+export const fetchDepartment = createAsyncThunk('projects/fetchDepartment', async params => {
+  const response = await instance.get(endpoints.getDepartment)
+
+  return response.data
 })
 
 export const appProjects = createSlice({
@@ -233,6 +239,7 @@ export const appProjects = createSlice({
     assignees: [],
 
     //list
+    departments: [],
     taskLists: [],
     projectMembers: [],
     editTask: {},
@@ -263,7 +270,7 @@ export const appProjects = createSlice({
       state.tasks = payload
     },
     setAssignees: (state, action) => {
-      state.assignees = action.payload?.result
+      state.assignees = action.payload
     },
     setEditProject: (state, action) => {
       state.editProject = action.payload?.result
@@ -295,7 +302,6 @@ export const appProjects = createSlice({
     setFeedbacks: (state, { payload }) => {
       state.feedbacks = payload
     },
-
     //boolean
     setEmpty: (state, { payload }) => {
       state.isEmpty = payload
@@ -303,7 +309,10 @@ export const appProjects = createSlice({
   },
   extraReducers: builder => {
     builder.addCase(fetchClients.fulfilled, (state, action) => {
-      state.allClients = action.payload?.result
+      state.allClients = action.payload?.result ?? []
+    })
+    builder.addCase(fetchDepartment.fulfilled, (state, action) => {
+      state.departments = action.payload?.result ?? []
     })
     // builder.addCase(fetchProjectsReport.fulfilled, (state, action) => {
     //   const userMap = {}
@@ -319,11 +328,9 @@ export const appProjects = createSlice({
     //   state.projectReport = tasksWithUsernames
     // })
     builder.addCase(postProject.fulfilled, (state, action) => {
-      const { data } = action.payload?.result
-      if (action.payload?.result.isSuccess) state.project.uniqueId = data
+      state.project.uniqueId = action.payload.data.result.id
     })
     builder.addCase(fetchProjects.fulfilled, (state, action) => {
-
       action.payload?.result?.forEach(project => {
         const client = state.allClients.find(c => c.id === project.clientId)
         project.clientName = client ? client.companyName : ''
@@ -331,7 +338,6 @@ export const appProjects = createSlice({
       state.allProjects = action.payload?.result
     })
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
-
       const users = action.payload?.result?.map(user => ({
         ...user,
         userName: `${user.firstName} ${user.lastName}`

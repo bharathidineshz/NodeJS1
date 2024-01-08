@@ -144,11 +144,25 @@ const NewTask = ({ isOpen, setOpen }) => {
     resolver: yupResolver(schema)
   })
 
-  //UPDATE state
-  const updateTaskState = newTask => {
+  //create state
+  const createTaskState = newTask => {
     const categories = [...store.taskLists]
     const index = categories.findIndex(o => o.taskCategoryId == newTask.taskCategoryId)
     const tasks = [...categories[index].tasks, newTask]
+    categories[index] = {
+      ...categories[index],
+      tasks: tasks
+    }
+    dispatch(setTaskLists(categories))
+  }
+
+  //update state
+  const updateTaskState = task => {
+    const categories = [...store.taskLists]
+    const index = categories.findIndex(o => o.taskCategoryId == task.taskCategoryId)
+    const tasks = [...categories[index].tasks.flat()]
+    const taskIndex = tasks.findIndex(o => o.id == task.id)
+    tasks[taskIndex] = task
     categories[index] = {
       ...categories[index],
       tasks: tasks
@@ -163,7 +177,7 @@ const NewTask = ({ isOpen, setOpen }) => {
     const category = JSON.parse(localStorage.getItem('category'))
     const tasks = category.tasks.flatMap(o => o.description?.trim()?.toLowerCase())
 
-    if (tasks.includes(data.description?.trim().toLowerCase())) {
+    if (!isEdit && tasks.includes(data.description?.trim().toLowerCase())) {
       return toast.error('Task Already exist in this category')
     }
 
@@ -178,7 +192,9 @@ const NewTask = ({ isOpen, setOpen }) => {
     dispatch(isEdit ? putTask(request) : postTask(request))
       .then(unwrapResult)
       .then(res => {
-        handleResponse('create', res, updateTaskState)
+        isEdit
+          ? handleResponse('update', res, updateTaskState)
+          : handleResponse('create', res, createTaskState)
       })
   }
 

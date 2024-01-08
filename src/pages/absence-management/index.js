@@ -127,7 +127,7 @@ const LeaveManagement = ({ tab, data }) => {
         ]
       : []
 
-  return activeTab != null ? (
+  return (
     <Grid container spacing={6}>
       {activeTab === undefined ? null : (
         <>
@@ -216,8 +216,6 @@ const LeaveManagement = ({ tab, data }) => {
         </>
       )}
     </Grid>
-  ) : (
-    <SimpleBackdrop />
   )
 }
 

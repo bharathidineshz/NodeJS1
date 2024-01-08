@@ -85,7 +85,7 @@ const shortcuts = [
     title: 'Timesheet',
     subtitle: 'Timesheets',
     icon: 'mdi:window-maximize',
-    url: '/apps/timesheets/'
+    url: '/timesheets/'
   },
   {
     title: 'Client',

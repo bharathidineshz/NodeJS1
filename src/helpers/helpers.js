@@ -64,3 +64,51 @@ export const handleResponse = (name, data, stateAction, deleteRow) => {
     }
   }
 }
+
+export function ConvertHoursToTime(input) {
+  if (typeof input === 'number') {
+    // If input is a number, assume it's in decimal hours
+    const hours = Math.floor(input)
+    const minutes = Math.floor((input - hours) * 60)
+    const seconds = Math.round(((input - hours) * 60 - minutes) * 60)
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(
+      seconds
+    ).padStart(2, '0')}`
+  } else if (typeof input === 'string') {
+    // If input is a string, try to parse it as "hh:mm"
+    const timeParts = input.split(':')
+    if (timeParts.length === 2) {
+      const hours = parseInt(timeParts[0], 10)
+      const minutes = parseInt(timeParts[1], 10)
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+      }
+    } else {
+      return input
+    }
+  }
+
+  return '00:00:00'
+}
+
+export function getWeekNumbers(day1, day2) {
+  const getWeekNumber = day => {
+    const daysOfWeek = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday'
+    ]
+
+    return daysOfWeek.indexOf(day)
+  }
+
+  const weekNumber1 = getWeekNumber(day1)
+  const weekNumber2 = getWeekNumber(day2)
+
+  return { start: weekNumber1, end: weekNumber2 }
+}

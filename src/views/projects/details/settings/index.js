@@ -47,13 +47,16 @@ import {
   fetchProjectAssignees,
   putProject,
   setAssignees,
-  fetchUsers
+  fetchUsers,
+  fetchDepartment
 } from 'src/store/apps/projects'
 import { unwrapResult } from '@reduxjs/toolkit'
 import UserTable from '../../edit/UserTable'
 import { Box, Stack } from '@mui/system'
 import toast from 'react-hot-toast'
 import { projectAssigneeRequest } from 'src/helpers/requests'
+import CustomChip from 'src/@core/components/mui/chip'
+import { handleResponse } from 'src/helpers/helpers'
 
 const defaultValues = {
   client: 0,
@@ -65,7 +68,8 @@ const defaultValues = {
   endDate: new Date(),
   isBillable: true,
   allowUsersToChangeEstHours: false,
-  allowUsersToCreateNewTask: false
+  allowUsersToCreateNewTask: false,
+  department: 0
 }
 
 const schema = yup.object().shape({
@@ -78,7 +82,8 @@ const schema = yup.object().shape({
   endDate: yup.date().notRequired(),
   isBillable: yup.boolean().notRequired(),
   allowUsersToChangeEstHours: yup.boolean().notRequired(),
-  allowUsersToCreateNewTask: yup.boolean().notRequired()
+  allowUsersToCreateNewTask: yup.boolean().notRequired(),
+  department: yup.string().required('Department is required')
 })
 
 const Settings = () => {
@@ -91,7 +96,6 @@ const Settings = () => {
   const store = useSelector(state => state.projects)
   const userStore = useSelector(state => state.user)
   const [users, setUsers] = useState([])
-  const [managerAssignments, setManagerAssignments] = useState([])
 
   const [values, setValues] = useState({
     password: '',
@@ -101,12 +105,12 @@ const Settings = () => {
   })
 
   useEffect(() => {
-    const _project = localStorage.getItem('project')
+    const _project = localStorage?.getItem('project')
     const project = JSON.parse(_project)
     const {
       clientId,
       name,
-      type,
+      projectTypeId,
       budget,
       departmentId,
       startDate,
@@ -114,7 +118,8 @@ const Settings = () => {
       estimatedHours,
       isBillable,
       allowUsersToChangeEstHours,
-      allowUsersToCreateNewTask
+      allowUsersToCreateNewTask,
+      skillId
     } = project
     dispatch(fetchClients())
       .then(unwrapResult)
@@ -128,21 +133,25 @@ const Settings = () => {
           allowUsersToChangeEstHours: allowUsersToChangeEstHours,
           allowUsersToCreateNewTask: allowUsersToCreateNewTask,
           isBillable: isBillable,
+          department: departmentId,
           name: name,
-          type: type
+          type: projectTypeId
         })
-        setClients(res)
+        setClients(res.result ?? [])
+      })
+
+    dispatch(fetchSkills())
+      .then(unwrapResult)
+      .then(res => {
+        setSkills(res?.result?.filter(x => skillId?.includes(x.id)) ?? [])
       })
   }, [])
 
   useEffect(() => {
     dispatch(fetchUsers())
-    dispatch(fetchSkills())
 
-    if (store.assignees && store.assignees.length > 0) {
-      setManagerAssignments(store.assignees)
-    }
-  }, [dispatch, store.assignees])
+    dispatch(fetchDepartment())
+  }, [dispatch])
 
   useEffect(() => {
     if (store.users?.length > 0 && store.users?.length > 0) {
@@ -173,7 +182,6 @@ const Settings = () => {
   })
 
   const onChangeAssignees = (params, users) => {
-    console.log('assignees', users)
     var assignees = users?.length == 0 ? [...store.assignees] : [...store.assignees, ...users]
     assignees = [...new Set(assignees)]
     dispatch(setAssignees(assignees))
@@ -182,11 +190,6 @@ const Settings = () => {
   const handleSkills = values => {
     setSkills(values)
   }
-
-  const handleDepartments = value => {
-    setDepartments(value)
-  }
-
   //submit
 
   const onSubmit = data => {
@@ -201,24 +204,21 @@ const Settings = () => {
       isActive: true,
       projectTypeId: data.type,
       clientId: data.client,
-      departmentId: 1,
+      departmentId: Number(data.department),
       isBillable: data.isBillable,
       allowUsersToChangeEstHours: data.allowUsersToChangeEstHours,
       allowUsersToCreateNewTask: data.allowUsersToCreateNewTask
     }
 
-    const req = projectAssigneeRequest(managerAssignments)
-
     dispatch(putProject(request))
       .then(unwrapResult)
       .then(res => {
-        if (res.status === 200) {
-          dispatch()
-          toast.success(res.data)
-          reset()
-        } else {
-          toast.error(res.data)
-        }
+        handleResponse('update', res, data => {
+          localStorage.setItem('project', JSON.stringify(data))
+        })
+      })
+      .catch(err => {
+        toast.error(err.message)
       })
   }
 
@@ -258,7 +258,7 @@ const Settings = () => {
                       value={value}
                       error={Boolean(errors.client)}
                     >
-                      {clients.map(client => (
+                      {clients?.map(client => (
                         <MenuItem key={client.id} value={client.id}>
                           {client.companyName}
                         </MenuItem>
@@ -493,7 +493,7 @@ const Settings = () => {
               <FormControl fullWidth>
                 <CustomSkillPicker
                   values={skills}
-                  items={userStore.skills || []}
+                  items={userStore.skills.result || []}
                   label='Skills'
                   setSkills={handleSkills}
                 />
@@ -502,12 +502,41 @@ const Settings = () => {
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <CustomDepartmentPicker
-                  values={departments}
-                  items={userStore.skills || []}
-                  label='Department'
-                  setDepartments={handleDepartments}
-                />
+                <FormControl fullWidth>
+                  <InputLabel id='demo-simple-select-outlined-label'>Department</InputLabel>
+                  <Controller
+                    name='department'
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field: { value, onChange } }) => (
+                      <Select
+                        label='Department *'
+                        id='demo-simple-select-outlined'
+                        labelId='demo-simple-select-outlined-label'
+                        required
+                        value={value}
+                        onChange={onChange}
+                      >
+                        {store.departments != null &&
+                          store.departments.map((dept, i) => (
+                            <MenuItem key={dept.id} className='gap-1' value={dept.id}>
+                              <CustomChip
+                                key={dept.id}
+                                label={dept.name}
+                                skin='light'
+                                color='primary'
+                              />
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    )}
+                  />
+                  {errors.department && (
+                    <FormHelperText sx={{ color: 'error.main' }}>
+                      {errors.department.message}
+                    </FormHelperText>
+                  )}
+                </FormControl>
               </FormControl>
             </Grid>
 
@@ -584,59 +613,6 @@ const Settings = () => {
 
           <Grid item xs={12}>
             <Divider sx={{ mb: '20px !important' }} />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant='body2' sx={{ fontWeight: 600 }}>
-              3. Assignee Details
-            </Typography>
-          </Grid>
-          <Grid container spacing={5}>
-            <Grid
-              item
-              xs={12}
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            ></Grid>
-            <Grid
-              item
-              xs={12}
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <Stack direction={'column'} spacing={5} sx={{ minWidth: 500 }}>
-                <Autocomplete
-                  multiple
-                  fullWidth
-                  limitTags={3}
-                  options={
-                    users?.map(item => ({
-                      email: item.email,
-                      userName: `${item.firstName} ${item.lastName}`,
-                      allocatedProjectCost: '',
-                      projectRoleId: 0
-                    })) ?? []
-                  }
-                  id='autocomplete-limit-tags'
-                  filterSelectedOptions
-                  getOptionLabel={option => option.userName || o}
-                  defaultValue={[] || null}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      label='Users'
-                      placeholder='Assignees'
-                      sx={{ width: '40%' }}
-                    />
-                  )}
-                  onChange={onChangeAssignees}
-                />
-                <UserTable
-                  selectedUsers={store.assignees || []}
-                  setManagerAssignments={setManagerAssignments}
-                  managerAssignments={managerAssignments}
-                />
-              </Stack>
-              {/* Render the UserTable component passing the selected users */}
-            </Grid>
           </Grid>
         </CardContent>
         <Divider sx={{ m: '0 !important' }} />

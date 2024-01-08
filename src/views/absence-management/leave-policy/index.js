@@ -145,7 +145,7 @@ const LeavePolicy = ({ data }) => {
       dispatch(deletePolicy(rowData?.id))
         .then(unwrapResult)
         .then(res => {
-          handleResponse('delete', res.data, updatePolicyState, rowData)
+          handleResponse('delete', res, updatePolicyState, rowData)
         })
     } catch (error) {
       customErrorToast(res.data)

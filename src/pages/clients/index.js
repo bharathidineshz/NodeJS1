@@ -210,7 +210,7 @@ const ClientList = ({ apiData }) => {
     dispatch(deleteClient(id))
       .then(unwrapResult)
       .then(res => {
-        handleResponse('delete', res.data, successFunction)
+        handleResponse('delete', res, successFunction)
       })
       .catch(err => {
         toast.error(err.message)

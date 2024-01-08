@@ -47,6 +47,21 @@ export const settingsRequest = req => {
   return request
 }
 
+//TIMESHEET
+export const timeSheetRequest = req => {
+  const request = {
+    id: req.id,
+    burnedHours: req.burnedHours,
+    timeSheetDate: req.timeSheetDate,
+    isBillable: req.isBillable,
+    taskId: req.taskId,
+    projectId: req.projectId,
+    taskCategoryId: req.taskCategoryId
+  }
+
+  return request
+}
+
 //USERS
 
 export const userRequest = req => {
@@ -107,13 +122,13 @@ export const clientRequest = req => {
 export const projectRequest = req => {
   const request = {
     name: req.name,
-    budget: req.plannedBudget,
+    budget: Number(req.plannedBudget),
     startDate: req.startDate,
     endDate: req.endDate,
-    estimatedHours: req.plannedHours,
+    estimatedHours: Number(req.plannedHours),
     skillId: req.skills,
     isActive: true,
-    projectTypeId: req.type,
+    projectTypeId: Number(req.type),
     clientId: req.client,
     departmentId: req.departmentId,
     isBillable: req.isBillable,
@@ -126,15 +141,13 @@ export const projectRequest = req => {
 
 export const projectAssigneeRequest = req => {
   const { allocatedProjectCost, projectId, userId, projectRoleId, availablePercentage } = req
-  const request = [
-    {
-      allocatedProjectCost: cost,
-      projectI: projectId,
-      userId: userId,
-      projectRoleId: roleId,
-      availablePercentage: availablePercentage
-    }
-  ]
+  const request = {
+    allocatedProjectCost: allocatedProjectCost,
+    projectId: projectId,
+    userId: userId,
+    projectRoleId: projectRoleId,
+    availablePercentage: availablePercentage
+  }
 
   return request
 }

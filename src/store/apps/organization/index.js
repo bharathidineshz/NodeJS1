@@ -8,45 +8,63 @@ import instance from 'src/store/endpoints/interceptor'
 // export const fetchData = createAsyncThunk()
 
 export const fetchData = createAsyncThunk('appOrg/fetchData', async params => {
-  const response = await instance.get(endpointURL(endpoints.getOrganizationSetup))
+  try {
+    const response = await instance.get(endpoints.getOrganizationSetup)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const addOrgs = createAsyncThunk('appOrg/addOrgs', async (data, { getState, dispatch }) => {
-  console.log(data)
+  try {
+    const response = await instance.post(endpoints.addOrganizationSetup, data)
 
-  const response = await instance.post(endpoints.addOrganizationSetup, data)
+    return response.data
+  } catch (error) {
+    const { response } = error
 
-  return response
+    return response.data
+  }
 })
 
 export const updateOrgs = createAsyncThunk(
   'appOrg/updateOrgs',
   async (data, { getState, dispatch }) => {
-    console.log(data)
+    try {
+      const response = await instance.post(endpoints.updateOrganizationSetup, data)
 
-    const response = await instance.post(endpointURL(endpoints.updateOrganizationSetup), data)
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
     dispatch(fetchData(getState().client.params))
-
-    return response.data
   }
 )
 
 export const deleteOrg = createAsyncThunk(
   'appOrg/deleteOrg',
   async (id, { getState, dispatch }) => {
-    console.log(id)
+    try {
+      const response = await instance.delete(endpointURL(endpoints.deletClient), {
+        data: id,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      dispatch(fetchData(getState().client.params))
 
-    const response = await instance.delete(endpointURL(endpoints.deletClient), {
-      data: id,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-    dispatch(fetchData(getState().client.params))
+      return response.data
+    } catch (error) {
+      const { response } = error
 
-    return response.data
+      return response.data
+    }
   }
 )
 

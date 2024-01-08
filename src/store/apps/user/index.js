@@ -7,34 +7,58 @@ import instance from 'src/store/endpoints/interceptor'
 
 // ** Fetch Users
 export const fetchUsers = createAsyncThunk('appUsers/fetchData', async params => {
-  const response = await instance.get(endpoints.allUsers)
+  try {
+    const response = await instance.get(endpoints.allUsers)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchSkills = createAsyncThunk('fetchSkills/Skills', async params => {
-  const response = await instance.get(endpoints.skills)
+  try {
+    const response = await instance.get(endpoints.skills)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 // ** Add User
 export const addUser = createAsyncThunk(
   'appUsers/addUser',
   async (data, { getState, dispatch }) => {
-    const response = await instance.post(endpoints.adduser, data)
-    dispatch(fetchUsers(getState().user.params))
+    try {
+      const response = await instance.post(endpoints.adduser, data)
+      dispatch(fetchUsers(getState().user.params))
 
-    return response
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 // ** update User
 export const updateUser = createAsyncThunk(
   'appUsers/updateUser',
   async (data, { getState, dispatch }) => {
-    const response = await instance.put(endpoints.Updateuser, data)
+    try {
+      const response = await instance.put(endpoints.Updateuser, data)
 
-    return response
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
@@ -42,20 +66,32 @@ export const updateUser = createAsyncThunk(
 export const deleteUser = createAsyncThunk(
   'appUsers/deleteUser',
   async (id, { getState, dispatch }) => {
-    const response = await instance.delete(endpoints.Deleteuser(id))
-    dispatch(fetchUsers(getState().user.params))
+    try {
+      const response = await instance.delete(endpoints.Deleteuser(id))
+      dispatch(fetchUsers(getState().user.params))
 
-    return response.data
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
 export const activateUser = createAsyncThunk(
   'appUsers/deleteUser',
   async (id, { getState, dispatch }) => {
-    const response = await instance.patch(endpoints.Activateuser(id))
-    dispatch(fetchUsers(getState().user.params))
+    try {
+      const response = await instance.patch(endpoints.Activateuser(id))
+      dispatch(fetchUsers(getState().user.params))
 
-    return response.data
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 

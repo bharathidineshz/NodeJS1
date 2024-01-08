@@ -31,7 +31,7 @@ export const fetchProjectData = createAsyncThunk('appTimesheet/getProjectData', 
 export const fetchAssignedTask = createAsyncThunk(
   'appTimesheet/getAssignedTaskData',
   async params => {
-    const response = await instance.get(endpoints.getTaskbyProject)
+    const response = await instance.get(endpoints.getTaskbyProject(params))
 
     return response.data
   }
@@ -52,13 +52,13 @@ export const postData = createAsyncThunk(
   async (postData, { store, dispatch }) => {
     try {
       const response = await instance.post(endpoints.postTimesheetList, postData)
-      dispatch(fetchData())
-      toast.success('Time sheet entry created succesfully')
-    } catch (error) {
-      toast.error(error.message)
-    }
 
-    return response.data
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
@@ -68,13 +68,13 @@ export const UpdateData = createAsyncThunk(
   async (UpdateData, { store, dispatch }) => {
     try {
       const response = await instance.put(endpoints.putTimesheetList, UpdateData)
-      dispatch(fetchData())
-      toast.success('Time sheet Updated succesfully')
-    } catch (error) {
-      toast.error(error.message)
-    }
 
-    return response.data
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
@@ -83,13 +83,13 @@ export const DeleteData = createAsyncThunk(
   async (DeleteData, { store, dispatch }) => {
     try {
       const response = await instance.delete(endpoints.deleteTimesheetList(DeleteData))
-      dispatch(fetchData())
-      toast.success('Time sheet Deleted succesfully')
-    } catch (error) {
-      toast.error(error.message)
-    }
 
-    return response.data
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
@@ -100,22 +100,27 @@ export const appTimeSheetSlice = createSlice({
     taskData: [],
     projectData: []
   },
-  reducers: {},
+  reducers: {
+    setTimeSheets: (state, { payload }) => {
+      state.data = payload
+    }
+  },
   extraReducers: builder => {
     builder
       .addCase(fetchData.fulfilled, (state, action) => {
-        let sortedArray = action.payload.sort((a, b) => {
+        let sortedArray = action.payload.result?.sort((a, b) => {
           return new Date(b.timeSheetDate).getTime() - new Date(a.timeSheetDate).getTime()
         })
         state.data = sortedArray ?? []
       })
       .addCase(fetchAssignedTask.fulfilled, (state, action) => {
-        state.taskData = action.payload
+        state.taskData = action.payload.result?.tasksByCategory
       })
       .addCase(fetchAssignedProject.fulfilled, (state, action) => {
-        state.projectData = action.payload
+        state.projectData = action.payload.result
       })
   }
 })
 
+export const { setTimeSheets } = appTimeSheetSlice.actions
 export default appTimeSheetSlice.reducer

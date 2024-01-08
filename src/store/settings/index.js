@@ -25,7 +25,7 @@ export const addConfig = createAsyncThunk(
   async (data, { getState, dispatch }) => {
     const response = await instance.post(endpoints.createConfig, data)
 
-    return response
+    return response.data
   }
 )
 

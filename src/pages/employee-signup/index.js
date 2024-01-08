@@ -136,6 +136,7 @@ const EmployeeSignup = ({ data }) => {
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [isDisabled, setDisabled] = useState(true)
   const [user, setData] = useState({})
   const dispatch = useDispatch()
   const router = useRouter()
@@ -212,7 +213,7 @@ const EmployeeSignup = ({ data }) => {
       window.localStorage.setItem('roleId', userData?.roleId)
 
       router.replace({
-        pathname: '/absence-management/leaves'
+        pathname: '/timesheets'
       })
     } else {
       toast.error('Login Failed')
@@ -424,7 +425,9 @@ const EmployeeSignup = ({ data }) => {
               </Grid>
 
               <FormControlLabel
-                control={<Checkbox />}
+                control={
+                  <Checkbox checked={isDisabled} onChange={() => setDisabled(!isDisabled)} />
+                }
                 sx={{ mb: 4, mt: 1.5, '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
                 label={
                   <>
@@ -437,7 +440,14 @@ const EmployeeSignup = ({ data }) => {
                   </>
                 }
               />
-              <Button fullWidth size='large' type='submit' variant='contained' sx={{ mb: 7 }}>
+              <Button
+                fullWidth
+                size='large'
+                type='submit'
+                variant='contained'
+                disabled={!isDisabled}
+                sx={{ mb: 7 }}
+              >
                 Sign up
               </Button>
 

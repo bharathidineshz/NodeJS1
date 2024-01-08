@@ -113,7 +113,7 @@ const defaultValues = {
   country: '',
   state: '',
   city: '',
-  zipcode: '',
+  zipcode: ''
 }
 
 const phoneRegExp =
@@ -133,7 +133,7 @@ const schema = yup.object().shape({
   country: yup.object().required('Country is required'),
   city: yup.object().required('City is required'),
   state: yup.object().required('State is required'),
-  zipcode: yup.string().max(6, 'Invalid Zipcode').required('ZIP code is required'),
+  zipcode: yup.string().max(6, 'Invalid Zipcode').required('ZIP code is required')
 })
 
 const OrganizationalSetup = () => {
@@ -155,10 +155,8 @@ const OrganizationalSetup = () => {
     resolver: yupResolver(schema)
   })
 
-
   const updateorg = newReq => {
-
-    router.replace({ pathname: '/absence-management/leaves' })
+    router.replace({ pathname: '/timesheets' })
   }
 
   const dispatch = useDispatch()
@@ -168,13 +166,12 @@ const OrganizationalSetup = () => {
     const req = { ...data }
     const request = organizationRequest(req)
 
-
-    dispatch(addOrgs(request)).then(unwrapResult)
+    dispatch(addOrgs(request))
+      .then(unwrapResult)
       .then(res => {
-        handleResponse('create', res.data, updateorg)
+        handleResponse('create', res, updateorg)
       })
   }
-
 
   console.log(watch('country'), watch('state'))
   console.log([].filter(item => item.state_code === watch('state').state_code))
@@ -505,8 +502,6 @@ const OrganizationalSetup = () => {
                       )}
                     </FormControl>
                   </Grid>
-
-
 
                   <Grid item xs={12} className='flex-right'>
                     <Button type='submit' variant='contained' color='primary'>

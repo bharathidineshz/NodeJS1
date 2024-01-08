@@ -33,6 +33,8 @@ import { unwrapResult } from '@reduxjs/toolkit'
 import FallbackSpinner from 'src/layouts/components/LogoSpinner'
 import dynamic from 'next/dynamic'
 import SimpleBackdrop from 'src/@core/components/spinner'
+import { STATUS } from 'src/helpers/constants'
+import { handleResponse } from 'src/helpers/helpers'
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
   ssr: false,
@@ -51,7 +53,14 @@ const TaskLists = () => {
   const [row, setRow] = useState({})
 
   useEffect(() => {
-    setCategories(store.taskLists)
+    const sortedTaskList = [...store.taskLists]
+    // sortedTaskList.sort((a, b) => {
+    //   const earliestDateA = new Date(Math.min(...a.tasks.map(ts => new Date(ts.dueDate))))
+    //   const earliestDateB = new Date(Math.min(...b.tasks.map(ts => new Date(ts.dueDate))))
+
+    //   return earliestDateB - earliestDateA
+    // })
+    setCategories(sortedTaskList)
   }, [dispatch, store.taskLists])
 
   const columns = [
@@ -77,26 +86,13 @@ const TaskLists = () => {
     },
     {
       flex: 0.13,
-      field: 'taskStatus',
+      field: 'taskStatusId',
       headerName: 'Status',
       sortable: false,
       renderCell: params => {
-        return (
-          <CustomChip
-            size='small'
-            skin='light'
-            color={
-              params.value?.toLowerCase() === 'completed'
-                ? 'success'
-                : params.value?.toLowerCase() === 'due' || params.value?.toLowerCase() === 'pending'
-                ? 'error'
-                : params.value?.toLowerCase() === 'not started'
-                ? 'info'
-                : 'warning'
-            }
-            label={params.value}
-          />
-        )
+        const status = STATUS.find(o => o.id == params.value)
+
+        return <CustomChip size='small' skin='light' color={status?.color} label={status?.name} />
       }
     },
 
@@ -152,7 +148,18 @@ const TaskLists = () => {
               console.log(params)
               setOpen(true),
                 dispatch(setEditTask(params.row)),
-                localStorage.setItem('category', JSON.stringify(params.row))
+                dispatch(
+                  setSelectedCategory(
+                    store.taskLists.find(o => o.taskCategoryId == params.row.taskCategoryId)
+                      .taskCategory
+                  )
+                ),
+                localStorage.setItem(
+                  'category',
+                  JSON.stringify(
+                    store.taskLists.find(o => o.taskCategoryId == params.row.taskCategoryId)
+                  )
+                )
             }}
           >
             <Icon icon='mdi:edit-outline' fontSize={20} />
@@ -175,21 +182,29 @@ const TaskLists = () => {
     setExpanded(isExpanded ? panel : false)
   }
 
+  //delete state
+  const deleteTaskState = row => {
+    const categories = [...store.taskLists]
+    const index = categories.findIndex(o => o.taskCategoryId == row.taskCategoryId)
+    const tasks = [...categories[index].tasks.flat()]
+    const taskIndex = tasks.findIndex(o => o.id == row.id)
+    tasks.splice(taskIndex, 1)
+    categories[index] = {
+      ...categories[index],
+      tasks: tasks
+    }
+    dispatch(setTaskLists(categories))
+  }
+
   const handleDeleteTask = () => {
     console.log(row)
     try {
-      const tasks = [...store.taskLists]
+      setAlert(false)
+
       dispatch(deleteTask(row?.id))
         .then(unwrapResult)
         .then(res => {
-          if (res.status === 200) {
-            dispatch(fetchTasks(Number(localStorage.getItem('projectId')))).then(() => {
-              toast.success(res.data)
-              setAlert(false)
-            })
-          } else {
-            toast.error(res.data)
-          }
+          handleResponse('delete', res, deleteTaskState, row)
         })
     } catch (error) {
       toast.error(error, { duration: 3000, position: 'top-right' })
@@ -239,7 +254,10 @@ const TaskLists = () => {
                   columns={columns}
                   disableRowSelectionOnClick
                   hideFooter
-                  sx={{ '&, [class^=MuiDataGrid]': { border: 'none' } }}
+                  sx={{
+                    '&, [class^=MuiDataGrid]': { border: 'none' },
+                    '&:hover': { cursor: 'pointer' }
+                  }}
                 />
               </AccordionDetails>
             </Accordion>

@@ -41,7 +41,7 @@ export const endpoints = {
   postTimesheetList: 'api/TimeSheet/CreateTimeSheet',
   putTimesheetList: 'api/TimeSheet/UpdateTimeSheet',
   deleteTimesheetList: id => `api/TimeSheet/DeleteTimeSheet?id=${id}`,
-  getTaskbyProject: 'api/TimeSheet/GetTasksForTimeSheet',
+  getTaskbyProject: id => `api/Task/GetTasksByProject?ProjectId=${id}`,
   getAssignedProject: 'api/Project/GetProjectsByUser',
 
   // assign users
@@ -132,6 +132,7 @@ export const endpoints = {
   getProjects: 'api/Project/GetProject',
   deleteProject: id => `api/Project?id=${id}`,
   projectMembers: id => `api/ProjectAssignee/GetProjectAssigneesByID?projectId=${id}`,
+
   projectAssignees: 'api/ProjectAssignee',
   projectsByUser: '/api/Project/GetProjectsByUser',
 
@@ -177,5 +178,8 @@ export const endpoints = {
 
   getUserReports: (userId, fromDate, toDate) =>
     `api/Report/GetUserLeaveRequest?UserId=${userId}&FromDate=${fromDate}&ToDate=${toDate}`,
-  getDashboard: userId => `api/Report/GetUserLeaveBalance?UserId=${userId}`
+  getDashboard: userId => `api/Report/GetUserLeaveBalance?UserId=${userId}`,
+
+  // Department
+  getDepartment: '/api/Department'
 }

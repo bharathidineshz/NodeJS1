@@ -53,7 +53,7 @@ const navigation = () => {
         {
           title: 'Timesheets',
           icon: 'mdi:clock-time-four-outline',
-          path: '/apps/timesheets'
+          path: '/timesheets'
         },
         {
           title: 'Reports',

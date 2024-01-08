@@ -174,7 +174,7 @@ const Holidays = ({ popperPlacement }) => {
       )
         .then(unwrapResult)
         .then(res => {
-          handleResponse('delete', res.data, updateHolidayState, row)
+          handleResponse('delete', res, updateHolidayState, row)
         })
     } catch (error) {
       customErrorToast(res.data)
