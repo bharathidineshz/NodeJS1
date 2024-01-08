@@ -13,6 +13,7 @@ import Icon from 'src/@core/components/icon'
 import {
   Autocomplete,
   Avatar,
+  Checkbox,
   Chip,
   Drawer,
   FormControl,
@@ -52,13 +53,14 @@ import * as yup from 'yup'
 import { fetchStatus } from 'src/store/absence-management'
 import { taskRequest } from 'src/helpers/requests'
 import { STATUS, TASK_PRIORITIES } from 'src/helpers/constants'
+import { handleResponse } from 'src/helpers/helpers'
 
 const defaultValues = {
   description: '',
   taskStatusId: 1,
   taskEstimatedHours: '',
   dueDate: new Date(),
-  taskAssignedUserId: 0,
+  taskAssignedUserId: {},
   taskPriorityId: 1,
   isBillable: true
 }
@@ -66,9 +68,14 @@ const defaultValues = {
 const schema = yup.object().shape({
   description: yup.string().required('task is required'),
   taskStatusId: yup.number().notRequired(),
-  taskEstimatedHours: yup.string().max(8).required('Estimated hours is required'),
-  dueDate: yup.date().required('Due Date Reaquired'),
-  taskAssignedUserId: yup.number().required('Task Owner required'),
+  taskEstimatedHours: yup
+    .string()
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)')
+    .max(8)
+    .typeError('Should be in 00:00 format')
+    .required('Estimated hours is required'),
+  dueDate: yup.date().required('Due Date  is Required'),
+  taskAssignedUserId: yup.object().required('Task Owner required'),
   taskPriorityId: yup.number().positive().required('Priority is required'),
   isBillable: yup.boolean()
 })
@@ -86,10 +93,12 @@ const NewTask = ({ isOpen, setOpen }) => {
     dispatch(fetchUsers())
       .then(unwrapResult)
       .then(res => {
-        setAssignees(store.users)
+        setAssignees(res.result)
         reset({
           taskPriorityId: 1,
-          taskStatusId: 1
+          taskStatusId: 1,
+          dueDate: new Date(),
+          isBillable: true
         })
       })
   }, [])
@@ -108,8 +117,11 @@ const NewTask = ({ isOpen, setOpen }) => {
         description: description,
         dueDate: dueDate,
         isBillable: isBillable,
-        taskAssignedUserId: taskAssignedUserId,
-        taskEstimatedHours: taskEstimatedHours,
+        taskAssignedUserId: assignees?.find(o => o.id == taskAssignedUserId),
+        taskEstimatedHours: [
+          taskEstimatedHours?.split(':')[0],
+          taskEstimatedHours?.split(':')[1]
+        ].join(':'),
         taskPriorityId: taskPriorityId,
         taskStatusId: taskStatusId
       })
@@ -132,9 +144,22 @@ const NewTask = ({ isOpen, setOpen }) => {
     resolver: yupResolver(schema)
   })
 
-  //UPDATE
+  //UPDATE state
+  const updateTaskState = newTask => {
+    const categories = [...store.taskLists]
+    const index = categories.findIndex(o => o.taskCategoryId == newTask.taskCategoryId)
+    const tasks = [...categories[index].tasks, newTask]
+    categories[index] = {
+      ...categories[index],
+      tasks: tasks
+    }
+    dispatch(setTaskLists(categories))
+  }
 
+  // submit
   const onSubmit = data => {
+    setOpen(false)
+    const isEdit = Object.keys(store.editTask).length > 0
     const category = JSON.parse(localStorage.getItem('category'))
     const tasks = category.tasks.flatMap(o => o.description?.trim()?.toLowerCase())
 
@@ -143,32 +168,17 @@ const NewTask = ({ isOpen, setOpen }) => {
     }
 
     const projId = Number(localStorage.getItem('projectId'))
-    const _category = JSON.parse(localStorage.getItem('category'))
     const request = taskRequest({
-      id: store.editTask ? store.editTask.id : 0,
-      taskCategoryId: _category?.taskCategoryId,
+      id: isEdit ? store.editTask.id : 0,
+      taskCategoryId: category?.taskCategoryId,
       projectId: projId,
+      isBillable: watch('isBillable'),
       ...data
     })
-    dispatch(
-      store.editTask || Object.keys(store.editTask).length > 0
-        ? putTask(request)
-        : postTask(request)
-    )
+    dispatch(isEdit ? putTask(request) : postTask(request))
       .then(unwrapResult)
       .then(res => {
-        if (res.status === 200) {
-          dispatch(fetchTasks(projId)).then(() => {
-            toast.success(res.data)
-            setOpen(false)
-            reset({
-              taskPriorityId: 1,
-              taskStatusId: 1
-            })
-          })
-        } else {
-          toast.error(res.data)
-        }
+        handleResponse('create', res, updateTaskState)
       })
   }
 
@@ -316,7 +326,6 @@ const NewTask = ({ isOpen, setOpen }) => {
                           <CustomInput
                             label='Due Date *'
                             fullWidth
-                            autocom
                             InputProps={{
                               startAdornment: (
                                 <InputAdornment position='start'>
@@ -380,10 +389,12 @@ const NewTask = ({ isOpen, setOpen }) => {
                     <Autocomplete
                       options={assignees}
                       id='autocomplete-limit-tags'
-                      getOptionLabel={option => option.userName || ''}
-                      value={store.editTask ? assignees[index] : value}
+                      getOptionLabel={option => `${option.firstName} ${option.lastName}`}
+                      value={
+                        Object.keys(store.editTask).length > 0 ? assignees[index] : field.value
+                      }
                       onChange={(event, value) => {
-                        field.onChange(value.id)
+                        field.onChange(value)
                       }}
                       renderInput={params => (
                         <TextField
@@ -412,9 +423,7 @@ const NewTask = ({ isOpen, setOpen }) => {
                   rules={{ required: false }}
                   render={({ field: { value, onChange } }) => (
                     <FormControlLabel
-                      control={
-                        <Switch checked={value} defaultChecked={value} onChange={onChange} />
-                      }
+                      control={<Checkbox checked={value} defaultChecked onChange={onChange} />}
                       label='Billable'
                     />
                   )}

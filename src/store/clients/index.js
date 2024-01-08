@@ -10,7 +10,7 @@ import instance from 'src/store/endpoints/interceptor'
 export const fetchClients = createAsyncThunk('appClient/fetchClients', async params => {
   const response = await instance.get(endpoints.getAllClient)
 
-  return response.data
+  return response.data.result
 })
 
 export const fetchClientById = createAsyncThunk('appClient/fetchClientById', async params => {
@@ -22,24 +22,17 @@ export const fetchClientById = createAsyncThunk('appClient/fetchClientById', asy
 export const addClients = createAsyncThunk(
   'appClient/addClients',
   async (data, { getState, dispatch }) => {
-    console.log(data)
-
     const response = await instance.post(endpoints.addClient, data)
 
     return response
   }
 )
 
-export const updateClient = createAsyncThunk(
-  'appClient/updateClient',
-  async (data) => {
-    console.log(data)
+export const updateClient = createAsyncThunk('appClient/updateClient', async data => {
+  const response = await instance.put(endpoints.updateClient, data)
 
-    const response = await instance.put(endpoints.updateClient, data)
-
-    return response
-  }
-)
+  return response
+})
 
 export const deleteClient = createAsyncThunk(
   'appClient/deleteClient',

@@ -57,6 +57,7 @@ import { customErrorToast } from 'src/helpers/custom-components/toasts'
 const NewTaskCategory = ({ isOpen, setOpen }) => {
   const [categoryName, setCategoryName] = useState(null)
   const [isBillable, setBillable] = useState(true)
+  const [isError, setError] = useState(false)
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
 
@@ -87,6 +88,8 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
           .then(res => {
             handleResponse('create', res, updateTaskCategoryState)
           })
+      } else {
+        setError(true)
       }
     } catch (error) {
       customErrorToast(error.message)
@@ -124,7 +127,9 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
                 label='Category'
                 value={categoryName}
                 placeholder='Category Name'
-                onChange={e => setCategoryName(e.target.value)}
+                onChange={e => {
+                  setCategoryName(e.target.value), e.target.value.length > 0 && setError(false)
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
@@ -133,7 +138,7 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
                   )
                 }}
               />
-              {categoryName == '' && (
+              {(isError || categoryName == '') && (
                 <FormHelperText sx={{ color: 'error.main' }}>Category is required</FormHelperText>
               )}
             </Grid>

@@ -187,7 +187,7 @@ const SkillsConfig = ({ data }) => {
 
 export async function getStaticProps() {
   // Use Axios to fetch data from an API with headers
-  const response = await axios.get(identifyURL() + endpoints.getLeavePolicy, {
+  const response = await axios.get(base.dev + endpoints.getLeavePolicy, {
     headers: {
       Authorization: `Bearer ${window.localStorage.getItem('accessToken')}`
     }

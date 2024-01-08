@@ -29,7 +29,7 @@ export const organizationRequest = req => {
     zipcode: req.zipcode,
     website: req.website,
     phone: req.phone,
-    isActive: true,
+    isActive: true
   }
 
   return request
@@ -160,7 +160,7 @@ export const taskRequest = req => {
     ProjectId: req.projectId,
     Files: '',
     TaskEstimatedHours: req.taskEstimatedHours,
-    TaskAssignedUserId: req.taskAssignedUserId,
+    TaskAssignedUserId: req.taskAssignedUserId.id,
     Description: req.description,
     TaskCategoryId: req.taskCategoryId
   }

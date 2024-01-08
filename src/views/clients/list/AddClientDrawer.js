@@ -33,6 +33,7 @@ import ProfileUpload from '../add/ProfileUpload'
 import { clientRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
+import { handleResponse } from 'src/helpers/helpers'
 
 const showErrors = (field, valueLen, min) => {
   if (valueLen === 0) {
@@ -52,8 +53,7 @@ const Header = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.default
 }))
 
-const phoneRegExp =
-  /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
+const phoneRegExp = /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
 
 const schema = yup.object().shape({
   address: yup.string().required(),
@@ -86,7 +86,7 @@ const defaultValues = {
 }
 const SidebarAddClient = props => {
   // ** Props
-  const { open, toggle, editedRowData , handleEdit} = props
+  const { open, toggle, editedRowData, handleEdit, editTrigger } = props
 
   // ** State
   const [plan, setPlan] = useState('basic')
@@ -109,12 +109,22 @@ const SidebarAddClient = props => {
     resolver: yupResolver(schema)
   })
 
-  useEffect(()=>{
-    if(editedRowData){
-      const {companyName,primaryContatctName,address,email,phoneNumber,companyId,taxId,isActive}= editedRowData;
-      reset( {
+  useEffect(() => {
+    debugger
+    if (editedRowData) {
+      const {
+        companyName,
+        primaryContatctName,
+        address,
+        email,
+        phoneNumber,
+        companyId,
+        taxId,
+        isActive
+      } = editedRowData
+      reset({
         companyName: companyName,
-        primaryContactName: primaryContatctName ||'',
+        primaryContactName: primaryContatctName || '',
         address: address,
         email: email,
         phoneNumber: phoneNumber,
@@ -123,26 +133,30 @@ const SidebarAddClient = props => {
         isActive: isActive
       })
     }
-  },[editedRowData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editedRowData, editTrigger])
 
   const onSubmit = data => {
-    const profilePhoto = (profile == null ) ? '' :  profile[0].base64String;
-const contactName = data.primaryContactName;
-    delete data.primaryContactName;
+    const profilePhoto = profile == null ? '' : profile[0].base64String
+    const contactName = data.primaryContactName
+    delete data.primaryContactName
 
-    const req = {profilePhoto : profilePhoto, primaryContatctName : contactName,  ...data}
-    dispatch(editedRowData ? updateClient({id: editedRowData?.id, ...req}) : addClients(req))
+    const successFunction = () => {
+      dispatch(fetchClients())
+      // toast.success(editedRowData ? 'Client Updated' : 'Client Created')
+      toggle()
+      handleEdit(null)
+      reset(defaultValues)
+    }
+
+    const req = { profilePhoto: profilePhoto, primaryContatctName: contactName, ...data }
+    dispatch(editedRowData ? updateClient({ id: editedRowData?.id, ...req }) : addClients(req))
       .then(unwrapResult)
       .then(res => {
-        if (res.status === 200 || res.status === 201) {
-          dispatch(fetchClients())
-          toast.success(editedRowData ? 'Client Updated' : 'Client Created')
-          toggle()
-          handleEdit(null)
-          reset()
-        } else {
-          toast.error(res.data)
-        }
+        handleResponse(editedRowData ? 'update' : 'create', res.data, successFunction)
+      })
+      .catch(error => {
+        toast.error(error.message)
       })
   }
 
@@ -152,7 +166,7 @@ const contactName = data.primaryContactName;
 
   const handleClose = () => {
     toggle()
-    reset()
+    reset(defaultValues)
     setProfile(null)
   }
 
@@ -345,9 +359,7 @@ const contactName = data.primaryContactName;
                 />
               )}
             />
-            {errors.taxId && (
-              <FormHelperText sx={{ color: 'error.main' }}>{errors.taxId.message}</FormHelperText>
-            )}
+
           </FormControl>
 
           <Box sx={{ display: 'flex', gap: 5, alignItems: 'center', justifyContent: 'flex-end' }}>

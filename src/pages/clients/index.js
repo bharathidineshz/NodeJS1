@@ -39,6 +39,7 @@ import AddClientDrawer from 'src/views/clients/list/AddClientDrawer'
 import { useRouter } from 'next/router'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
+import { handleResponse } from 'src/helpers/helpers'
 
 // ** Vars
 const userRoleObj = {
@@ -75,6 +76,7 @@ const ClientList = ({ apiData }) => {
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
   const [editedRowData, setEditedRowData] = useState(null)
+  const [editTrigger, seteditTrigger] = useState(false)
   const [filteredData, setFilteredData] = useState([])
 
   // ** Hooks
@@ -82,7 +84,7 @@ const ClientList = ({ apiData }) => {
   const store = useSelector(state => state.clients)
   useEffect(() => {
     dispatch(fetchClients())
-  }, [dispatch, store.clients])
+  }, [])
 
   const handleFilter = useCallback(val => {
     setValue(val)
@@ -196,17 +198,22 @@ const ClientList = ({ apiData }) => {
 
   const handleEdit = rowData => e => {
     setEditedRowData(rowData)
+    seteditTrigger(!editTrigger)
     toggleAddUserDrawer() // Open the drawer
   }
 
   const handleDelete = id => e => {
+    const successFunction = () => {
+      dispatch(fetchClients())
+    }
+
     dispatch(deleteClient(id))
       .then(unwrapResult)
       .then(res => {
-        if (res.status === 200) {
-          toast.success('Client Deleted')
-          dispatch(fetchClients())
-        }
+        handleResponse('delete', res.data, successFunction)
+      })
+      .catch(err => {
+        toast.error(err.message)
       }) // Open the drawer
   }
 
@@ -239,6 +246,7 @@ const ClientList = ({ apiData }) => {
         toggle={toggleAddUserDrawer}
         handleEdit={handleEdit}
         editedRowData={editedRowData}
+        editTrigger={editTrigger}
       />
     </Grid>
   )

@@ -55,7 +55,7 @@ export const postTask = createAsyncThunk('projects/postTask', async params => {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 
-  return response
+  return response.data
 })
 
 //** fetch categories */
@@ -147,7 +147,7 @@ export const putTask = createAsyncThunk('projects/putTask', async params => {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
 
-    return response
+    return response.data
   } catch (error) {
     toast.error(error.message, { duration: 3000, position: 'top-right' })
 
@@ -323,6 +323,7 @@ export const appProjects = createSlice({
       if (action.payload?.result.isSuccess) state.project.uniqueId = data
     })
     builder.addCase(fetchProjects.fulfilled, (state, action) => {
+
       action.payload?.result?.forEach(project => {
         const client = state.allClients.find(c => c.id === project.clientId)
         project.clientName = client ? client.companyName : ''
@@ -330,6 +331,7 @@ export const appProjects = createSlice({
       state.allProjects = action.payload?.result
     })
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
+
       const users = action.payload?.result?.map(user => ({
         ...user,
         userName: `${user.firstName} ${user.lastName}`
@@ -365,7 +367,9 @@ export const appProjects = createSlice({
       state.userProjects = action.payload?.result || []
     })
     builder.addCase(fetchProjectAssignees.fulfilled, (state, action) => {
-      const assignees = action.payload.filter(o => o.projectId == localStorage.getItem('projectId'))
+      const assignees = action.payload.result?.filter(
+        o => o.projectId == localStorage.getItem('projectId')
+      )
       const tempUsers = []
       assignees.forEach(user => {
         const _user = state.users?.find(o => o.id === user.userId)
