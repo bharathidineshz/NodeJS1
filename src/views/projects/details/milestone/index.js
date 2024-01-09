@@ -59,10 +59,11 @@ const MileStone = () => {
   const store = useSelector(state => state.projects)
 
   useEffect(() => {
-    dispatch(fetchCategories()).then(()=>{
-      dispatch(fetchMileStones(localStorage.getItem('projectId')))
+    const projectId = localStorage.getItem('projectId')
+    dispatch(fetchCategories()).then(() => {
+      dispatch(fetchMileStones(projectId))
     })
-  }, [dispatch])
+  }, [])
 
   return (
     <Timeline position={hiddenMD ? 'right' : 'alternate'}>

@@ -89,11 +89,20 @@ const NewMileStone = ({ isOpen, setOpen }) => {
     startDate: new Date(),
     endDate: new Date(),
     categories: [],
-    categoryList: []
+    categoryList: [],
+    minDate: new Date(),
+    maxDate: null
   })
 
   useEffect(() => {
-    setMilestone({ ...milestone, categoryList: store.categories })
+    // minDate = new Date(JSON.parse(localStorage.getItem('category'))) //Project start date
+    // maxDate = new Date(JSON.parse(localStorage.getItem('category'))) //Project ENd date
+    setMileStones(state => ({
+      ...state,
+      categoryList: store.categories
+      // minDate: minDate,
+      // maxDate: maxDate
+    }))
   }, [store.categories])
 
   const {
@@ -181,8 +190,6 @@ const NewMileStone = ({ isOpen, setOpen }) => {
 
   const currentYear = new Date().getFullYear()
   //const minDate = new Date(currentYear, 0, 1)
-  const minDate = new Date(JSON.parse(localStorage.getItem('category'))) //Project start date
-  const maxDate = new Date(JSON.parse(localStorage.getItem('category'))) //Project ENd date
 
   return (
     <Box>
@@ -269,9 +276,8 @@ const NewMileStone = ({ isOpen, setOpen }) => {
                         id='picker-filter-from-date'
                         selected={value}
                         popperPlacement='bottom'
-                       
-                        minDate={minDate}
-                        maxDate={maxDate}
+                        minDate={milestone.minDate}
+                        // maxDate={milestone.maxDate}
                         onChange={e => {
                           onChange(e), handleFromDateChange(e)
                         }}
@@ -314,7 +320,7 @@ const NewMileStone = ({ isOpen, setOpen }) => {
                         popperPlacement='bottom'
                         onChange={onChange}
                         minDate={watch('startDate')}
-                        maxDate={maxDate}
+                        // maxDate={maxDate}
                         customInput={
                           <CustomInput
                             label='End Date'

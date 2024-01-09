@@ -8,7 +8,7 @@ import instance from 'src/store/endpoints/interceptor'
 import { parseMarker } from '@fullcalendar/core/internal'
 import toast from 'react-hot-toast'
 import { formatLocalDate } from 'src/helpers/dateFormats'
-import { CATEGORIES, FEEDBACKS, PROJECT_MEMBERS, TASk_LIST } from 'src/helpers/constants'
+import { FEEDBACKS } from 'src/helpers/constants'
 
 // ** Fetch Reports
 export const fetchClients = createAsyncThunk('projects/fetchClients', async params => {
@@ -73,7 +73,7 @@ export const fetchTasks = createAsyncThunk('projects/fetchTasks', async params =
 })
 
 export const fetchMileStones = createAsyncThunk('projects/fetchMileStones', async params => {
-  const response = await instance.get(endpoints.getMilestone(params))
+  const response = await instance.get(endpoints.mileStoneById(params))
 
   return response.data
 })
@@ -118,7 +118,7 @@ export const postCategory = createAsyncThunk('projects/postCategory', async para
 
 export const postMileStone = createAsyncThunk('projects/postMileStone', async params => {
   const response = await instance.post(endpoints.mileStones, params)
-  
+
   //dispatch(fetchMileStones(localStorage.getItem('projectId')))
   return response
 })
@@ -296,10 +296,10 @@ export const appProjects = createSlice({
     },
     setProjectMembers: (state, { payload }) => {
       state.projectMembers = payload
-    },
-    setMileStones: (state, { payload }) => {
-      state.mileStones = payload
-    },
+    }, setMileStones
+      : (state, { payload }) => {
+        state.mileStones = payload
+      },
     setFeedbacks: (state, { payload }) => {
       state.feedbacks = payload
     },
@@ -360,7 +360,6 @@ export const appProjects = createSlice({
     builder.addCase(fetchMileStones.fulfilled, (state, action) => {
       var mileStones = action.payload.result
       //.filter(o => o.projectId === state.selectedProject?.id)
-      debugger;
       mileStones = mileStones.sort((start, end) => {
         return new Date(start.startDate) - new Date(end.endDate)
       })

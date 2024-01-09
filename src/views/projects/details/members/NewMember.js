@@ -51,12 +51,11 @@ import toast from 'react-hot-toast'
 import CustomPeoplePicker from 'src/views/components/autocomplete/CustomPeoplePicker'
 import { unwrapResult } from '@reduxjs/toolkit'
 import { projectAssigneeRequest } from 'src/helpers/requests'
-import { postAssignee, fetchProjectAssignee } from 'src/store/apps/projects'
+import { postAssignee, fetchProjectAssignees } from 'src/store/apps/projects'
 import { handleResponse } from 'src/helpers/helpers'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useRouter } from 'next/router';
-
+import { useRouter } from 'next/router'
 
 const ITEM_HEIGHT = 48
 const ITEM_PADDING_TOP = 8
@@ -141,11 +140,10 @@ const NewMember = ({ isOpen, setOpen }) => {
     mode: 'onChange',
     resolver: yupResolver(schema)
   })
-  const router = useRouter();
-
+  const router = useRouter()
 
   const updateMember = newReq => {
-    dispatch(fetchProjectAssignee())
+    dispatch(fetchProjectAssignees())
   }
   const onSubmit = data => {
     const req = {

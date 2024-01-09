@@ -132,7 +132,7 @@ export const endpoints = {
   getProjects: 'api/Project/GetProject',
   deleteProject: id => `api/Project?id=${id}`,
 
-  projectMembers: id => `api/ProjectAssignee/GetProjectAssigneesByID?projectId=${id}`,
+  projectMembers: id => `api/ProjectAssignee?projectId=${id}`,
 
   projectAssignees: 'api/ProjectAssignee',
   projectsByUser: '/api/Project/GetProjectsByUser',
@@ -146,7 +146,8 @@ export const endpoints = {
   //milestone
 
   mileStones: 'api/Milestone',
-  getMilestone :projectId => `api/Milestone?ProjectId=${projectId}`,
+  mileStoneById:id =>`/api/Milestone?projectId=${id}`,
+
 
   //skills
   skills: 'api/MasterSkill',
