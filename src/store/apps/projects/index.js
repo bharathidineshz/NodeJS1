@@ -142,6 +142,12 @@ export const putProject = createAsyncThunk('projects/putProject', async params =
   }
 })
 
+export const putAssignee = createAsyncThunk('projects/puttAssignee', async params => {
+  const response = await instance.put(endpoints.projectAssignees, params)
+
+  return response
+})
+
 export const putTask = createAsyncThunk('projects/putTask', async params => {
   try {
     const response = await instance.put(endpoints.putTask, params, {
@@ -189,6 +195,20 @@ export const putProjectMap = createAsyncThunk('projects/putProjectMap', async pa
   return response.data
 })
 
+export const putMilestone = createAsyncThunk(
+  'projects/putMilestone',
+  async (params, { dispatch }) => {
+    try {
+      const response = await instance.put(endpoints.updateMilestome, params)
+
+      return response.data
+    } catch (error) {
+      console.error('Error updating milestone:', error)
+      throw error
+    }
+  }
+)
+
 export const getProjectDetails = createAsyncThunk('projects/getProjectDetails', async params => {
   const response = await instance.get(endpoints.getProjectDetails(params))
 
@@ -216,6 +236,8 @@ export const appProjects = createSlice({
     client: {},
     allTasks: [],
     editProject: {},
+    editMilestone: null,
+    editProjectMember: null,
     projectDetails: {},
     selectedProject: {},
     projectReport: [],
@@ -247,10 +269,10 @@ export const appProjects = createSlice({
     selectedCategory: '',
     categories: [],
     mileStones: [],
-    feedbacks: FEEDBACKS,
+    feedbacks: [],
     requiredSkills: [],
     projectAssignees: [],
-    userProjects: [],
+    userProjects: null,
     //boolean
     isEmpty: false
   },
@@ -279,6 +301,9 @@ export const appProjects = createSlice({
     setSelectedProject: (state, action) => {
       state.selectedProject = action.payload?.result
     },
+    setUserProject: (state, action) => {
+      state.userProjects = action.payload
+    },
     setEditTask: (state, { payload }) => {
       state.editTask =
         Object.keys(payload).length > 0
@@ -296,10 +321,19 @@ export const appProjects = createSlice({
     },
     setProjectMembers: (state, { payload }) => {
       state.projectMembers = payload
-    }, setMileStones
-      : (state, { payload }) => {
-        state.mileStones = payload
-      },
+    },
+    setMileStones: (state, { payload }) => {
+      state.mileStones = payload
+    },
+    setEditMilestone: (state, action) => {
+      state.editMilestone = action.payload
+    },
+    setEditProjectMember: (state, action) => {
+      state.editProjectMember = action.payload
+    },
+    setMileStones: (state, { payload }) => {
+      state.mileStones = payload
+    },
     setFeedbacks: (state, { payload }) => {
       state.feedbacks = payload
     },
@@ -328,14 +362,11 @@ export const appProjects = createSlice({
     //   }))
     //   state.projectReport = tasksWithUsernames
     // })
+
     builder.addCase(postProject.fulfilled, (state, action) => {
       state.project.uniqueId = action.payload.data.result.id
     })
     builder.addCase(fetchProjects.fulfilled, (state, action) => {
-      action.payload?.result?.forEach(project => {
-        const client = state.allClients.find(c => c.id === project.clientId)
-        project.clientName = client ? client.companyName : ''
-      })
       state.allProjects = action.payload?.result
     })
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
@@ -347,7 +378,7 @@ export const appProjects = createSlice({
     })
     builder.addCase(fetchCategories.fulfilled, (state, action) => {
       const categories = action.payload?.result?.filter(
-        o => o.projectId === localStorage.getItem('projectId')
+        o => o.projectId == localStorage.getItem('projectId')
       )
       state.categories = categories || []
     })
@@ -365,6 +396,13 @@ export const appProjects = createSlice({
       })
       state.mileStones = mileStones || []
     })
+    builder.addCase(putMilestone.fulfilled, (state, action) => {
+      const updatedMilestone = action.payload
+      const index = state.mileStones.findIndex(m => m.id === updatedMilestone.id)
+      if (index !== -1) {
+        state.mileStones[index] = updatedMilestone
+      }
+    })
     builder.addCase(fetchRequiredSkills.fulfilled, (state, action) => {
       state.requiredSkills = action.payload?.result || []
     })
@@ -372,7 +410,7 @@ export const appProjects = createSlice({
       state.projectMembers = action.payload?.result || []
     })
     builder.addCase(fetchProjectsByUser.fulfilled, (state, action) => {
-      state.userProjects = action.payload?.result || []
+      state.userProjects = action.payload?.result
     })
     builder.addCase(fetchProjectAssignees.fulfilled, (state, action) => {
       const assignees = action.payload.result?.filter(
@@ -411,7 +449,10 @@ export const {
   setCategories,
   setTaskLists,
   setEmpty,
-  setProjectMembers
+  setProjectMembers,
+  setEditMilestone,
+  setEditProjectMember,
+  setUserProject
 } = appProjects.actions
 
 export default appProjects.reducer

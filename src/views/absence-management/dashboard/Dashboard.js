@@ -15,6 +15,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getRandomColor } from 'src/helpers/helpers'
 import { CHART_COLORS, NODATA } from 'src/helpers/constants'
 import { useTheme } from '@emotion/react'
+import { Spinner } from 'src/@core/components/spinner'
+import { fetchDashboard } from 'src/store/absence-management'
+import { setDate } from 'date-fns'
 
 const RADIAN = Math.PI / 180
 
@@ -32,8 +35,24 @@ const renderCustomizedLabel = props => {
   )
 }
 
-const LeaveDashboard = () => {
+const renderPieValue = props => {
+  // ** Props
+  const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+  const x = cx + radius * Math.cos(-midAngle * RADIAN)
+  const y = cy + radius * Math.sin(-midAngle * RADIAN)
+
+  return (
+    <text x={x} y={y} fill='#fff' textAnchor='middle' dominantBaseline='central'>
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  )
+}
+
+const LeaveDetails = () => {
   const [data, setData] = useState([])
+  const [isLoading, setLoading] = useState(true)
+  const [show, setShow] = useState(false)
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
   const theme = useTheme()
@@ -41,7 +60,6 @@ const LeaveDashboard = () => {
   useEffect(() => {
     const _data = []
     const colors = CHART_COLORS(theme)
-
     store.dashboards?.forEach((p, i) => {
       _data.push({
         name: p.name,
@@ -50,8 +68,15 @@ const LeaveDashboard = () => {
       })
     })
 
-    setData(_data)
-  }, [store.dashboards, theme])
+    if (store.dashboards != null) {
+      setData(_data)
+      setLoading(false)
+    }
+
+    return () => {
+      setShow(false)
+    }
+  }, [dispatch, store.dashboards, store.users, theme])
 
   return (
     <Card>
@@ -62,46 +87,59 @@ const LeaveDashboard = () => {
         }}
       />
       <CardContent>
-        {data != null && data.length > 0 ? (
-          <>
-            <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
-              <ResponsiveContainer>
-                <PieChart style={{ direction: 'ltr' }} stroke='none'>
-                  <Pie data={data} innerRadius={50} dataKey='value' label labelLine={false}>
-                    {data.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 4, justifyContent: 'center' }}>
-              {data.map((item, key) => (
-                <Box
-                  key={key}
-                  sx={{
-                    mr: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    '& svg': { mr: 1.5, color: item.color }
-                  }}
-                >
-                  <Icon icon='mdi:circle' fontSize='0.75rem' />
-                  <Typography variant='body2'>{item.name}</Typography>
-                </Box>
-              ))}
-            </Box>
-          </>
+        {isLoading ? (
+          <Spinner />
         ) : (
-          <div className='gap-1'>
-            <Typography>{NODATA.oops}</Typography>
-            <img src='/images/cards/pose_m18.png' alt='' height='80' style={{ marginTop: -30 }} />
-          </div>
+          <>
+            {data?.length > 0 && (
+              <>
+                <Box sx={{ height: data?.length > 0 ? 280 : 0 }}>
+                  <ResponsiveContainer>
+                    <PieChart style={{ direction: 'ltr' }} stroke='none'>
+                      <Pie data={data} innerRadius={50} dataKey='value' label labelLine={false}>
+                        {data.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 4, justifyContent: 'center' }}>
+                  {data.map((item, key) => (
+                    <Box
+                      key={key}
+                      sx={{
+                        mr: 6,
+                        display: 'flex',
+                        alignItems: 'center',
+                        '& svg': { mr: 1.5, color: item.color }
+                      }}
+                    >
+                      <Icon icon='mdi:circle' fontSize='0.75rem' />
+                      <Typography variant='body2'>{item.name}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
+
+            {store.policies != null && store.policies.length == 0 && (
+              <div className='gap-1'>
+                <Typography>{NODATA.noLeave}</Typography>
+                <img
+                  src='/images/cards/pose_m18.png'
+                  alt=''
+                  height='80'
+                  style={{ marginTop: -30 }}
+                />
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
   )
 }
 
-export default LeaveDashboard
+export default LeaveDetails

@@ -14,22 +14,22 @@ const ClientTableHeader = props => {
   return (
     <Box
       sx={{
-        p: 5,
-        pb: 3,
+        pb: 5,
+        pr: 5,
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'flex-end'
       }}
     >
-      <Button
+      {/* <Button
         sx={{ mr: 4, mb: 2 }}
         color='secondary'
         variant='outlined'
         startIcon={<Icon icon='mdi:export-variant' fontSize={20} />}
       >
         Export
-      </Button>
+      </Button> */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size='small'
@@ -39,7 +39,7 @@ const ClientTableHeader = props => {
           onChange={e => handleFilter(e.target.value)} // Pass the search value to handleFilter
         />
 
-        <Button sx={{ mb: 2 }} variant='contained' onClick={()=> setOpen()}>
+        <Button sx={{ mb: 2 }} variant='contained' onClick={() => setOpen()}>
           New Client
         </Button>
       </Box>

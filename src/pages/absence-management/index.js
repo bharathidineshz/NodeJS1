@@ -30,7 +30,7 @@ import NewLeavePolicy from 'src/views/absence-management/leave-policy/NewLeavePo
 import Holidays from 'src/views/absence-management/holidays'
 import { useDispatch, useSelector } from 'react-redux'
 import FallbackSpinner from 'src/layouts/components/LogoSpinner'
-import SimpleBackdrop from 'src/@core/components/spinner'
+import SimpleBackdrop, { Spinner } from 'src/@core/components/spinner'
 import SidebarAddHoliday from 'src/views/pages/account-settings/holiday/AddHolidayDrawer'
 import { fetchHolidays } from 'src/store/apps/accountSetting'
 
@@ -91,9 +91,8 @@ const LeaveManagement = ({ tab, data }) => {
       // Perform localStorage action
       const role = localStorage?.getItem('roleId')
       setRole(role)
-      dispatch(fetchHolidays())
     }
-  }, [tab])
+  }, [activeTab, dispatch, tab])
 
   const tabContentList =
     role == 1 || role == 2 || role == 3
@@ -188,8 +187,9 @@ const LeaveManagement = ({ tab, data }) => {
                     <Box
                       sx={{ mt: 6, display: 'flex', alignItems: 'center', flexDirection: 'column' }}
                     >
-                      <CircularProgress sx={{ mb: 4 }} />
-                      <Typography>Loading...</Typography>
+                      {/* <CircularProgress sx={{ mb: 4 }} />
+                      <Typography>Loading...</Typography> */}
+                      <Spinner />
                     </Box>
                   ) : (
                     <TabPanel sx={{ p: 0 }} value={activeTab}>

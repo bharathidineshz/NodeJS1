@@ -2,7 +2,7 @@ import { Grid, Typography } from '@mui/material'
 import { unwrapResult } from '@reduxjs/toolkit'
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchCategories, fetchTasks } from 'src/store/apps/projects'
+import { fetchCategories, fetchTasks, setEmpty } from 'src/store/apps/projects'
 import EmptyTask from 'src/views/projects/details/task-category/tasks/EmptyTask'
 import TaskLists from 'src/views/projects/details/task-category/tasks/TaskLists'
 
@@ -15,11 +15,13 @@ const TaskCategory = () => {
     dispatch(fetchTasks(localStorage.getItem('projectId')))
       .then(unwrapResult)
       .then(res => {
-        res?.result.tasksByCategory?.length > 0 ? setIsEmpty(false) : setIsEmpty(true)
+        res?.result.tasksByCategory?.length > 0
+          ? dispatch(setEmpty(false))
+          : dispatch(setEmpty(true))
       })
-  }, [dispatch])
+  }, [])
 
-  return <Grid>{isEmpty ? <EmptyTask /> : <TaskLists />}</Grid>
+  return <Grid>{store.isEmpty ? <EmptyTask /> : <TaskLists />}</Grid>
 }
 
 export default TaskCategory

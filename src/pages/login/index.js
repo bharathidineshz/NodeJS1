@@ -49,9 +49,11 @@ import { endpointURL, endpoints } from 'src/store/endpoints/endpoints'
 import toast from 'react-hot-toast'
 import { base, identifyURL } from 'src/store/endpoints/interceptor'
 import { useDispatch, useSelector } from 'react-redux'
-import { setUserRoleId } from 'src/store/apps/user'
-import SimpleBackdrop from 'src/@core/components/spinner'
+import { fetchUserByEmail, setUserId, setUserRoleId } from 'src/store/apps/user'
+import SimpleBackdrop, { BackdropSpinner } from 'src/@core/components/spinner'
 import { customErrorToast } from 'src/helpers/custom-components/toasts'
+import { fetchUsers } from 'src/store/absence-management'
+import { unwrapResult } from '@reduxjs/toolkit'
 
 // ** Styled Components
 const LoginIllustrationWrapper = styled(Box)(({ theme }) => ({
@@ -128,6 +130,7 @@ const LoginPage = () => {
   const router = useRouter()
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
+  const [user, setUser] = useState(null)
 
   // ** Vars
   const { skin } = settings
@@ -149,21 +152,28 @@ const LoginPage = () => {
     try {
       const response = await axios.post(base.dev + endpoints.login, data)
       const { result } = response.data
+      window.localStorage.setItem('accessToken', result.accessToken)
+      const userData = jwt.decode(result.accessToken, { complete: true }).payload
+      window.localStorage.setItem('userData', JSON.stringify(userData))
+      window.localStorage.setItem('roleId', userData?.roleId)
+      setUser(userData)
 
       if (result.accessToken) {
-        window.localStorage.setItem('accessToken', result.accessToken)
-        const userData = jwt.decode(result.accessToken, { complete: true }).payload
-        window.localStorage.setItem('userData', JSON.stringify(userData))
-        window.localStorage.setItem('roleId', userData?.roleId)
-        dispatch(setUserRoleId(userData?.roleId))
-        setLoading(false)
-        JSON.parse(userData.org)
-          ? router.replace({
-              pathname: '/timesheets'
-            })
-          : router.replace({
-              pathname: '/organizational-setup'
-            })
+        dispatch(fetchUserByEmail(userData?.user))
+          .then(unwrapResult)
+          .then(res => {
+            dispatch(setUserRoleId(userData?.roleId))
+            dispatch(setUserId(res.result.id))
+            localStorage.setItem('userId', res.result.id)
+            JSON.parse(userData.org)
+              ? router.replace({
+                  pathname: '/absence-management/leaves'
+                })
+              : router.replace({
+                  pathname: '/organizational-setup'
+                })
+            setLoading(false)
+          })
       } else {
         setLoading(false)
         setDisable(false)
@@ -206,7 +216,7 @@ const LoginPage = () => {
           skin === 'bordered' && !hidden ? { borderLeft: `1px solid ${theme.palette.divider}` } : {}
         }
       >
-        {loading && <SimpleBackdrop />}
+        {loading && <BackdropSpinner />}
         <Box
           sx={{
             p: 12,

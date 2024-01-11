@@ -51,7 +51,17 @@ import * as yup from 'yup'
 import CustomSkillPicker from 'src/views/components/autocomplete/CustomSkillPicker'
 import { userRequest } from 'src/helpers/requests'
 import { useDispatch, useSelector } from 'react-redux'
-import { activateUser, fetchSkills, fetchUsers, setUsers, updateUser } from 'src/store/apps/user'
+import {
+  activateUser,
+  fetchSkills,
+  fetchUsers,
+  setActivate,
+  setActivateDialog,
+  setSuspend,
+  setSuspendDialogOpen,
+  setUsers,
+  updateUser
+} from 'src/store/apps/user'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
@@ -116,17 +126,16 @@ const schema = yup.object().shape({
   reportingManager: yup.object().required('Reporting Manager is required')
 })
 
-const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
+const UserViewLeft = ({ currentUser, rpm, index, updateUserData, setLoading }) => {
   // ** States
   const [openEdit, setOpenEdit] = useState(false)
   const [openPlans, setOpenPlans] = useState(false)
-  const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false)
-  const [activateDialog, setActivateDialog] = useState(false)
   const [isActivated, setisActivated] = useState(false)
-
   const [alertDialog, setalertDialog] = useState(false)
   const [skills, setSkills] = useState([])
+  const [items, setItems] = useState(null)
+  const [user, setUser] = useState(null)
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
   const {
@@ -142,6 +151,20 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
   })
 
   useEffect(() => {
+    updateUserState()
+  }, [store.isSuspended, store.isActivated])
+
+  useEffect(() => {
+    if (currentUser == null) {
+      updateUserData()
+    } else {
+      setUser(currentUser)
+      dispatch(setSuspend(false))
+      dispatch(setActivate(false))
+    }
+  }, [currentUser])
+
+  useEffect(() => {
     user &&
       reset({
         fullName: user?.fullName,
@@ -155,23 +178,35 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
     dispatch(fetchSkills())
   }, [user, openEdit])
 
+  useEffect(() => {
+    const items = store.skills.filter(u => !skills.some(o => o.id === u.id))
+    setItems(items)
+  }, [skills])
+
   // Handle Edit dialog
   const handleEditClickOpen = () => setOpenEdit(true)
   const handleEditClose = () => setOpenEdit(false)
 
-  // Handle Upgrade Plan dialog
-  const handlePlansClickOpen = () => setOpenPlans(true)
-  const handlePlansClose = () => setOpenPlans(false)
+  //update user
+
+  const updateUserState = () => {
+    let _user = { ...user }
+    if (store.isSuspended) {
+      _user.isActive = false
+    } else if (store.isActivated) {
+      _user.isActive = true
+    }
+    setUser(_user)
+  }
 
   //UPDATE Request STATE
-  const updateUserState = newUser => {
-    let users = [...store.users]
-    const indexToReplace = users.findIndex(item => item.id === newUser.id)
-
-    if (indexToReplace !== -1) {
-      users[indexToReplace] = newUser
+  const updateState = newUser => {
+    let _user = { ...user }
+    _user = {
+      ...user,
+      ...newUser
     }
-    dispatch(setUsers(users))
+    setUser(_user)
   }
 
   const onSubmit = async data => {
@@ -188,35 +223,49 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
     dispatch(updateUser(request))
       .then(unwrapResult)
       .then(res => {
-        handleResponse('update', res, updateUserState)
-        updateUserData()
+        handleResponse('update', res, updateState)
         setLoading(false)
       })
   }
 
   const handleUser = () => {
     if (user.isActive) {
-      setSuspendDialogOpen(true)
+      dispatch(setSuspendDialogOpen(true))
     } else {
-      setActivateDialog(true)
+      dispatch(setActivateDialog(true))
     }
   }
 
-  const handleSkills = value => {
-    setSkills(value)
+  const handleSkills = values => {
+    setSkills(values)
+    const _items = [...items]
+    const _index = _items.findIndex(o => o.id == values[values.length - 1].id)
+    _items.splice(_index, 1)
+    setItems(_items)
+  }
+
+  const handleRemoveSkill = value => {
+    const _skills = [...skills]
+    const _index = _skills.findIndex(o => o.id == value.id)
+    _skills.splice(_index, 1)
+    setSkills(_skills)
   }
 
   const handleActivate = () => {
+    dispatch(setActivateDialog(false))
     dispatch(activateUser(store.userId))
       .then(unwrapResult)
       .then(res => {
-        setisActivated(true)
-        setalertDialog(true)
-        setActivateDialog(false)
+        if (!res.hasError) {
+          setisActivated(true)
+          setalertDialog(true)
+          dispatch(setActivate(true))
+          dispatch(setSuspend(false))
+        }
       })
       .catch(err => {
         toast.error('Error while activating user')
-        setActivateDialog(false)
+        dispatch(setActivateDialog(false))
         setalertDialog(true)
       })
   }
@@ -290,7 +339,9 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
             </CardContent> */}
 
             <CardContent>
-              <Typography variant='h6'>Details</Typography>
+              <Grid className='d-flex justify-between'>
+                <Typography variant='h6'>Details</Typography>
+              </Grid>
               <Divider sx={{ my: theme => `${theme.spacing(4)} !important` }} />
               <Box sx={{ pb: 1 }}>
                 <Box sx={{ display: 'flex', mb: 2 }}>
@@ -359,9 +410,9 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
             </CardContent>
 
             <CardActions sx={{ display: 'flex', justifyContent: 'center' }}>
-              {/* <Button color='error' variant='outlined' onClick={handleUser}>
+              <Button color='error' variant='outlined' onClick={handleUser}>
                 {user.isActive ? 'Suspend' : 'Activate'}
-              </Button> */}
+              </Button>
               <Button variant='contained' sx={{ mr: 2 }} onClick={handleEditClickOpen}>
                 Edit
               </Button>
@@ -570,9 +621,11 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
                     <Grid item xs={12} sm={6}>
                       <CustomSkillPicker
                         values={skills}
-                        items={store.skills ? store.skills : []}
+                        items={items?.length > 0 ? items : store.skills || []}
                         label='Skills'
                         setSkills={handleSkills}
+                        onRemove={handleRemoveSkill}
+                        originalItems={store.skills ? store.skills : []}
                       />
                     </Grid>
                   </Grid>
@@ -602,8 +655,8 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
 
             <Dialog
               fullWidth
-              open={activateDialog}
-              onClose={() => setActivateDialog(false)}
+              open={store.activateDialog}
+              onClose={() => dispatch(setActivateDialog(false))}
               sx={{ '& .MuiPaper-root': { width: '100%', maxWidth: 512 } }}
             >
               <DialogContent
@@ -655,7 +708,7 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
                   variant='outlined'
                   color='secondary'
                   onClick={() => {
-                    setActivateDialog(false)
+                    dispatch(setActivateDialog(false))
                   }}
                 >
                   Cancel
@@ -663,7 +716,10 @@ const UserViewLeft = ({ user, rpm, index, updateUserData, setLoading }) => {
               </DialogActions>
             </Dialog>
 
-            <UserSuspendDialog open={suspendDialogOpen} setOpen={setSuspendDialogOpen} />
+            <UserSuspendDialog
+              open={store.suspendDialogOpen}
+              setOpen={value => dispatch(setSuspendDialogOpen(value ? true : false))}
+            />
             <UserSubscriptionDialog
               open={subscriptionDialogOpen}
               setOpen={setSubscriptionDialogOpen}

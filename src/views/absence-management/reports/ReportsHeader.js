@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import SimpleBackdrop from 'src/@core/components/spinner'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { setLoading } from 'src/store/authentication/register'
-import { fetchUserReports } from 'src/store/absence-management'
+import { fetchUserReports, fetchUsers } from 'src/store/absence-management'
 import CustomInput from 'src/views/forms/form-elements/pickers/PickersCustomInput'
 
 const ReportsHeader = ({ user, fromDate, toDate, getData }) => {
@@ -26,6 +26,10 @@ const ReportsHeader = ({ user, fromDate, toDate, getData }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
   const isSM = useMediaQuery(theme => theme.breakpoints.up('sm'))
+
+  useEffect(() => {
+    store.users == null && dispatch(fetchUsers())
+  }, [])
 
   useEffect(() => {
     setReport(prev => ({ ...prev, start: fromDate, end: toDate, user: user }))
@@ -55,12 +59,14 @@ const ReportsHeader = ({ user, fromDate, toDate, getData }) => {
     <Grid display='flex' flexWrap='wrap' justifyContent='start' columnGap={6} sx={{ m: 5 }}>
       <Grid xs={12} sm={4} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>
         <Autocomplete
-          options={store.users}
+          options={store.users ? store.users : []}
           id='autocomplete-limit-tags'
           getOptionLabel={option => option.fullName}
           value={report.user}
           onChange={(e, value) => setReport(report => ({ ...report, user: value }))}
           renderInput={params => <TextField {...params} label='Search User' placeholder='User' />}
+          noOptionsText='No Users'
+          loading={store.users == null}
         />
       </Grid>
       <Grid xs={12} sm={4} sx={{ pt: theme => `${theme.spacing(4)} !important` }}>

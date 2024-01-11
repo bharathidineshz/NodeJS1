@@ -73,6 +73,7 @@ const NewTaskCategory = ({ isOpen, setOpen }) => {
       taskCategory: newCategory.name,
       tasks: []
     })
+    dispatch(setEmpty(false))
     dispatch(setTaskLists(taskList))
   }
 

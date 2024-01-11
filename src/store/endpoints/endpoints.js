@@ -5,10 +5,13 @@ export const endpointURL = endpoint => {
 }
 
 export const endpoints = {
-  login: 'api/Authorization/Login',
-  userByEmail: 'api/User/Get?email=',
+  //User
   allUsers: 'api/User/GetUsers',
+  userByEmail: email => `api/User/GetUserByEmail?emailId=${email}`,
+  adduser: 'api/User/CreateUser/',
+  Updateuser: 'api/User/UpdateUser/',
 
+  login: 'api/Authorization/Login',
   // refresh token
   refreshtoken: 'api/Account/refresh-token',
 
@@ -22,8 +25,6 @@ export const endpoints = {
   tenant: 'api/Tenant',
 
   userInvite: 'api/User/UserInvite',
-  adduser: 'api/User/CreateUser/',
-  Updateuser: 'api/User/UpdateUser/',
 
   Deleteuser: id => `api/User/DeleteUser/${id}`,
   Activateuser: id => `api/User/ActivateUser/${id}`,
@@ -135,7 +136,7 @@ export const endpoints = {
   projectMembers: id => `api/ProjectAssignee?projectId=${id}`,
 
   projectAssignees: 'api/ProjectAssignee',
-  projectsByUser: '/api/Project/GetProjectsByUser',
+  projectsByUser: 'api/Project/GetProjectsByUser',
 
   // tasks
   postTask: 'api/Task/CreateTask',
@@ -146,7 +147,7 @@ export const endpoints = {
   //milestone
 
   mileStones: 'api/Milestone',
-  mileStoneById:id =>`/api/Milestone?projectId=${id}`,
+  mileStoneById: id => `/api/Milestone?projectId=${id}`,
 
 
   //skills
@@ -164,11 +165,10 @@ export const endpoints = {
   HRApprovals: 'api/OrganizationLeaveHRApproval',
   deleteHRApproval: 'api/OrganizationLeaveHRApproval',
 
-  //Projet Assignee 
+  //Projet Assignee
 
   AddMember: '/api/ProjectAssignee',
   getMembers: '/api/ProjectAssignee',
-
 
   //leave Management
 

@@ -52,7 +52,7 @@ const ImgShoe = styled('img')(({ theme }) => ({
   borderRadius: theme.shape.borderRadius
 }))
 
-const MileStone = () => {
+const MileStone = ({ setOpen }) => {
   // ** Vars
   const hiddenMD = useMediaQuery(theme => theme.breakpoints.down('md'))
   const dispatch = useDispatch()
@@ -75,7 +75,7 @@ const MileStone = () => {
                 '& svg': { verticalAlign: 'bottom', mx: 4 }
               }}
             >
-              <MileStoneCard data={ms} />
+              <MileStoneCard data={ms} setOpen={setOpen} />
             </TimelineContent>
             <TimelineSeparator>
               <CustomTimelineDot skin='light' color='primary'>

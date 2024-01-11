@@ -1,543 +1,135 @@
-const navigation = () => {
-  return [
-    {
-      title: 'Dashboards',
-      icon: 'mdi:home-outline',
-      badgeContent: 'new',
-      badgeColor: 'error',
-      children: [
-        {
-          title: 'CRM',
-          path: '/dashboards/crm'
-        },
-        {
-          title: 'Analytics',
-          path: '/dashboards/analytics'
-        },
-        {
-          title: 'eCommerce',
-          path: '/dashboards/ecommerce'
-        }
-      ]
-    },
-    {
-      sectionTitle: 'Apps & Pages'
-    },
-    {
-      title: 'Email',
-      icon: 'mdi:email-outline',
-      path: '/apps/email'
-    },
-    {
-      title: 'Chat',
-      icon: 'mdi:message-outline',
-      path: '/apps/chat'
-    },
-    {
-      title: 'Calendar',
-      icon: 'mdi:calendar-blank-outline',
-      path: '/apps/calendar'
-    },
-    {
-      title: 'Timesheets',
-      icon: 'mdi:clock-time-four-outline',
-      auth: false,
-      path: '/timesheets'
-    },
-    {
-      title: 'Clients',
-      icon: 'mdi:account-group-outline',
-      auth: false,
-      path: '/clients'
-    },
-    {
-      title: 'Projects',
-      icon: 'mdi:clipboard-text',
-      auth: false,
-      path: '/projects/list'
-    },
-    {
-      title: 'Reports',
-      icon: 'mdi:chart-line',
+import { useEffect, useState } from 'react'
 
-      // auth: false,
-      children: [
-        {
-          title: 'Utilization',
-          path: '/apps/reports',
-          icon: 'solar:chart-linear'
+const VerticalNavItems = () => {
+  const [role, setRole] = useState(0)
+  useEffect(() => {
+    const role = localStorage?.getItem('roleId')
+    setRole(role)
+  }, [])
 
-          // auth: false
-        },
-        {
-          title: 'Revenue',
-          path: '/apps/financialReports',
-          icon: 'material-symbols:finance-mode'
+  // return role == 1 || role == 2
+  //   ? [
+  //       {
+  //         title: 'Timesheets',
+  //         icon: 'mdi:clock-time-four-outline',
+  //         auth: false,
+  //         path: '/timesheets'
+  //       },
+  //       {
+  //         title: 'Clients',
+  //         icon: 'mdi:account-group-outline',
+  //         auth: false,
+  //         path: '/clients'
+  //       },
+  //       {
+  //         title: 'Projects',
+  //         icon: 'mdi:clipboard-text',
+  //         auth: false,
+  //         path: '/projects/list'
+  //       },
+  //       {
+  //         title: 'Reports',
+  //         icon: 'mdi:chart-line',
 
-          // auth: false
-        },
-        {
-          title: 'Time',
-          path: '/apps/reports/time',
-          icon: 'mdi:clock-time-seven-outline'
+  //         // auth: false,
+  //         children: [
+  //           {
+  //             title: 'Utilization',
+  //             path: '/apps/reports',
+  //             icon: 'solar:chart-linear'
 
-          // auth: false
-        }
-      ]
-    },
-    {
-      title: 'Invoice',
-      icon: 'mdi:file-document-outline',
-      path: '/apps/invoice/list'
-    },
-    {
-      title: 'User',
-      icon: 'mdi:account-outline',
-      auth: false,
-      path: '/users/list'
-    },
+  //             // auth: false
+  //           },
+  //           {
+  //             title: 'Revenue',
+  //             path: '/apps/financialReports',
+  //             icon: 'material-symbols:finance-mode'
 
-    {
-      title: 'Absence Management',
-      icon: 'mdi:calendar-alert-outline',
-      path: '/absence-management/leaves',
-      auth: false
-    },
+  //             // auth: false
+  //           },
+  //           {
+  //             title: 'Time',
+  //             path: '/apps/reports/time',
+  //             icon: 'mdi:clock-time-seven-outline'
 
-    {
-      title: 'Roles & Permissions',
-      icon: 'mdi:shield-outline',
-      children: [
-        {
-          title: 'Permissions',
-          path: '/apps/permissions'
-        }
-      ]
-    },
-    {
-      title: 'Settings',
-      icon: 'mdi:file-document-outline',
-      path: '/settings/Department',
-      auth: false
-    },
-    {
-      title: 'Auth Pages',
-      icon: 'mdi:lock-outline',
-      children: [
-        {
-          title: 'Login',
-          children: [
-            {
-              openInNewTab: true,
-              title: 'Login v1',
-              path: '/pages/auth/login-v1'
-            },
-            {
-              openInNewTab: true,
-              title: 'Login v2',
-              path: '/pages/auth/login-v2'
-            },
-            {
-              openInNewTab: true,
-              title: 'Login With AppBar',
-              path: '/pages/auth/login-with-appbar'
-            }
-          ]
-        },
-        {
-          title: 'Register',
-          children: [
-            {
-              openInNewTab: true,
-              title: 'Register v1',
-              path: '/pages/auth/register-v1'
-            },
-            {
-              openInNewTab: true,
-              title: 'Register v2',
-              path: '/pages/auth/register-v2'
-            },
-            {
-              openInNewTab: true,
-              title: 'Register Multi-Steps',
-              path: '/pages/auth/register-multi-steps'
-            }
-          ]
-        },
-        {
-          title: 'Verify Email',
-          children: [
-            {
-              openInNewTab: true,
-              title: 'Verify Email v1',
-              path: '/pages/auth/verify-email-v1'
-            },
-            {
-              openInNewTab: true,
-              title: 'Verify Email v2',
-              path: '/pages/auth/verify-email-v2'
-            }
-          ]
-        },
-        {
-          title: 'Forgot Password',
-          children: [
-            {
-              openInNewTab: true,
-              title: 'Forgot Password v1',
-              path: '/pages/auth/forgot-password-v1'
-            },
-            {
-              openInNewTab: true,
-              title: 'Forgot Password v2',
-              path: '/pages/auth/forgot-password-v2'
-            }
-          ]
-        },
-        {
-          title: 'Reset Password',
-          children: [
-            {
-              openInNewTab: true,
-              title: 'Reset Password v1',
-              path: '/pages/auth/reset-password-v1'
-            },
-            {
-              openInNewTab: true,
-              title: 'Reset Password v2',
-              path: '/pages/auth/reset-password-v2'
-            }
-          ]
-        },
-        {
-          title: 'Two Steps',
-          children: [
-            {
-              openInNewTab: true,
-              title: 'Two Steps v1',
-              path: '/pages/auth/two-steps-v1'
-            },
-            {
-              openInNewTab: true,
-              title: 'Two Steps v2',
-              path: '/pages/auth/two-steps-v2'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      title: 'Wizard Examples',
-      icon: 'mdi:transit-connection-horizontal',
-      children: [
-        {
-          title: 'Checkout',
-          path: '/pages/wizard-examples/checkout'
-        },
-        {
-          title: 'Property Listing',
-          path: '/pages/wizard-examples/property-listing'
-        },
-        {
-          title: 'Create Deal',
-          path: '/pages/wizard-examples/create-deal'
-        }
-      ]
-    },
+  //             // auth: false
+  //           }
+  //         ]
+  //       },
+  //       {
+  //         title: 'Invoice',
+  //         icon: 'mdi:file-document-outline',
+  //         path: '/apps/invoice/list'
+  //       },
+  //       {
+  //         title: 'User',
+  //         icon: 'mdi:account-outline',
+  //         auth: false,
+  //         path: '/users'
+  //       },
 
-    {
-      icon: 'mdi:vector-arrange-below',
-      title: 'Dialog Examples',
-      path: '/pages/dialog-examples'
-    },
-    {
-      sectionTitle: 'User Interface'
-    },
-    {
-      title: 'Typography',
-      icon: 'mdi:format-letter-case',
-      path: '/ui/typography'
-    },
-    {
-      title: 'Icons',
-      path: '/ui/icons',
-      icon: 'mdi:google-circles-extended'
-    },
-    {
-      title: 'Cards',
-      icon: 'mdi:credit-card-outline',
-      children: [
-        {
-          title: 'Basic',
-          path: '/ui/cards/basic'
-        },
-        {
-          title: 'Advanced',
-          path: '/ui/cards/advanced'
-        },
-        {
-          title: 'Statistics',
-          path: '/ui/cards/statistics'
-        },
-        {
-          title: 'Widgets',
-          path: '/ui/cards/widgets'
-        },
-        {
-          title: 'Gamification',
-          path: '/ui/cards/gamification'
-        },
-        {
-          title: 'Actions',
-          path: '/ui/cards/actions'
-        }
-      ]
-    },
-    {
-      badgeContent: '19',
-      title: 'Components',
-      icon: 'mdi:archive-outline',
-      badgeColor: 'primary',
-      children: [
-        {
-          title: 'Accordion',
-          path: '/components/accordion'
-        },
-        {
-          title: 'Alerts',
-          path: '/components/alerts'
-        },
-        {
-          title: 'Avatars',
-          path: '/components/avatars'
-        },
-        {
-          title: 'Badges',
-          path: '/components/badges'
-        },
-        {
-          title: 'Buttons',
-          path: '/components/buttons'
-        },
-        {
-          title: 'Button Group',
-          path: '/components/button-group'
-        },
-        {
-          title: 'Chips',
-          path: '/components/chips'
-        },
-        {
-          title: 'Dialogs',
-          path: '/components/dialogs'
-        },
-        {
-          title: 'List',
-          path: '/components/list'
-        },
-        {
-          title: 'Menu',
-          path: '/components/menu'
-        },
-        {
-          title: 'Pagination',
-          path: '/components/pagination'
-        },
-        {
-          title: 'Progress',
-          path: '/components/progress'
-        },
-        {
-          title: 'Ratings',
-          path: '/components/ratings'
-        },
-        {
-          title: 'Snackbar',
-          path: '/components/snackbar'
-        },
-        {
-          title: 'Swiper',
-          path: '/components/swiper'
-        },
-        {
-          title: 'Tabs',
-          path: '/components/tabs'
-        },
-        {
-          title: 'Timeline',
-          path: '/components/timeline'
-        },
-        {
-          title: 'Toasts',
-          path: '/components/toast'
-        },
-        {
-          title: 'Tree View',
-          path: '/components/tree-view'
-        },
-        {
-          title: 'More',
-          path: '/components/more'
-        }
-      ]
-    },
-    {
-      sectionTitle: 'Forms & Tables'
-    },
-    {
-      title: 'Form Elements',
-      icon: 'mdi:form-select',
-      children: [
-        {
-          title: 'Text Field',
-          path: '/forms/form-elements/text-field'
-        },
-        {
-          title: 'Select',
-          path: '/forms/form-elements/select'
-        },
-        {
-          title: 'Checkbox',
-          path: '/forms/form-elements/checkbox'
-        },
-        {
-          title: 'Radio',
-          path: '/forms/form-elements/radio'
-        },
-        {
-          title: 'Custom Inputs',
-          path: '/forms/form-elements/custom-inputs'
-        },
-        {
-          title: 'Textarea',
-          path: '/forms/form-elements/textarea'
-        },
-        {
-          title: 'Autocomplete',
-          path: '/forms/form-elements/autocomplete'
-        },
-        {
-          title: 'Date Pickers',
-          path: '/forms/form-elements/pickers'
-        },
-        {
-          title: 'Switch',
-          path: '/forms/form-elements/switch'
-        },
-        {
-          title: 'File Uploader',
-          path: '/forms/form-elements/file-uploader'
-        },
-        {
-          title: 'Editor',
-          path: '/forms/form-elements/editor'
-        },
-        {
-          title: 'Slider',
-          path: '/forms/form-elements/slider'
-        },
-        {
-          title: 'Input Mask',
-          path: '/forms/form-elements/input-mask'
-        }
-      ]
-    },
-    {
-      icon: 'mdi:cube-outline',
-      title: 'Form Layouts',
-      path: '/forms/form-layouts'
-    },
-    {
-      title: 'Form Validation',
-      path: '/forms/form-validation',
-      icon: 'mdi:checkbox-marked-circle-outline'
-    },
-    {
-      title: 'Form Wizard',
-      path: '/forms/form-wizard',
-      icon: 'mdi:transit-connection-horizontal'
-    },
-    {
-      title: 'Table',
-      icon: 'mdi:grid-large',
-      path: '/tables/mui'
-    },
-    {
-      title: 'Mui DataGrid',
-      icon: 'mdi:grid',
-      path: '/tables/data-grid'
-    },
-    {
-      sectionTitle: 'Charts & Misc'
-    },
-    {
-      title: 'Charts',
-      icon: 'mdi:chart-donut',
-      children: [
-        {
-          title: 'Apex',
-          path: '/charts/apex-charts'
-        },
-        {
-          title: 'Recharts',
-          path: '/charts/recharts'
-        },
-        {
-          title: 'ChartJS',
-          path: '/charts/chartjs'
-        }
-      ]
-    },
+  //       {
+  //         title: 'Absence',
+  //         icon: 'mdi:calendar-alert-outline',
+  //         path: '/absence-management/leaves',
+  //         auth: false
+  //       },
 
-    {
-      path: '/acl',
-      action: 'read',
-      subject: 'acl-page',
-      icon: 'mdi:shield-outline',
-      title: 'Access Control'
-    },
-    {
-      title: 'Others',
-      icon: 'mdi:dots-horizontal',
-      children: [
+  //       {
+  //         title: 'Settings',
+  //         icon: 'mdi:file-document-outline',
+  //         path: '/settings/Settings',
+  //         auth: false
+  //       }
+  //     ]
+  //   : [
+  //       {
+  //         title: 'Timesheets',
+  //         icon: 'mdi:clock-time-four-outline',
+  //         auth: false,
+  //         path: '/timesheets'
+  //       },
+  //       {
+  //         title: 'Absence',
+  //         icon: 'mdi:calendar-alert-outline',
+  //         path: '/absence-management/leaves',
+  //         auth: false
+  //       }
+  //     ]
+
+  //** -------------LEAVE MANAGEMENT ------------ */
+
+  return role == 1 || role == 2 || role == 3
+    ? [
         {
-          title: 'Menu Levels',
-          children: [
-            {
-              title: 'Menu Level 2.1'
-            },
-            {
-              title: 'Menu Level 2.2',
-              children: [
-                {
-                  title: 'Menu Level 3.1'
-                },
-                {
-                  title: 'Menu Level 3.2'
-                }
-              ]
-            }
-          ]
+          title: 'User',
+          icon: 'mdi:account-outline',
+          auth: false,
+          path: '/users'
         },
+
         {
-          title: 'Disabled Menu',
-          disabled: true
+          title: 'Absence',
+          icon: 'mdi:calendar-alert-outline',
+          path: '/absence-management/leaves',
+          auth: false
         },
+
         {
-          title: 'Raise Support',
-          externalLink: true,
-          openInNewTab: true,
-          path: 'https://themeselection.com/support'
-        },
-        {
-          title: 'Documentation',
-          externalLink: true,
-          openInNewTab: true,
-          path: 'https://demos.themeselection.com/materio-mui-react-nextjs-admin-template/documentation'
+          title: 'Settings',
+          icon: 'mdi:file-document-outline',
+          path: '/settings/Settings',
+          auth: false
         }
       ]
-    }
-  ]
+    : [
+        {
+          title: 'Absence',
+          icon: 'mdi:calendar-alert-outline',
+          path: '/absence-management/leaves',
+          auth: false
+        }
+      ]
 }
 
-export default navigation
+export default VerticalNavItems

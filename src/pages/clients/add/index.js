@@ -88,8 +88,7 @@ const NewClient = () => {
       ])
     )
     router.replace({
-      pathname: '/clients',
-      query: { returnUrl: router.asPath }
+      pathname: '/clients'
     })
   }
 

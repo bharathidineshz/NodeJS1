@@ -42,7 +42,8 @@ import {
   fetchUsers,
   postLeaveRequest,
   setApply,
-  setMyleaves
+  setMyleaves,
+  setPolicies
 } from 'src/store/absence-management'
 import { useEffect, useState } from 'react'
 import { Box } from '@mui/system'
@@ -55,7 +56,7 @@ import { useTheme } from '@emotion/react'
 import { myLeaveRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
-import SimpleBackdrop from 'src/@core/components/spinner'
+import SimpleBackdrop, { BackdropSpinner, Spinner } from 'src/@core/components/spinner'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 import { fetchHolidays } from 'src/store/apps/accountSetting'
 import subDays from 'date-fns/subDays'
@@ -113,8 +114,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
   })
 
   useEffect(() => {
-    dispatch(fetchPolicies())
-    dispatch(fetchUsers())
+    store.policies == null && dispatch(fetchPolicies())
     dispatch(fetchConfig())
     dispatch(fetchHolidays())
       .then(unwrapResult)
@@ -122,10 +122,18 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
         const { result } = res
         setHolidays(result.map(o => subDays(new Date(o.date), 0)))
       })
-  }, [])
+  }, [dispatch, store.dashboards])
 
   useEffect(() => {
     reset()
+    const usedLeaves = store.dashboards
+      ? store.policies.filter(o =>
+          store.dashboards.some(d => d.balanceCount != 0 && o.typeOfLeave === d.name)
+        )
+      : []
+    if (usedLeaves.length > 0) {
+      dispatch(setPolicies(usedLeaves))
+    }
   }, [isOpen])
 
   const isWeekday = date => {
@@ -140,6 +148,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
 
     myleaves.push(newReq)
     dispatch(setMyleaves(myleaves))
+    reset()
   }
 
   //submit
@@ -148,13 +157,11 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
     try {
       setOpen(false)
       setLoading(true)
-      reset()
 
-      const currentUser = JSON.parse(localStorage.getItem('userData'))
-      const user = currentUser && store.users.find(o => currentUser.user === o.email)
+      const userId = JSON.parse(localStorage.getItem('userId'))
 
       const request = myLeaveRequest({
-        submittedUserId: user.id,
+        submittedUserId: userId,
         requestTypeId: formData.requestType.id,
         ...formData
       })
@@ -162,7 +169,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
         .then(unwrapResult)
         .then(res => {
           handleResponse('create', res, updateRequestsState)
-          dispatch(fetchDashboard(user.id))
+          dispatch(fetchDashboard(userId))
           setLoading(false)
         })
     } catch (error) {
@@ -208,7 +215,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
 
   return (
     <>
-      <Dialog fullWidth open={isOpen} maxWidth='sm' onClose={handleClose}>
+      <Dialog fullWidth open={isOpen} maxWidth='md' onClose={handleClose}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent
             sx={{
@@ -306,7 +313,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                         <DatePicker
                           id='event-start-date'
                           selected={value}
-                          minDate={minDate}
+                          minDate={new Date()}
                           maxDate={maxDate}
                           dateFormat={'yyyy-MM-dd'}
                           excludeDates={[...holidays]}
@@ -335,7 +342,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
                 <> */}
               <Grid item xs={4} sm={4} md={4} lg={4}>
                 {watch('requestType')?.isPermission !== true && (
-                  <FormControl fullWidth>
+                  <FormControl>
                     <Controller
                       name='isFromDateHalfDay'
                       control={control}
@@ -361,7 +368,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
               <Grid item xs={8} sm={8} md={8} lg={8}>
                 {watch('requestType')?.isPermission !== true && (
                   <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
-                    <FormControl fullWidth>
+                    <FormControl>
                       <Controller
                         name='toDate'
                         control={control}
@@ -456,7 +463,7 @@ const LeaveApplyForm = ({ isOpen, setOpen }) => {
           </DialogActions>
         </form>
       </Dialog>
-      {isLoading && <SimpleBackdrop />}
+      {isLoading && <BackdropSpinner />}
     </>
   )
 }

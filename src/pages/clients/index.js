@@ -85,15 +85,38 @@ const ClientList = ({ apiData }) => {
     dispatch(fetchClients())
   }, [])
 
-  const handleFilter = useCallback(val => {
-    setValue(val)
-  }, [])
+  const handleFilter = useCallback(
+    value => {
+      setValue(value)
+      const data = store.clients.map(o => ({
+        ...o,
+        companyName: o.companyName.toLowerCase(),
+        primaryContatctName: o.primaryContatctName.toLowerCase(),
+        phoneNumber: o.phoneNumber.toLowerCase(),
+        email: o.email.toLowerCase(),
+        address: o.address.toLowerCase(),
+        taxId: o.taxId.toLowerCase()
+      }))
+      const filteredRows = data.filter(
+        o =>
+          o.companyName.trim().includes(value.toLowerCase()) ||
+          o.primaryContatctName.trim().includes(value.toLowerCase()) ||
+          o.phoneNumber.trim().includes(value.toLowerCase()) ||
+          o.email.trim().includes(value.toLowerCase()) ||
+          o.address.trim().includes(value.toLowerCase()) ||
+          o.taxId.trim().includes(value.toLowerCase())
+      )
+      const _data = data.filter(o => filteredRows.some(f => f.id == o.id))
+      setFilteredData(_data)
+    },
+    [value]
+  )
 
   const columns = [
     {
       flex: 0.2,
       field: 'companyName',
-      headerName: 'Client',
+      headerName: 'Company Name',
       renderCell: ({ row }) => {
         const { companyName } = row
 
@@ -120,23 +143,16 @@ const ClientList = ({ apiData }) => {
       renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
+      flex: 0.17,
+      field: 'phoneNumber',
+      minWidth: 150,
+      headerName: 'Phone'
+    },
+    {
       flex: 0.15,
       field: 'taxId',
       minWidth: 150,
       headerName: 'Tax Id'
-    },
-    {
-      flex: 0.15,
-      minWidth: 120,
-      headerName: 'CompanyId',
-      field: 'CompanyId',
-      renderCell: ({ row }) => {
-        return (
-          <Typography noWrap sx={{ textTransform: 'capitalize' }}>
-            {row.companyId}
-          </Typography>
-        )
-      }
     },
     {
       flex: 0.15,
@@ -146,7 +162,7 @@ const ClientList = ({ apiData }) => {
       renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
     },
     {
-      flex: 0.15,
+      flex: 0.1,
       minWidth: 120,
       headerName: 'Active',
       field: 'isActive',
@@ -195,9 +211,13 @@ const ClientList = ({ apiData }) => {
   }, [])
   const toggleAddUserDrawer = () => setAddUserOpen(!addUserOpen)
 
+  const openNewClient = () => {
+    setEditedRowData(null)
+    toggleAddUserDrawer()
+  }
+
   const handleEdit = rowData => e => {
     setEditedRowData(rowData)
-
     toggleAddUserDrawer() // Open the drawer
   }
 
@@ -221,21 +241,19 @@ const ClientList = ({ apiData }) => {
       <Grid item xs={12}>
         <Card>
           <CardHeader />
-
           {/* <Divider /> */}
-          <ClientTableHeader
-            setOpen={toggleAddUserDrawer}
-            value={value}
-            handleFilter={handleFilter}
-          />
+          <ClientTableHeader setOpen={openNewClient} value={value} handleFilter={handleFilter} />
           <DataGrid
             autoHeight
-            rows={store.clients || []}
+            rows={value ? filteredData : store.clients}
             columns={columns}
             disableRowSelectionOnClick
+            disableColumnMenu
+            sortingMode='client'
             pageSizeOptions={[10, 25, 50]}
             paginationModel={paginationModel}
             onPaginationModelChange={setPaginationModel}
+            localeText={{ noRowsLabel: 'No Clients' }}
           />
         </Card>
       </Grid>

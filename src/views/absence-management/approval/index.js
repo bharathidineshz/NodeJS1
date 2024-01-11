@@ -35,7 +35,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux'
 import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
-import FallbackSpinner from 'src/@core/components/spinner'
+import FallbackSpinner, { BackdropSpinner } from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import LeaveHeader from 'src/views/absence-management/LeaveHeader'
 import Toolbar from 'src/views/absence-management/toolBar'
@@ -82,10 +82,8 @@ const Approval = () => {
   const theme = useTheme()
 
   useEffect(() => {
-    dispatch(fetchUsers())
-    // dispatch(fetchStatus())
-    dispatch(fetchApprovals()).then(() => setLoading(false))
-  }, [dispatch])
+    store.approvals == null && dispatch(fetchApprovals()).then(() => setLoading(false))
+  }, [dispatch, store.approvals])
 
   const columns = [
     {
@@ -142,22 +140,26 @@ const Approval = () => {
     {
       flex: 0.175,
       minWidth: 110,
-      field: 'comment',
-      headerName: 'Comment',
-      renderCell: params => <div style={{ whiteSpace: 'pre-line' }}>{params.value}</div>
+      field: 'status',
+      headerName: 'Status',
+      renderCell: params => {
+        const status = LEAVE_STATUS.find(o => o.id == params.row.requestStatusId)
+
+        return <CustomChip size='small' label={status.name} skin='light' color={status.color} />
+      }
     },
     {
       flex: 0.26,
       sortable: false,
-      field: 'currentStatusId',
-      headerName: 'Status',
+      field: 'action',
+      headerName: 'Action',
       align: 'left',
       renderCell: params => {
-        const status = LEAVE_STATUS.find(o => o.id == params.value)
+        const status = LEAVE_STATUS.find(o => o.id == params.row.requestStatusId)
 
         return (
           <Box columnGap={2} sx={{ display: 'flex' }}>
-            {status.id === 1 ? (
+            {(status.id === 4 || status.id === 7) && (
               <Box className='gap-1' sx={{ display: 'flex', alignItems: 'center' }}>
                 <>
                   <Button
@@ -180,8 +182,6 @@ const Approval = () => {
                   </Button>
                 </>
               </Box>
-            ) : (
-              <CustomChip size='small' label={status.name} skin='light' color={status.color} />
             )}
           </Box>
         )
@@ -196,14 +196,12 @@ const Approval = () => {
       item => item.leaveRequestApprovalId === newApproval.id
     )
 
-    const status = store.statuses?.find(o => o.id == newApproval.statusId)
-
     if (indexToReplace !== -1) {
       approvals[indexToReplace] = {
         ...approvals[indexToReplace],
         comment: newApproval.comment,
-        status: status && status.statusName,
-        currentStatusId: newApproval.statusId
+        status: newApproval.requestStatusName,
+        requestStatusId: newApproval.statusId
       }
     }
     dispatch(setLeaveApproval(approvals))
@@ -228,7 +226,16 @@ const Approval = () => {
       const req = {
         ..._row,
         comment: _comment,
-        leaveStatusId: name == 'Approved' ? 2 : name == 'Rejected' ? 3 : 1,
+        leaveStatusId:
+          _row.requestStatusId == 4 && name == 'Approved'
+            ? 5
+            : _row.requestStatusId == 4 && name == 'Rejected'
+            ? 6
+            : _row.requestStatusId == 5 && name == 'Approved'
+            ? 8
+            : _row.requestStatusId == 5 && name == 'Rejected'
+            ? 9
+            : 0,
         approvalLevelId: _row.currentLevelId
       }
       const request = approvalRequest(req)
@@ -259,7 +266,7 @@ const Approval = () => {
 
   const handleSearch = value => {
     setSearchValue(value)
-    const data = store.approvals.map(o => ({
+    const data = store.approvals?.map(o => ({
       ...o,
       request: o.request.toLowerCase(),
       requestReason: o.requestReason.toLowerCase(),
@@ -276,7 +283,7 @@ const Approval = () => {
         o.email.trim().includes(value.toLowerCase()) ||
         o.comment.trim().includes(value.toLowerCase())
     )
-    const _data = store.approvals.filter(o => filteredRows.some(f => f.id == o.id))
+    const _data = store.approvals?.filter(o => filteredRows.some(f => f.id == o.id))
     setFilteredRows(_data)
   }
 
@@ -289,18 +296,17 @@ const Approval = () => {
   return (
     <>
       <Card>
-        {respond.isLoading && <SimpleBackdrop />}
+        {respond.isLoading && <BackdropSpinner />}
         <DataGrid
           autoHeight
           pagination
-          rows={searchValue ? filteredRows : store.approvals}
-          rowCount={store.approvals ? store.approvals.length : 0}
+          rows={searchValue ? filteredRows : store.approvals ? store.approvals : []}
           columns={columns}
           sortingMode='client'
           rowSelection={false}
           className='no-border'
           localeText={{ noRowsLabel: 'No Approvals' }}
-          loading={isLoading}
+          loading={store.approvals == null}
           pageSizeOptions={[5, 10, 25, 50, 100]}
           disableColumnMenu
           slots={{
@@ -344,7 +350,7 @@ const Approval = () => {
         </DialogContent>
         <DialogActions className='dialog-actions-dense'>
           <Button variant='outlined' onClick={handleClose}>
-            Discard
+            Cancel
           </Button>
           <Button variant='contained' color='error' onClick={handleApproval({}, 'Rejected')}>
             Reject

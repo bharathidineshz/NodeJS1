@@ -219,7 +219,7 @@ const EmployeeSignup = ({ data }) => {
       window.localStorage.setItem('roleId', userData?.roleId)
 
       router.replace({
-        pathname: '/timesheets'
+        pathname: '/absence-management/leaves'
       })
       setLoading(false)
       customSuccessToast('Signup Completed')

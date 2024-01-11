@@ -70,6 +70,7 @@ const SidebarAddHoliday = props => {
     control,
     setValue,
     setError,
+    watch,
     handleSubmit,
     formState: { errors }
   } = useForm({
@@ -86,7 +87,10 @@ const SidebarAddHoliday = props => {
   const updateHolidayState = newHoliday => {
     let _holidays = [...holidays]
     _holidays.push(newHoliday)
-    dispatch(setHolidays(_holidays))
+    let sortedArray = _holidays.sort((a, b) => {
+      return new Date(a.date) - new Date(b.date)
+    })
+    dispatch(setHolidays(sortedArray))
   }
 
   const onSubmit = data => {
@@ -194,7 +198,7 @@ const SidebarAddHoliday = props => {
                 Leave description is required
               </FormHelperText>
             )}
-            {existError && (
+            {existError && watch('leaveDescription') && (
               <FormHelperText sx={{ color: 'error.main' }}>
                 This Holiday already exist
               </FormHelperText>

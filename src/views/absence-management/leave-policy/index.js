@@ -14,7 +14,7 @@ import { getInitials } from 'src/@core/utils/get-initials'
 import { IconButton } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
 import { Icon } from '@iconify/react'
-import FallbackSpinner from 'src/@core/components/spinner'
+import FallbackSpinner, { BackdropSpinner } from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import Toolbar from 'src/views/absence-management/toolBar'
 import { deletePolicy, fetchPolicies, setPolicies } from 'src/store/absence-management'
@@ -29,18 +29,12 @@ import { handleResponse } from 'src/helpers/helpers'
 const DynamicEditLeavePolicy = dynamic(
   () => import('src/views/absence-management/leave-policy/EditLeavePolicy'),
   {
-    ssr: false,
-    loading: () => {
-      return <FallbackSpinner />
-    }
+    ssr: false
   }
 )
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
-  ssr: false,
-  loading: () => {
-    return <FallbackSpinner />
-  }
+  ssr: false
 })
 
 const LeavePolicy = ({ data }) => {
@@ -185,14 +179,14 @@ const LeavePolicy = ({ data }) => {
   return (
     <>
       {isLoading ? (
-        <FallbackSpinner />
+        <BackdropSpinner />
       ) : (
         <>
           <Card>
             <DataGrid
               autoHeight
               pagination
-              rows={searchValue ? filteredRows : store.policies}
+              rows={searchValue ? filteredRows : store.policies ? store.policies : []}
               columns={columns}
               rowSelection={false}
               onCellClick={data => data.field != 'action' && handleRowSelection(data)}

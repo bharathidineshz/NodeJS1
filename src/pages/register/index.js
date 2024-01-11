@@ -177,7 +177,7 @@ const Register = () => {
                 })
               } else {
                 router.replace({
-                  pathname: '/timesheets'
+                  pathname: '/absence-management/leaves'
                 })
               }
               setLoading(false)

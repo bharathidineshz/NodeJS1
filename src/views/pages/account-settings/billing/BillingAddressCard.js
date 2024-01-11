@@ -58,7 +58,9 @@ const BillingAddressCard = () => {
                   )}
                 />
                 {errors.companyName && (
-                  <FormHelperText sx={{ color: 'error.main' }}>This field is required</FormHelperText>
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    This field is required
+                  </FormHelperText>
                 )}
               </FormControl>
             </Grid>
@@ -80,7 +82,9 @@ const BillingAddressCard = () => {
                   )}
                 />
                 {errors.billingEmail && (
-                  <FormHelperText sx={{ color: 'error.main' }}>This field is required</FormHelperText>
+                  <FormHelperText sx={{ color: 'error.main' }}>
+                    This field is required
+                  </FormHelperText>
                 )}
               </FormControl>
             </Grid>
@@ -96,7 +100,9 @@ const BillingAddressCard = () => {
                 type='number'
                 label='Phone Number'
                 placeholder='202 555 0111'
-                InputProps={{ startAdornment: <InputAdornment position='start'>US (+1)</InputAdornment> }}
+                InputProps={{
+                  startAdornment: <InputAdornment position='start'>US (+1)</InputAdornment>
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -125,7 +131,7 @@ const BillingAddressCard = () => {
                 Save Changes
               </Button>
               <Button variant='outlined' color='secondary'>
-                Discard
+                Cancel
               </Button>
             </Grid>
           </Grid>

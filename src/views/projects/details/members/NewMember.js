@@ -38,20 +38,23 @@ import { Box } from '@mui/system'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
+  fetchProjectMembers,
   fetchUsers,
+  setEditProjectMember,
   setCategories,
   setEditTask,
   setEmpty,
   setNewTask,
   setProjectMembers,
-  setTaskLists
+  setTaskLists,
+  putAssignee
 } from 'src/store/apps/projects'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import toast from 'react-hot-toast'
 import CustomPeoplePicker from 'src/views/components/autocomplete/CustomPeoplePicker'
 import { unwrapResult } from '@reduxjs/toolkit'
 import { projectAssigneeRequest } from 'src/helpers/requests'
-import { postAssignee, fetchProjectAssignees } from 'src/store/apps/projects'
+import { postAssignee } from 'src/store/apps/projects'
 import { handleResponse } from 'src/helpers/helpers'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -72,8 +75,8 @@ const MenuProps = {
 const defaultValues = {
   allocatedProjectCost: '',
   projectId: '',
-  userId: {},
-  projectRoleId: {},
+  userId: null,
+  projectRoleId: null,
   availablePercentage: ''
 }
 
@@ -81,7 +84,6 @@ const schema = yup.object().shape({
   allocatedProjectCost: yup.number().notRequired(),
   userId: yup.object().required('user required')
 })
-
 const NewMember = ({ isOpen, setOpen }) => {
   const [assignees, setAssignees] = useState()
   const [members, setMembers] = useState([])
@@ -89,23 +91,24 @@ const NewMember = ({ isOpen, setOpen }) => {
   const [selectedRole, setSelectedRole] = useState(null)
 
   const dispatch = useDispatch()
-  const store = useSelector(state => state.projects)
-
-  console.log(members)
+  const { editProjectMember, projectMembers } = useSelector(state => state.projects)
+  console.log(editProjectMember)
   useEffect(() => {
     dispatch(fetchUsers())
       .then(unwrapResult)
       .then(res => {
-        setMembers(res.result)
+        setMembers(res.result ?? [])
       })
   }, [])
+  console.log(members)
+  console.log(projectMembers)
 
   const STATUS = ['Completed', 'Not Started', 'Working on it', 'Due']
   const STATUS_COLOR = ['success', 'warning', 'info', 'error']
 
   const roles = {
-    2: { name: 'Management', icon: 'mdi:cog-outline', color: 'warning.main', id: 2 },
-    4: { name: 'User', icon: 'mdi:account-outline', color: 'primary.main', id: 4 }
+    2: { name: 'Management', id: 2 },
+    4: { name: 'User', id: 4 }
   }
 
   const onSelectMember = e => {
@@ -140,33 +143,64 @@ const NewMember = ({ isOpen, setOpen }) => {
     mode: 'onChange',
     resolver: yupResolver(schema)
   })
+
+  useEffect(() => {
+    if (editProjectMember) {
+      reset({
+        allocatedProjectCost: editProjectMember.allocatedProjectCost,
+        projectId: editProjectMember.projectId,
+        userId: members.map(i => ({ id: i.id, name: i.firstName + ' ' + i.lastName, })).find(x => x.id === editProjectMember.userId),
+        projectRoleId: Object.values(roles).find(x => x.id === editProjectMember.projectRoleId),
+        availablePercentage: editProjectMember.availablePercentage
+      })
+    } else {
+      reset({})
+    }
+  }, [editProjectMember])
+
   const router = useRouter()
 
   const updateMember = newReq => {
-    dispatch(fetchProjectAssignees())
+    handleClose()
+    dispatch(fetchProjectMembers(Number(localStorage.getItem('projectId'))))
   }
+
   const onSubmit = data => {
     const req = {
       ...data,
       userId: data.userId.id,
       projectId: Number(localStorage.getItem('projectId')),
       projectRoleId: data.projectRoleId.id,
-      availablePercentage: Number(data.availablePercentage)
+      availablePercentage: Number(data.availablePercentage),
+      id: editProjectMember ? editProjectMember.id : null
     }
     const request = projectAssigneeRequest(req)
+    if (editProjectMember) {
+      dispatch(putAssignee(request))
+        .then(unwrapResult)
+        .then(res => {
+          console.log(res.data)
+          handleResponse('update', res.data, updateMember)
+        }).catch(err => { toast.error(err.message) })
+    } else {
+      dispatch(postAssignee(request))
+        .then(unwrapResult)
+        .then(res => {
+          handleResponse('create', res.data, updateMember)
+        }).catch(err => { toast.error(err.message) })
+    }
 
-    dispatch(postAssignee(request))
-      .then(unwrapResult)
-      .then(res => {
-        handleResponse('create', res.data, updateMember)
-      })
   }
 
   const handleClose = () => {
     setOpen(false)
     setProjectMem([])
+    reset()
   }
   console.log(Object.values(roles))
+  console.log(watch('projectRoleId'))
+  console.log(watch('userId'))
+
 
   return (
     <Box>
@@ -174,7 +208,7 @@ const NewMember = ({ isOpen, setOpen }) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={5} sx={{ p: 8, width: 400 }}>
             <Grid item xs={12} className='gap-1' justifyContent='space-between' alignItems='center'>
-              <Typography color='secondary'>Add Member</Typography>
+              <Typography color='secondary'>{editProjectMember ? 'Edit Member' : 'Add Member'}</Typography>
             </Grid>
 
             <Grid item xs={12}>
@@ -185,11 +219,11 @@ const NewMember = ({ isOpen, setOpen }) => {
                   render={({ field }) => (
                     <Autocomplete
                       label='Project Member'
-                      options={members.map(x => ({
+                      options={members?.map(x => ({
                         name: x.firstName + ' ' + x.lastName,
                         id: x.id
                       }))}
-                      getOptionLabel={option => option.name}
+                      getOptionLabel={option => option.name || ''}
                       id='autocomplete-limit-tags'
                       value={field.value}
                       onChange={(event, newValue) => field.onChange(newValue)}
@@ -243,7 +277,7 @@ const NewMember = ({ isOpen, setOpen }) => {
                       id='autocomplete-limit-tags'
                       value={field.value}
                       onChange={(event, newValue) => field.onChange(newValue)}
-                      renderInput={params => <TextField {...params} label='Project Role Id' />}
+                      renderInput={params => <TextField {...params} label='Project Role' />}
                     />
                   )}
                 />
@@ -255,7 +289,8 @@ const NewMember = ({ isOpen, setOpen }) => {
                 Close
               </Button>
               <Button size='large' variant='contained' type='submit'>
-                Add Member
+                {editProjectMember ? 'Edit Member' : 'Add Member'}
+
               </Button>
             </Grid>
           </Grid>

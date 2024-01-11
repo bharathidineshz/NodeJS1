@@ -107,7 +107,7 @@ const TabNotifications = () => {
               Save Changes
             </Button>
             <Button variant='outlined' color='secondary'>
-              Discard
+              Cancel
             </Button>
           </Grid>
         </Grid>

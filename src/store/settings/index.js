@@ -6,10 +6,15 @@ import instance from 'src/store/endpoints/interceptor'
 import { fetchRequiredSkills } from '../apps/projects'
 
 export const fetchConfig = createAsyncThunk('appConfig/fetchConfig', async params => {
-  const response = await instance.get(endpoints.getConfig)
-  console.log(response)
+  try {
+    const response = await instance.get(endpoints.getConfig)
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchHRApprovals = createAsyncThunk('appConfig/fetchHRApprovals', async params => {
@@ -130,9 +135,9 @@ export const deleteHRApproval = createAsyncThunk(
 export const appConfigSlice = createSlice({
   name: 'settings',
   initialState: {
-    configuration: {},
+    configuration: null,
     OrgHrApprove: {},
-    HrApprovals: []
+    HrApprovals: null
   },
   reducers: {
     setConfigs: (state, { payload }) => {
@@ -144,7 +149,8 @@ export const appConfigSlice = createSlice({
   },
   extraReducers: builder => {
     builder.addCase(fetchConfig.fulfilled, (state, action) => {
-      state.configuration = action.payload.result
+      state.configuration = action.payload?.result
+      state.HrApprovals = action.payload.result?.organizationLeaveHRApprovals
     })
     builder.addCase(fetchOrgHrApprove.fulfilled, (state, action) => {
       state.OrgHrApprove = action.payload

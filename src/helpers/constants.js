@@ -34,7 +34,13 @@ export const STATUS = [
 export const LEAVE_STATUS = [
   { id: 1, name: 'Pending', color: 'warning' },
   { id: 2, name: 'Approved', color: 'success' },
-  { id: 3, name: 'Rejected', color: 'error' }
+  { id: 3, name: 'Rejected', color: 'error' },
+  { id: 4, name: 'Level 1 Pending', color: 'warning' },
+  { id: 5, name: 'Level 1 Approved', color: 'info' },
+  { id: 6, name: 'Level 1 Rejected', color: 'error' },
+  { id: 7, name: 'Level 2 Pending', color: 'warning' },
+  { id: 8, name: 'Level 2 Approved', color: 'success' },
+  { id: 9, name: 'Level 2 Rejected', color: 'error' }
 ]
 
 export const APPROVERS = [
@@ -65,7 +71,8 @@ export const NODATA = {
     'The requested information is not readily accessible at this time. We apologize for the inconvenience.',
   privacy:
     'Due to privacy restrictions, we are unable to disclose the information you are seeking.',
-  maintenance: 'This page is currently under construction. Data will be available soon.'
+  maintenance: 'This page is currently under construction. Data will be available soon.',
+  noLeave: 'Leaves were not discovered.'
 }
 
 export const roles = {

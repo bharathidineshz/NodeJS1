@@ -112,3 +112,26 @@ export function getWeekNumbers(day1, day2) {
 
   return { start: weekNumber1, end: weekNumber2 }
 }
+
+export const getBase64String = file => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+
+    reader.onload = () => {
+      resolve(reader.result)
+    }
+
+    reader.onerror = error => {
+      reject(error)
+    }
+  })
+}
+
+export function getCurrentMonthDates() {
+  const currentDate = new Date()
+  const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+  const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+
+  return { startDate, endDate }
+}

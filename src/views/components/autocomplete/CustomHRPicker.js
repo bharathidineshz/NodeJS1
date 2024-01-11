@@ -31,8 +31,8 @@ const CustomHRPicker = ({ items, values, label, onSelect, onDelete, originalItem
     values.splice(indx, 1)
     !options.includes(person) && options.push(person)
     setOptions(options)
-    onDelete(person)
     setSelectedValues(values)
+    onDelete(person)
   }
 
   return (

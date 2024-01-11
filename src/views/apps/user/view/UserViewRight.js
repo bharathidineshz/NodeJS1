@@ -59,7 +59,7 @@ const UserViewRight = ({ tab, invoiceData }) => {
     setActiveTab(value)
     router
       .push({
-        pathname: `/users/view`
+        pathname: `/users/`
       })
       .then(() => setIsLoading(false))
   }

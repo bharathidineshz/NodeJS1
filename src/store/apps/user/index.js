@@ -18,6 +18,18 @@ export const fetchUsers = createAsyncThunk('appUsers/fetchData', async params =>
   }
 })
 
+export const fetchUserByEmail = createAsyncThunk('appUsers/fetchUserByEmail', async params => {
+  try {
+    const response = await instance.get(endpoints.userByEmail(params))
+
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
+})
+
 export const fetchSkills = createAsyncThunk('fetchSkills/Skills', async params => {
   try {
     const response = await instance.get(endpoints.skills)
@@ -98,13 +110,18 @@ export const appUsersSlice = createSlice({
   name: 'appUsers',
   initialState: {
     loggedInUser: {},
-    users: [],
+    users: null,
     total: 1,
     params: {},
     allData: [],
     skills: [],
     userId: 0,
-    userRoleId: 0
+    userRoleId: 0,
+    secondDialogOpen: false,
+    suspendDialogOpen:false,
+    activateDialog:false,
+    isSuspended :false,
+    isActivated: false
   },
   reducers: {
     setLoggedInUser: (state, action) => {
@@ -118,6 +135,21 @@ export const appUsersSlice = createSlice({
     },
     setUsers: (state, { payload }) => {
       state.users = payload
+    },
+    setSuspendDialogOpen: (state, { payload }) => {
+      state.suspendDialogOpen = payload
+    },
+    setActivateDialog: (state, { payload }) => {
+      state.activateDialog = payload
+    },
+    setSecondDialogOpen: (state, { payload }) => {
+      state.secondDialogOpen = payload
+    },
+    setActivate: (state, { payload }) => {
+      state.isActivated = payload
+    },
+    setSuspend: (state, { payload }) => {
+      state.isSuspended = payload
     }
   },
   extraReducers: builder => {
@@ -134,6 +166,7 @@ export const appUsersSlice = createSlice({
   }
 })
 
-export const { setUsers, setLoggedInUser, setUserId, setUserRoleId } = appUsersSlice.actions
+export const { setUsers, setLoggedInUser, setUserId, setUserRoleId,setActivateDialog,setSuspendDialogOpen, setSecondDialogOpen,setSuspend,setActivate } =
+  appUsersSlice.actions
 
 export default appUsersSlice.reducer

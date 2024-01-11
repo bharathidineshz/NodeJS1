@@ -41,7 +41,7 @@ import {
   updateHoliday,
   setHolidays
 } from 'src/store/apps/accountSetting/index'
-import SimpleBackdrop from 'src/@core/components/spinner'
+import SimpleBackdrop, { BackdropSpinner } from 'src/@core/components/spinner'
 import { formatDateToYYYYMMDD, formatLocalDate } from 'src/helpers/dateFormats'
 import HolidayForm from './HolidayForm'
 import FallbackSpinner from 'src/layouts/components/LogoSpinner'
@@ -52,10 +52,7 @@ import { customErrorToast, customSuccessToast } from 'src/helpers/custom-compone
 import { handleResponse } from 'src/helpers/helpers'
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
-  ssr: false,
-  loading: () => {
-    return <FallbackSpinner />
-  }
+  ssr: false
 })
 
 const Holidays = ({ popperPlacement }) => {

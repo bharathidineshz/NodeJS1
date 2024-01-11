@@ -1,5 +1,6 @@
 //REGISTER
 
+import { id } from 'date-fns/locale'
 import { formatDateToYYYYMMDD, formatLocalDate } from './dateFormats'
 
 export const signupRequest = req => {
@@ -38,11 +39,21 @@ export const organizationRequest = req => {
 //CONFIGURATIONS
 
 export const settingsRequest = req => {
-  const request = {
-    currency: req.currency?.cc,
-    workingdays: [req.startWeekDay, req.endWeekDay].join('-'),
-    timeZone: `${req.timezone.name} - ${req.timezone?.offset}`
-  }
+  const request =
+    req.name == 'update'
+      ? {
+          currency: req.currency?.cc,
+          workingdays: [req.startWeekDay, req.endWeekDay].join('-'),
+          timeZone: `${req.timezone.name} - ${req.timezone?.offset}`,
+          updateHrUsers: req.hrApprovalsIds,
+          removeHrUsers: req.removeHrUsers
+        }
+      : {
+          currency: req.currency?.cc,
+          workingdays: [req.startWeekDay, req.endWeekDay].join('-'),
+          timeZone: `${req.timezone.name} - ${req.timezone?.offset}`,
+          leaveHRApprovalUserIds: req.hrApprovalsIds
+        }
 
   return request
 }
@@ -67,33 +78,33 @@ export const timeSheetRequest = req => {
 export const userRequest = req => {
   const request = req?.id
     ? {
-      id: req.id,
-      firstName: req.firstName,
-      lastName: req.lastName,
-      invitationStatus: req.invitationStatus,
-      email: req.email,
-      password: req.email,
-      isActive: true,
-      costPerHour: req.costPerHour,
-      roleId: req.roleId,
-      tenantId: req.tenantId,
-      organizationId: req.organizationId,
-      joinedDate: req.joinedDate?.toISOString(),
-      departmentId: req.departmentId,
-      reportingManagerId: req.reportingManagerId,
-      skillId: req.skills
-    }
+        id: req.id,
+        firstName: req.firstName,
+        lastName: req.lastName,
+        invitationStatus: req.invitationStatus,
+        email: req.email,
+        password: req.password,
+        isActive: true,
+        costPerHour: req.costPerHour,
+        roleId: req.roleId,
+        tenantId: req.tenantId,
+        organizationId: req.organizationId,
+        joinedDate: req.joinedDate?.toISOString(),
+        departmentId: req.departmentId,
+        reportingManagerId: req.reportingManagerId,
+        skillId: req.skills
+      }
     : {
-      dateJoined: new Date().toISOString(),
-      firstName: req.firstName,
-      lastName: req.lastName,
-      email: req.email,
-      costPerHour: req.cost,
-      roleId: req.role,
-      reportingManagerId: req.reportingManagerId,
-      departmentId: req.departmentId,
-      skills: req.skills
-    }
+        dateJoined: new Date().toISOString(),
+        firstName: req.firstName,
+        lastName: req.lastName,
+        email: req.email,
+        costPerHour: req.cost,
+        roleId: req.role,
+        reportingManagerId: req.reportingManagerId,
+        departmentId: req.departmentId,
+        skills: req.skills
+      }
 
   return request
 }
@@ -103,16 +114,16 @@ export const clientRequest = req => {
   const request = req.id
     ? {}
     : {
-      companyName: req.companyName,
-      profilePhoto: req?.profilePhoto || '',
-      primaryContatctName: req.primaryContactName,
-      address: req.address,
-      email: req.email,
-      phoneNumber: req.phoneNumber,
-      companyId: req.companyId,
-      taxId: req.taxId,
-      isActive: req.isActive
-    }
+        companyName: req.companyName,
+        profilePhoto: req?.profilePhoto || '',
+        primaryContatctName: req.primaryContactName,
+        address: req.address,
+        email: req.email,
+        phoneNumber: req.phoneNumber,
+        companyId: req.companyId,
+        taxId: req.taxId,
+        isActive: req.isActive
+      }
 
   return request
 }
@@ -140,17 +151,18 @@ export const projectRequest = req => {
 }
 
 export const projectAssigneeRequest = req => {
-  const { allocatedProjectCost, projectId, userId, projectRoleId, availablePercentage } = req
+  const { allocatedProjectCost, projectId, userId, projectRoleId, availablePercentage, id } = req
   const request = [
     {
       allocatedProjectCost: allocatedProjectCost,
       projectId: projectId,
       userId: userId,
       projectRoleId: projectRoleId,
-      availablePercentage: availablePercentage
+      availablePercentage: availablePercentage,
+      id: id || undefined
+
     }
   ]
-
 
   return request
 }
@@ -203,26 +215,26 @@ export const mileStoneRequest = req => {
 export const leavePolicyRequest = req => {
   const request = req.id
     ? {
-      leavePolicyId: req.id,
-      typeOfLeave: req?.typeOfLeave,
-      allowanceCount: !isNaN(req?.allowanceCount) && Number(req?.allowanceCount),
-      allowanceTime: !isNaN(req?.allowanceTime) && Number(req?.allowanceTime),
-      isPermission: req.isPermission,
-      period: req?.period,
-      carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
-      levelOneApprovalLevelId: req.level1,
-      levelTwoApprovalLevelId: req.level1 === 3 ? 0 : req.level2
-    }
+        leavePolicyId: req.id,
+        typeOfLeave: req?.typeOfLeave,
+        allowanceCount: !isNaN(req?.allowanceCount) && Number(req?.allowanceCount),
+        allowanceTime: !isNaN(req?.allowanceTime) && Number(req?.allowanceTime),
+        isPermission: req.isPermission,
+        period: req?.period,
+        carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
+        levelOneApprovalLevelId: req.level1,
+        levelTwoApprovalLevelId: req.level1 === 3 ? 0 : req.level2
+      }
     : {
-      typeOfLeave: req?.typeOfLeave,
-      allowanceCount: !isNaN(req?.allowanceCount) && Number(req?.allowanceCount),
-      allowanceTime: !isNaN(req?.allowanceTime) && Number(req?.allowanceTime),
-      isPermission: req.isPermission,
-      period: req?.period,
-      carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
-      levelOneApprovalLevelId: req.level1,
-      levelTwoApprovalLevelId: req.level1 === 3 ? 0 : req.level2
-    }
+        typeOfLeave: req?.typeOfLeave,
+        allowanceCount: !isNaN(req?.allowanceCount) && Number(req?.allowanceCount),
+        allowanceTime: !isNaN(req?.allowanceTime) && Number(req?.allowanceTime),
+        isPermission: req.isPermission,
+        period: req?.period,
+        carryForwardCount: !isNaN(req?.carryForwardCount) && Number(req?.carryForwardCount),
+        levelOneApprovalLevelId: req.level1,
+        levelTwoApprovalLevelId: req.level1 === 3 ? 0 : req.level2
+      }
 
   return request
 }
@@ -230,24 +242,24 @@ export const leavePolicyRequest = req => {
 export const myLeaveRequest = req => {
   const request = req.id
     ? {
-      id: req.id,
-      requestTypeId: req?.requestTypeId,
-      fromDate: req?.fromDate?.toISOString(),
-      toDate: req?.toDate?.toISOString(),
-      isFromDateHalfDay: req.isFromDateHalfDay,
-      isToDateHalfDay: req.isToDateHalfDay,
-      requestReason: req?.requestReason,
-      submittedUserId: req?.submittedUserId
-    }
+        id: req.id,
+        requestTypeId: req?.requestTypeId,
+        fromDate: req?.fromDate?.toISOString(),
+        toDate: req?.toDate?.toISOString(),
+        isFromDateHalfDay: req.isFromDateHalfDay,
+        isToDateHalfDay: req.isToDateHalfDay,
+        requestReason: req?.requestReason,
+        submittedUserId: req?.submittedUserId
+      }
     : {
-      requestTypeId: req?.requestTypeId,
-      fromDate: req?.fromDate?.toISOString(),
-      toDate: req?.toDate?.toISOString(),
-      isFromDateHalfDay: req.isFromDateHalfDay,
-      isToDateHalfDay: req.isToDateHalfDay,
-      requestReason: req?.requestReason,
-      submittedUserId: req?.submittedUserId
-    }
+        requestTypeId: req?.requestTypeId,
+        fromDate: req?.fromDate?.toISOString(),
+        toDate: req?.toDate?.toISOString(),
+        isFromDateHalfDay: req.isFromDateHalfDay,
+        isToDateHalfDay: req.isToDateHalfDay,
+        requestReason: req?.requestReason,
+        submittedUserId: req?.submittedUserId
+      }
 
   return request
 }

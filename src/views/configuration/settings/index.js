@@ -48,7 +48,7 @@ import { store } from 'src/store'
 import { settingsRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
-import SimpleBackdrop from 'src/@core/components/spinner'
+import SimpleBackdrop, { BackdropSpinner, Spinner } from 'src/@core/components/spinner'
 import CustomPeoplePicker from 'src/views/components/autocomplete/CustomPeoplePicker'
 import CustomHRPicker from 'src/views/components/autocomplete/CustomHRPicker'
 import { addUser, fetchUsers } from 'src/store/apps/user'
@@ -74,12 +74,13 @@ const SettingsConfig = () => {
   const { configuration, OrgHrApprove, HrApprovals } = useSelector(state => state.settings)
   const dispatch = useDispatch()
   const _userStore = useSelector(state => state.user)
+  const [deleteHRs, setDeleteHRs] = useState([])
 
   const [HRs, setHRs] = useState({
-    users: [],
-    selectedHRs: [],
-    newHRs: [],
-    deleteHRs: []
+    items: [],
+    selectedHRs: null,
+    newHRs: []
+    // deleteHRs: []
   })
 
   const {
@@ -97,38 +98,29 @@ const SettingsConfig = () => {
 
   const theme = useTheme()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
-  const [isLoading, setLoading] = useState(true)
+  const [isLoading, setLoading] = useState(false)
 
   useEffect(() => {
-    const fetchDatum = async () => {
-      dispatch(fetchConfig())
-      dispatch(fetchHRApprovals()).then(response => {
-        dispatch(fetchUsers())
-          .then(unwrapResult)
-          .then(res => {
-            if (HRs.selectedHRs == 0) {
-              const _HRs = res.result.filter(u =>
-                response.payload.result.some(o => o.userId === u.id)
-              )
-              const users = res.result.filter(u => !_HRs.includes(u))
-              setHRs(state => ({ ...state, selectedHRs: _HRs, users: users }))
-            }
-            setLoading(false)
-          })
-      })
-    }
+    store.configuration == null && dispatch(fetchConfig())
+    _userStore.users == null && dispatch(fetchUsers())
     reset()
+  }, [_userStore.users, dispatch, reset])
 
-    fetchDatum()
-  }, [])
+  useEffect(() => {
+    const users = _userStore.users ? [..._userStore.users] : []
+    const _HRs = users.filter(
+      u => !configuration.organizationLeaveHRApprovals.some(o => o.userId === u.id)
+    )
+    const _selectedHRs = users.filter(u =>
+      configuration.organizationLeaveHRApprovals.some(o => o.userId === u.id)
+    )
+    setHRs(state => ({ ...state, selectedHRs: _selectedHRs, items: _HRs }))
+  }, [_userStore.users, configuration])
 
   useEffect(() => {
     if (configuration != null && Object.keys(configuration).length > 0) {
       const currency = currencies.findIndex(o => o.cc == configuration.currency)
       const time = timezones.findIndex(o => o.offset == configuration.timeZone?.split(' - ')[1])
-      const HRs = _userStore.users.filter(u => HrApprovals.some(o => o.userId === u.id))
-      const users = _userStore.users.filter(u => !HRs.includes(u))
-      setHRs(state => ({ ...state, selectedHRs: HRs, users: users }))
       reset({
         currency: currency == -1 ? '' : currencies[currency],
         timezone: time == -1 ? '' : timezones[time],
@@ -138,26 +130,41 @@ const SettingsConfig = () => {
     } else {
       reset()
     }
-  }, [HrApprovals, _userStore.users, configuration])
+  }, [configuration, reset])
 
   const updateOrgSettings = newConfig => {
     dispatch(setConfigs(newConfig))
-    // handleHRApproval()
+    setDeleteHRs([])
   }
 
   //Save Configure
 
   const handleSaveSettings = request => {
     setLoading(true)
-    const req = settingsRequest(request)
-    if (configuration != null && Object.keys(configuration).length > 0) {
-      dispatch(putConfig({ id: configuration.id, ...req }))
+    const hrApprovalsIds = HRs.selectedHRs.map(o => o.id)
+    if (configuration != null && Object.keys(configuration).length > 0 && configuration.id != 0) {
+      const req = settingsRequest({
+        name: 'update',
+        id: configuration.id,
+        hrApprovalsIds: hrApprovalsIds,
+        removeHrUsers: deleteHRs,
+        ...request
+      })
+
+      dispatch(putConfig(req))
         .then(unwrapResult)
         .then(res => {
           handleResponse('update', res, updateOrgSettings)
           setLoading(false)
         })
     } else {
+      const req = settingsRequest({
+        name: 'create',
+        id: configuration.id,
+        hrApprovalsIds: hrApprovalsIds,
+        ...request
+      })
+
       dispatch(addConfig(req))
         .then(unwrapResult)
         .then(res => {
@@ -167,77 +174,31 @@ const SettingsConfig = () => {
     }
   }
 
-  //Handle HR Approval
-
-  const handleHRApproval = users => {
-    if (users.length > 0) {
-      const id = users.map(o => o.id)
-      dispatch(postHRApproval(id))
-        .then(unwrapResult)
-        .then(res => {
-          handleResponse('create', res, updateState)
-          setLoading(false)
-        })
-    }
-  }
-
-  // Map Configuration
-
-  const collectDeletingHRs = data => {
-    handleDelete([data])
-    // setHRs(state => ({ ...state, users: HRs.users, deleteHRs: deleteHRs, selectedHRs: restHRs }))
-  }
-
   const collectNewHRs = data => {
-    let newUsers = []
-    const deleted = [...HRs.deleteHRs]
-    const addedUser = data[data.length - 1]
-
-    const updatedUsers = HRs.users.filter(o => o.id != addedUser.id)
-
-    if (!HRs.selectedHRs.includes(addedUser) && !deleted.includes(addedUser)) {
-      if (HRs.newHRs.length > 0) newUsers = [...HRs.newHRs, addedUser]
-      else newUsers.push(addedUser)
-    }
-
-    if (deleted.includes(addedUser)) {
-      const index = deleted.findIndex(o => o.id == addedUser.id)
-      deleted.splice(index, 1)
-    }
-
-    // setHRs({ newHRs: , users: updatedUsers, deleteHRs: deleted, selectedHRs: data })
-    handleHRApproval([addedUser])
+    const items = [...HRs.items]
+    const _deleteHRs = [...deleteHRs]
+    const updatedItems = items.filter(o => !data.some(d => d.id === o.id))
+    const index = _deleteHRs.findIndex(o => o == data[data.length - 1].id)
+    index != -1 && _deleteHRs.splice(index, 1)
+    setHRs(state => ({ ...state, items: updatedItems, selectedHRs: data }))
+    setDeleteHRs(_deleteHRs)
   }
 
-  const updateState = data => {
-    const approvals = [...HrApprovals]
-    approvals.push(data[0])
-    dispatch(setHRApprovals(approvals))
-  }
-  const deleteHRState = data => {
-    const approvals = [...HrApprovals]
-    const index = approvals.findIndex(o => o.id == data[0])
-    approvals.splice(index, 1)
-    dispatch(setHRApprovals(approvals))
-  }
-
-  //handle delete
-  const handleDelete = deleteUsers => {
-    const approvals = HrApprovals.find(o => o.userId == deleteUsers[0].id)
-    const ids = [approvals.id]
-    if (ids != null) {
-      dispatch(deleteHRApproval(ids))
-        .then(unwrapResult)
-        .then(res => {
-          handleResponse('delete', res, deleteHRState, ids)
-          setLoading(false)
-        })
-    }
+  const CollectDeleteHRs = data => {
+    const _deleteHRs = [...deleteHRs]
+    const _selectedHRs = [...HRs.selectedHRs]
+    const approvals = [...configuration.organizationLeaveHRApprovals]
+    const deleteUser = approvals.find(o => o.userId == data.id)?.userId
+    const removeUser = _selectedHRs.findIndex(o => o.id == data.id)
+    deleteUser && _deleteHRs.push(deleteUser)
+    removeUser != -1 && _selectedHRs.splice(removeUser, 1)
+    setDeleteHRs(_deleteHRs)
+    setHRs(state => ({ ...state, selectedHRs: _selectedHRs }))
   }
 
   return (
     <Grid className='d-flex'>
-      {isLoading && <SimpleBackdrop />}
+      {isLoading && <BackdropSpinner />}
       <Grid container xs={12} sm={12} md={7} lg={7}>
         <Card>
           <CardHeader title='Configurations' />
@@ -334,6 +295,7 @@ const SettingsConfig = () => {
                           value={field.value}
                           error={Boolean(errors.currency)}
                           renderInput={params => <TextField {...params} label='Currency' />}
+                          noOptionsText='No Currency'
                         />
                       )}
                     />
@@ -368,6 +330,7 @@ const SettingsConfig = () => {
                           renderInput={params => (
                             <TextField {...params} label='Timezone' error={errors.timezone} />
                           )}
+                          noOptionsText='No Timezone'
                         />
                       )}
                     />
@@ -386,24 +349,29 @@ const SettingsConfig = () => {
                     HR Approval <span style={{ color: 'red' }}>*</span>
                   </Typography>
                 </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <CustomHRPicker
-                      items={HRs.users}
-                      values={HRs.selectedHRs}
-                      label='Users'
-                      onDelete={collectDeletingHRs}
-                      onSelect={collectNewHRs}
-                      originalItems={_userStore.users}
-                    />
 
-                    {errors.hr && (
-                      <FormHelperText sx={{ color: 'error.main' }}>
-                        {errors.hr.message}
-                      </FormHelperText>
-                    )}
-                  </FormControl>
-                </Grid>
+                {HRs.selectedHRs ? (
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <CustomHRPicker
+                        items={HRs.items}
+                        values={HRs.selectedHRs}
+                        label='Users'
+                        onDelete={CollectDeleteHRs}
+                        onSelect={collectNewHRs}
+                        originalItems={_userStore.users}
+                      />
+
+                      {errors.hr && (
+                        <FormHelperText sx={{ color: 'error.main' }}>
+                          {errors.hr.message}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
+                  </Grid>
+                ) : (
+                  <Spinner />
+                )}
 
                 <Grid item xs={12} className='flex-right'>
                   <Button type='submit' variant='contained' color='primary'>

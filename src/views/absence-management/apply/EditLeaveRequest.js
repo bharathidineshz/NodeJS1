@@ -38,7 +38,8 @@ import {
   fetchDashboard,
   fetchMyLeaves,
   putRequest,
-  setMyleaves
+  setMyleaves,
+  setPolicies
 } from 'src/store/absence-management'
 import { useEffect, useState } from 'react'
 import { Box, display } from '@mui/system'
@@ -55,7 +56,7 @@ import { customErrorToast, customSuccessToast } from 'src/helpers/custom-compone
 import { fetchHolidays } from 'src/store/apps/accountSetting'
 import subDays from 'date-fns/subDays'
 import { setLoading } from 'src/store/authentication/register'
-import SimpleBackdrop from 'src/@core/components/spinner'
+import SimpleBackdrop, { BackdropSpinner } from 'src/@core/components/spinner'
 
 const schema = yup.object().shape({
   requestType: yup.object().required('Request Type is Required'),
@@ -101,6 +102,15 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
         isFromDateHalfDay: row.isFromDateHalfDay,
         isToDateHalfDay: row.isToDateHalfDay
       })
+
+      const usedLeaves = store.dashboards
+        ? store.policies.filter(o =>
+            store.dashboards.some(d => d.balanceCount != 0 && o.typeOfLeave === d.name)
+          )
+        : []
+      if (usedLeaves.length > 0) {
+        dispatch(setPolicies(usedLeaves))
+      }
     }
   }, [isOpen])
 
@@ -111,7 +121,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
         const { result } = res
         setHolidays(result?.map(o => subDays(new Date(o.date), 0)))
       })
-  }, [])
+  }, [dispatch])
 
   //UPDATE Request STATE
   const updateRequestsState = newReq => {
@@ -122,6 +132,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
       myLeaves[indexToReplace] = newReq
     }
     dispatch(setMyleaves(myLeaves))
+    reset()
   }
 
   //submit
@@ -130,12 +141,10 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
     try {
       setOpen(false)
       setLoading(true)
-      reset()
-      const currentUser = JSON.parse(localStorage.getItem('userData'))
-      const user = currentUser && store.users.find(o => currentUser.user === o.email)
+      const userId = JSON.parse(localStorage.getItem('userId'))
       const request = myLeaveRequest({
         id: row?.id,
-        submittedUserId: user.id,
+        submittedUserId: userId,
         requestTypeId: formData.requestType.id,
         ...formData
       })
@@ -143,7 +152,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
         .then(unwrapResult)
         .then(res => {
           handleResponse('update', res, updateRequestsState)
-          dispatch(fetchDashboard(user.id))
+          dispatch(fetchDashboard(userId))
           setLoading(false)
         })
     } catch (error) {
@@ -175,8 +184,8 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
 
   return (
     <>
-      {loading && <SimpleBackdrop />}
-      <Dialog fullWidth open={isOpen} maxWidth='sm' scroll='body' onClose={handleClose}>
+      {loading && <BackdropSpinner />}
+      <Dialog fullWidth open={isOpen} maxWidth='md' scroll='body' onClose={handleClose}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent
             sx={{
@@ -293,9 +302,8 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
 
               {!watch('requestType')?.isPermission && (
                 <>
-                  {' '}
                   <Grid item xs={12} sm={4} md={4} lg={4}>
-                    <FormControl fullWidth>
+                    <FormControl>
                       <Controller
                         name='isFromDateHalfDay'
                         control={control}
@@ -318,7 +326,7 @@ const EditLeaveRequest = ({ isOpen, setOpen, row }) => {
                   </Grid>
                   <Grid item xs={12} sm={8} md={8} lg={8}>
                     <DatePickerWrapper sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
-                      <FormControl fullWidth>
+                      <FormControl>
                         <Controller
                           name='toDate'
                           control={control}

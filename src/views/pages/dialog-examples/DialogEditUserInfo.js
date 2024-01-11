@@ -48,7 +48,9 @@ const DialogEditUserInfo = () => {
         <Typography variant='h6' sx={{ mb: 4 }}>
           Edit User Info
         </Typography>
-        <Typography sx={{ mb: 3 }}>Use this modal to modify the existing user&prime;s current information.</Typography>
+        <Typography sx={{ mb: 3 }}>
+          Use this modal to modify the existing user&prime;s current information.
+        </Typography>
         <Button variant='contained' onClick={() => setShow(true)}>
           Show
         </Button>
@@ -81,7 +83,9 @@ const DialogEditUserInfo = () => {
             <Typography variant='h5' sx={{ mb: 3 }}>
               Edit User Information
             </Typography>
-            <Typography variant='body2'>Updating user details will receive a privacy audit.</Typography>
+            <Typography variant='body2'>
+              Updating user details will receive a privacy audit.
+            </Typography>
           </Box>
           <Grid container spacing={6}>
             <Grid item sm={6} xs={12}>
@@ -91,7 +95,12 @@ const DialogEditUserInfo = () => {
               <TextField fullWidth defaultValue='Queen' label='Last Name' placeholder='Doe' />
             </Grid>
             <Grid item xs={12}>
-              <TextField fullWidth defaultValue='oliverQueen' label='Username' placeholder='johnDoe' />
+              <TextField
+                fullWidth
+                defaultValue='oliverQueen'
+                label='Username'
+                placeholder='johnDoe'
+              />
             </Grid>
             <Grid item sm={6} xs={12}>
               <TextField
@@ -116,7 +125,12 @@ const DialogEditUserInfo = () => {
               <TextField fullWidth label='Tax ID' placeholder='Tax-7490' defaultValue='Tax-8894' />
             </Grid>
             <Grid item sm={6} xs={12}>
-              <TextField fullWidth label='Contact' placeholder='+ 123 456 7890' defaultValue='+1 609 933 4422' />
+              <TextField
+                fullWidth
+                label='Contact'
+                placeholder='+ 123 456 7890'
+                defaultValue='+1 609 933 4422'
+              />
             </Grid>
             <Grid item sm={6} xs={12}>
               <FormControl fullWidth>
@@ -164,7 +178,10 @@ const DialogEditUserInfo = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <FormControlLabel control={<Switch defaultChecked />} label='Make this default shipping address' />
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label='Make this default shipping address'
+              />
             </Grid>
           </Grid>
         </DialogContent>
@@ -179,7 +196,7 @@ const DialogEditUserInfo = () => {
             Submit
           </Button>
           <Button variant='outlined' color='secondary' onClick={() => setShow(false)}>
-            Discard
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>

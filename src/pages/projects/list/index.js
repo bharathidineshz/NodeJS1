@@ -30,7 +30,7 @@ import {
 } from 'src/store/apps/projects'
 import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
-import FallbackSpinner from 'src/@core/components/spinner'
+import FallbackSpinner, { BackdropSpinner } from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import { useRouter } from 'next/router'
 import styled from '@emotion/styled'
@@ -58,21 +58,10 @@ const TableServerSide = () => {
   const router = useRouter()
 
   useEffect(() => {
-    dispatch(fetchUsers())
-    dispatch(fetchClients())
-      .then(unwrapResult)
-      .then(() => {
-        dispatch(fetchProjects()).then(res => setLoading(false))
-      })
+    dispatch(fetchProjects()).then(res => setLoading(false))
   }, [dispatch, searchValue, sort, sortColumn])
 
   const columns = [
-    // {
-    //   flex: 0.1,
-    //   field: 'id',
-    //   minWidth: 80,
-    //   headerName: 'Id'
-    // },
     {
       flex: 0.3,
       minWidth: 200,
@@ -156,25 +145,6 @@ const TableServerSide = () => {
     }
   }
 
-  // ** renders client column
-  const renderUsers = params => {
-    const stateNum = Math.floor(Math.random() * 6)
-    const states = ['success', 'error', 'warning', 'info', 'primary', 'secondary']
-    const color = states[stateNum]
-    const user = store.users?.find(o => o.id === params.userId)
-    const fullName = `${user?.firstName} ${user?.lastName}`
-
-    return (
-      <CustomAvatar
-        skin='light'
-        color={color}
-        sx={{ mr: 1, fontSize: '.8rem', width: '1.875rem', height: '1.875rem' }}
-      >
-        {getInitials(fullName ? fullName : 'Unkown User')}
-      </CustomAvatar>
-    )
-  }
-
   //SEARCH
   const handleSearch = value => {
     setSearchValue(value)
@@ -203,7 +173,7 @@ const TableServerSide = () => {
   return (
     <>
       {isLoading ? (
-        <FallbackSpinner />
+        <BackdropSpinner />
       ) : (
         <Card>
           <ProjectHeader />

@@ -25,7 +25,7 @@ export const handleNestedTabs = router => {
     '/absence-management/holidays',
     '/settings/skills',
     '/setting/Settings',
-    '/users/view'
+    '/users'
   ]
 
   return paths.includes(router.asPath)

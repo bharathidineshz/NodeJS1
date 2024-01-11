@@ -1,5 +1,5 @@
 // ** React Imports
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 
 // ** MUI Imports
 import Box from '@mui/material/Box'
@@ -30,6 +30,7 @@ import {
   resetReport
 } from 'src/store/absence-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
+import { LEAVE_STATUS } from 'src/helpers/constants'
 
 const LeaveReports = () => {
   // ** States
@@ -42,24 +43,21 @@ const LeaveReports = () => {
   const store = useSelector(state => state.leaveManagement)
   const [report, setReport] = useState({
     user: null,
-    start: new Date(),
-    end: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000)
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
   })
 
   useEffect(() => {
-    dispatch(fetchPolicies())
-    dispatch(fetchStatus())
-
     return () => {
       dispatch(resetReport([]))
     }
-  }, [])
+  }, [dispatch])
 
   const columns = [
     {
       flex: 0.2,
       minWidth: 230,
-      field: 'request',
+      field: 'leavePolicyName',
       headerName: 'Request Type',
       renderCell: params => <div style={{ fontWeight: 'bold' }}>{params.value}</div>
     },
@@ -72,7 +70,6 @@ const LeaveReports = () => {
     },
     {
       flex: 0.15,
-      minWidth: 250,
       field: 'duration',
       headerName: 'Duration'
     },
@@ -89,30 +86,19 @@ const LeaveReports = () => {
       renderCell: params => <>{formatLocalDate(new Date(params.value))}</>
     },
     {
-      flex: 0.15,
+      flex: 0.13,
       field: 'createdDate',
-      headerName: 'Date',
+      headerName: 'Applied',
       renderCell: params => <>{formatLocalDate(new Date(params.value))}</>
     },
     {
       flex: 0.15,
-      field: 'statusName',
+      field: 'requestStatusName',
       headerName: 'Status',
       renderCell: params => {
-        return (
-          <CustomChip
-            size='small'
-            skin='light'
-            color={
-              params.row.requestStatusId === 2
-                ? 'success'
-                : params.row.requestStatusId === 3
-                ? 'error'
-                : 'warning'
-            }
-            label={params.value}
-          />
-        )
+        const status = LEAVE_STATUS.find(o => o.name == params.value)
+
+        return <CustomChip size='small' skin='light' color={status.color} label={params.value} />
       }
     }
   ]
@@ -151,62 +137,53 @@ const LeaveReports = () => {
     setSearchValue(value)
   }
 
-  const handleProjectSelection = data => {
-    console.log('row', data)
-    dispatch(getProjectDetails(data.row.uniqueId))
-    dispatch(setSelectedProject(data.row))
-  }
-
-  const getReports = (data, user) => {
-    dispatch(fetchUserReports(data)).then(() => {
-      setReport(prev => ({ ...prev, start: data.fromDate, end: data.toDate, user: user }))
-    })
-  }
+  const getReports = useCallback(
+    (data, user) => {
+      setLoading(true)
+      dispatch(fetchUserReports(data)).then(() => {
+        setReport(prev => ({ ...prev, start: data.fromDate, end: data.toDate, user: user }))
+        setLoading(false)
+      })
+    },
+    [store.reports]
+  )
 
   return (
-    <>
-      {isLoading ? (
-        <FallbackSpinner />
-      ) : (
-        <>
-          <Card>
-            <DataGrid
-              autoHeight
-              pagination
-              rows={store.reports || []}
-              columns={columns}
-              sortingMode='client'
-              rowSelection={false}
-              onRowClick={handleProjectSelection}
-              pageSizeOptions={[5, 10, 25, 50, 100]}
-              loading={store.reports == null}
-              className='no-border'
-              localeText={{ noRowsLabel: 'No Reports' }}
-              disableColumnMenu
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 25
-                  }
-                }
-              }}
-              slots={{
-                toolbar: () => {
-                  return (
-                    <ReportsHeader
-                      getData={getReports}
-                      user={report.user}
-                      fromDate={new Date(report.start)}
-                      toDate={new Date(report.end)}
-                    />
-                  )
-                }
-              }}
-            />
-          </Card>
-        </>
-      )}
-    </>
+    <Card>
+      <DataGrid
+        autoHeight
+        pagination
+        rows={store.reports || []}
+        columns={columns}
+        sortingMode='client'
+        rowSelection={false}
+        pageSizeOptions={[5, 10, 25, 50, 100]}
+        loading={isLoading}
+        className='no-border'
+        localeText={{ noRowsLabel: 'No Reports' }}
+        disableRowSelectionOnClick
+        disableColumnMenu
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 25
+            }
+          }
+        }}
+        slots={{
+          toolbar: () => {
+            return (
+              <ReportsHeader
+                getData={getReports}
+                user={report.user}
+                fromDate={new Date(report.start)}
+                toDate={new Date(report.end)}
+              />
+            )
+          }
+        }}
+      />
+    </Card>
   )
 }
 

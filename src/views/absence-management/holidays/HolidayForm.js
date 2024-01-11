@@ -107,12 +107,17 @@ const HolidayForm = ({ isOpen, row, setOpen }) => {
   //UPDATE Holiday STATE
   const updateHolidayState = newHoliday => {
     let _holidays = [...holidays]
+    let sortedArray = []
     const indexToReplace = _holidays.findIndex(item => item.id === newHoliday.id)
 
     if (indexToReplace !== -1) {
       _holidays[indexToReplace] = newHoliday
+      sortedArray = _holidays.sort((a, b) => {
+        return new Date(a.date) - new Date(b.date)
+      })
     }
-    dispatch(setHolidays(_holidays))
+
+    dispatch(setHolidays(sortedArray))
   }
 
   //submit
@@ -238,7 +243,7 @@ const HolidayForm = ({ isOpen, row, setOpen }) => {
             Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
-            {row ? 'Edit' : 'Add'}
+            Submit
           </Button>
         </DialogActions>
       </form>

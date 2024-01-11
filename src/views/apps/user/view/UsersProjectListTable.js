@@ -49,16 +49,17 @@ const columns = [
 const InvoiceListTable = () => {
   // ** State
   const [value, setValue] = useState('')
-  const [data, setData] = useState([])
+  const [data, setData] = useState(null)
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
 
   useEffect(() => {
-    dispatch(fetchProjectsByUser())
-      .then(unwrapResult)
-      .then(res => {
-        setData(res)
-      })
+    if (store.userProjects == null || store.userProjects?.length == 0)
+      dispatch(fetchProjectsByUser())
+        .then(unwrapResult)
+        .then(res => {
+          setData(res.result)
+        })
   }, [])
 
   const filteredData = useMemo(() => {
@@ -78,24 +79,15 @@ const InvoiceListTable = () => {
   return (
     <Card>
       <CardHeader title='Projects List' />
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <TextField
-            size='small'
-            placeholder='Search Project'
-            value={value}
-            onChange={e => setValue(e.target.value)}
-          />
-        </Box>
-      </CardContent>
       <DataGrid
         autoHeight
-        rows={filteredData || []}
+        rows={data ? data : []}
         columns={columns}
         disableRowSelectionOnClick
         pageSizeOptions={[5, 10, 25, 50]}
         getRowId={row => row.projectId}
         disableColumnMenu
+        loading={store.userProjects == null}
         localeText={{ noRowsLabel: 'No Projects' }}
       />
     </Card>

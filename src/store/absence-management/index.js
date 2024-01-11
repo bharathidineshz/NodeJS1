@@ -208,14 +208,14 @@ export const deletePolicy = createAsyncThunk('deletePolicy/LeavePolicy', async p
 })
 
 const initialStates = {
-  myLeaves: [],
+  myLeaves: null,
   requestTypes: [],
-  policies: [],
+  policies: null,
   statuses: [],
-  users: [],
-  approvals: [],
-  reports: [],
-  dashboards: []
+  users: null,
+  approvals: null,
+  reports: null,
+  dashboards: null
 }
 
 export const LeaveManagement = createSlice({
@@ -235,6 +235,9 @@ export const LeaveManagement = createSlice({
     setMyleaves: (state, { payload }) => {
       state.myLeaves = payload
     },
+    setDashboards: (state, { payload }) => {
+      state.dashboards = payload
+    },
 
     setLeaveApproval: (state, action) => {
       state.approvals = action.payload
@@ -242,34 +245,33 @@ export const LeaveManagement = createSlice({
   },
   extraReducers: builder => {
     builder.addCase(fetchMyLeaves.fulfilled, (state, action) => {
-      let sortedArray = action.payload.result.sort((a, b) => {
+      let sortedArray = action.payload.result?.sort((a, b) => {
         return new Date(b.fromDate).getTime() - new Date(a.toDate).getTime()
       })
       state.myLeaves = sortedArray
     })
     builder.addCase(fetchRequests.fulfilled, (state, action) => {
-      state.requestTypes = action.payload.result
+      state.requestTypes = action.payload?.result
     })
     builder.addCase(fetchPolicies.fulfilled, (state, action) => {
-      const { result } = action.payload
-      state.policies = result
+      state.policies = action.payload?.result
     })
     builder.addCase(fetchStatus.fulfilled, (state, action) => {
-      state.statuses = action.payload.result
+      state.statuses = action.payload?.result
     })
     builder.addCase(fetchApprovals.fulfilled, (state, action) => {
-      const approvals = [...action.payload.result]
+      const approvals = action.payload?.result ? [...action.payload?.result] : []
       const _approvals = []
-      approvals.forEach(approval => {
-        const user = state.users.find(o => o.id === approval.submittedUserId)
+      approvals?.forEach(approval => {
         _approvals.push({
           ...approval,
           leaveRequestApprovalId: approval.requestApprovals.id,
-          userName: approval.requestApprovals.username,
-          email: user.email,
-          request: approval.requestApprovals.typeOfLeave,
+          userId: approval.submittedUserDetails.userId,
+          userName: approval.submittedUserDetails.username,
+          email: approval.submittedUserDetails.email,
+          request: approval.requestTypeName,
           comment: approval.requestApprovals.comment,
-          currentStatusId: approval.requestApprovals.statusId,
+          requestStatusId: approval.requestApprovals.statusId,
           status: approval.requestApprovals.status
         })
       })
@@ -283,35 +285,25 @@ export const LeaveManagement = createSlice({
       state.approvals = sortedArray
     })
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
-      const users = [...action.payload.result]
+      const users = action.payload?.result ? [...action.payload.result] : []
       users.map(u => {
         u.fullName = `${u.firstName} ${u.lastName}`
       })
       state.users = users
     })
     builder.addCase(fetchUserReports.fulfilled, (state, action) => {
-      const reports = [...action.payload.result]
-      const _reports = []
-      reports.forEach((report, i) => {
-        const policy = state.policies.find(o => o.id === report.requestTypeId)
-        const status = state.statuses.find(o => o.id === report.requestStatusId)
-        _reports.push({
-          request: policy.typeOfLeave,
-          statusName: status.statusName,
-          ...report
-        })
-      })
+      const reports = action.payload?.result ? [...action.payload?.result] : []
 
       let sortedArray =
-        _reports.length > 0
-          ? _reports.sort((a, b) => {
+        reports.length > 0
+          ? reports.sort((a, b) => {
               return new Date(a.fromDate) - new Date(b.toDate)
             })
           : []
       state.reports = sortedArray
     })
     builder.addCase(fetchDashboard.fulfilled, (state, action) => {
-      const dashboards = [...action.payload.result]
+      const dashboards = action.payload?.result ? [...action.payload.result] : []
       dashboards?.map((report, i) => {
         report.id = i
       })
@@ -326,6 +318,7 @@ export const {
   resetReport,
   setPolicies,
   setApprovals,
+  setDashboards,
   setMyleaves
 } = LeaveManagement.actions
 

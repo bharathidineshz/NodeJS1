@@ -110,6 +110,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
     let policies = [...store.policies]
     policies.push(newPolicy)
     dispatch(setPolicies(policies))
+    reset()
   }
 
   //submit
@@ -123,7 +124,6 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
       return
     }
     setOpen(false)
-    reset()
 
     const req = leavePolicyRequest(formData)
     dispatch(postPolicy(req))
@@ -404,7 +404,7 @@ const NewLeavePolicy = ({ isOpen, setOpen }) => {
             Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
-            Add
+            Submit
           </Button>
         </DialogActions>
       </form>

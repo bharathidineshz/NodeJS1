@@ -36,6 +36,7 @@ import SimpleBackdrop from 'src/@core/components/spinner'
 import { STATUS } from 'src/helpers/constants'
 import { handleResponse } from 'src/helpers/helpers'
 
+
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
   ssr: false,
   loading: () => {
@@ -226,7 +227,7 @@ const TaskLists = () => {
                 id='customized-panel-header-1'
                 aria-controls='customized-panel-content-1'
 
-                // expandIcon={expanded === category ? <Icon icon="mdi:chevron-up" /> : <Icon icon="mdi:chevron-down" />}
+              // expandIcon={expanded === category ? <Icon icon="mdi:chevron-up" /> : <Icon icon="mdi:chevron-down" />}
               >
                 <Box className='gap-1' display='flex' justifyContent='space-between' width={'100%'}>
                   <Typography variant='body1' color='secondary'>
@@ -254,6 +255,7 @@ const TaskLists = () => {
                   columns={columns}
                   disableRowSelectionOnClick
                   hideFooter
+                  localeText={{ noRowsLabel: 'No Tasks' }}
                   sx={{
                     '&, [class^=MuiDataGrid]': { border: 'none' },
                     '&:hover': { cursor: 'pointer' }

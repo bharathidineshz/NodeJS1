@@ -55,6 +55,7 @@ const Configurations = ({ tab }) => {
   const [activeTab, setActiveTab] = useState('cofigurations')
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setOpen] = useState(false)
+  const [role, setRole] = useState(0)
 
   // ** Hooks
   const router = useRouter()
@@ -82,17 +83,19 @@ const Configurations = ({ tab }) => {
 
   useEffect(() => {
     dispatch(fetchConfig())
+    const role = localStorage?.getItem('roleId')
+    setRole(role)
   }, [])
 
-  const tabContentList = {
-    Department: <DepartmentConfig />,
-    Skills: <SkillsConfig />,
+  const tabContentList = (role == 1 || role == 2) && {
+    // Department: <DepartmentConfig />,
+    // Skills: <SkillsConfig />,
     Settings: <SettingsConfig />
   }
 
   const tabs = [
-    { name: 'Department', icon: 'mdi:calendar-alert' },
-    { name: 'Skills', icon: 'mdi:check-decagram' },
+    // { name: 'Department', icon: 'mdi:calendar-alert' },
+    // { name: 'Skills', icon: 'mdi:check-decagram' },
     { name: 'Settings', icon: 'mdi:chart-box' }
   ]
 

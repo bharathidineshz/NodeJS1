@@ -71,7 +71,7 @@ const shortcuts = [
   },
   {
     title: 'Users',
-    url: '/users/list/',
+    url: '/users/',
     subtitle: 'Manage Users',
     icon: 'mdi:account-outline'
   },

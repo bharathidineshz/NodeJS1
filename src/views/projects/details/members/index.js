@@ -1,4 +1,3 @@
-// ** Next Import
 import Link from 'next/link'
 
 // ** MUI Components
@@ -17,19 +16,29 @@ import Icon from 'src/@core/components/icon'
 import CustomChip from 'src/@core/components/mui/chip'
 import OptionsMenu from 'src/@core/components/option-menu'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchProjectMembers } from 'src/store/apps/projects'
+import {
+  fetchProjectMembers,
+  setEditProjectMember,
+  setProjectMembers
+} from 'src/store/apps/projects'
 import { useEffect } from 'react'
 import EmptyMembers from './EmptyMembers'
 
 const COLORS = ['primary', 'secondary', 'info', 'warning', 'error', 'grey']
 
-const Members = ({ data }) => {
+const Members = ({ data, setOpen }) => {
   const dispatch = useDispatch()
   const store = useSelector(state => state.projects)
-
   useEffect(() => {
-    dispatch(fetchProjectMembers(Number(localStorage.getItem('projectId'))))
+    const projectId = localStorage.getItem('projectId')
+    dispatch(fetchProjectMembers(projectId))
+    // dispatch(fetchProjectMembers(Number(localStorage.getItem('projectId'))))
   }, [])
+
+  const handleEdit = item => {
+    setOpen(true)
+    dispatch(setEditProjectMember(item))
+  }
 
   return (
     <>
@@ -49,6 +58,7 @@ const Members = ({ data }) => {
                         'Block',
                         'Share Profile',
                         { divider: true },
+                        { text: 'Edit', menuItemProps: { onClick: () => handleEdit(item) } },
                         { text: 'Remove', menuItemProps: { sx: { color: 'error.main' } } }
                       ]}
                     />
@@ -66,12 +76,14 @@ const Members = ({ data }) => {
                           sx={{ mb: 6, width: 80, height: 80 }}
                         />
                         <Typography variant='h6'>{item.userName}</Typography>
-                        <Typography sx={{ mb: 6, color: 'text.secondary' }}>{item.role}</Typography>
+                        <Typography sx={{ mb: 6, color: 'text.secondary' }}>
+                          {item.role || ''}
+                        </Typography>
                         <Box sx={{ mb: 6, display: 'flex', alignItems: 'center' }}>
-                          {item.userSkills &&
-                            item.userSkills.map((skill, i) => (
+                          {item.skills &&
+                            item.skills.map((skill, i) => (
                               <Box
-                                key={index}
+                                key={i}
                                 onClick={e => e.preventDefault()}
                                 sx={{
                                   textDecoration: 'none',
@@ -79,12 +91,12 @@ const Members = ({ data }) => {
                                   '& .MuiChip-root': { cursor: 'pointer' }
                                 }}
                               >
-                                {skill && (
+                                {skill.skillName && (
                                   <CustomChip
                                     size='small'
                                     skin='light'
                                     color={COLORS[i]}
-                                    label={skill || ''}
+                                    label={skill.skillName || ''}
                                   />
                                 )}
                               </Box>
@@ -105,7 +117,9 @@ const Members = ({ data }) => {
                             sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}
                           >
                             <Typography variant='h5'>{item?.feedbacks || 0}</Typography>
-                            <Typography sx={{ color: 'text.secondary' }}>Feedbacks</Typography>
+                            <Typography sx={{ color: 'text.secondary' }}>
+                              Efficiency Score
+                            </Typography>
                           </Box>
                           <Box
                             sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}
@@ -116,7 +130,9 @@ const Members = ({ data }) => {
                           <Box
                             sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}
                           >
-                            <Typography variant='h5'>{item.utilization + '%'}</Typography>
+                            <Typography variant='h5'>
+                              {item.utilizationPercentage?.toFixed(1) + '%'}
+                            </Typography>
                             <Typography sx={{ color: 'text.secondary' }}>Utilizations</Typography>
                           </Box>
                         </Box>
@@ -125,6 +141,9 @@ const Members = ({ data }) => {
                             variant='outlined'
                             color='secondary'
                             sx={{ p: 1.5, minWidth: 38 }}
+                            target='_top'
+                            rel='noopener noreferrer'
+                            href={`mailto:${item?.email}`}
                           >
                             <Icon icon='mdi:email-outline' />
                           </Button>

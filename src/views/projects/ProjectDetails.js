@@ -35,7 +35,7 @@ import NewMember from './details/members/NewMember'
 import NewFeedback from './details/feedback/NewFeedback'
 import Files from './details/files'
 import Link from 'next/link'
-import { fetchProjectAssignees } from 'src/store/apps/projects'
+import { fetchProjectAssignees, setEditMilestone, setEditProjectMember } from 'src/store/apps/projects'
 import toast from 'react-hot-toast'
 
 const TabList = styled(MuiTabList)(({ theme }) => ({
@@ -115,9 +115,9 @@ const ProjectDetails = ({ tab, data }) => {
 
   const tabContentList = {
     task: <TaskCategory />,
-    milestone: <MileStone />,
+    milestone: <MileStone setOpen={setOpen} />,
     feedback: <Feedback data={store.feedbacks} />,
-    members: <Members data={store.projectMembers} />,
+    members: <Members data={store.projectMembers} setOpen={setOpen} />,
     settings: <Settings />,
     files: <Files />
   }
@@ -137,6 +137,9 @@ const ProjectDetails = ({ tab, data }) => {
   //SHOW DRAWER
 
   const showDrawer = name => () => {
+    dispatch(setEditMilestone(null))
+    dispatch(setEditProjectMember(null))
+
     switch (name?.toLowerCase()) {
       case 'category':
         setOpen(true)
@@ -289,7 +292,7 @@ const ProjectDetails = ({ tab, data }) => {
                   >
                     Reports
                   </Button>
-                  {tab !== 'settings'  ? (
+                  {tab !== 'settings' ? (
                     <Button
                       variant='contained'
                       startIcon={<Icon icon='mdi:add' fontSize={20} />}

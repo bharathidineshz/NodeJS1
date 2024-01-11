@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 // ** Third Party Imports
 import { useDropzone } from 'react-dropzone'
 import { Icon } from '@iconify/react'
+import { getBase64String } from 'src/helpers/helpers'
 
 // Styled component for the upload image inside the dropzone area
 const Img = styled('img')(({ theme }) => ({
@@ -53,27 +54,9 @@ const ProfileUpload = props => {
         })
       )
       setFiles(base64Strings)
-      props?.handleProfile
-        ? props.handleProfile(base64Strings)
-        : null
+      props?.handleProfile ? props.handleProfile(base64Strings) : null
     }
   })
-
-  const getBase64String = file => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-
-      reader.onload = () => {
-        resolve(reader.result)
-      }
-
-      reader.onerror = error => {
-        reject(error)
-      }
-    })
-  }
-  
 
   return (
     <Box {...getRootProps({ className: 'dropzone' })}>
@@ -95,16 +78,16 @@ const ProfileUpload = props => {
             textAlign: ['center', 'center', 'inherit']
           }}
         >
-          {(files.length && props.profile )? (
+          {files.length && props.profile ? (
             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3, alignItems: 'center' }}>
-               <img
-      key={''}
-      alt={''}
-      className='single-file-image'
-      style={{ height: 50 }}
-      src={files[0].base64String}
-    />
-              <Typography>{files[0].file.name}</Typography>
+              <img
+                key={''}
+                alt={''}
+                className='single-file-image'
+                style={{ height: 50 }}
+                src={files[0].base64String}
+              />
+              <Typography>{files[0]?.file?.name}</Typography>
             </Box>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3, alignItems: 'center' }}>

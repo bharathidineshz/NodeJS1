@@ -38,9 +38,6 @@ import { timeSheetRequest } from 'src/helpers/requests'
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
   ssr: false,
-  loading: () => {
-    return <FallbackSpinner />
-  }
 })
 
 const TimeSheetTable = ({ popperPlacement, loading }) => {

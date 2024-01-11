@@ -11,11 +11,20 @@ import DialogActions from '@mui/material/DialogActions'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
-import { deleteUser } from 'src/store/apps/user'
+import {
+  deleteUser,
+  setActivate,
+  setSecondDialogOpen,
+  setSuspend,
+  setSuspendDialogOpen,
+  setUsers
+} from 'src/store/apps/user'
 import { unwrapResult } from '@reduxjs/toolkit'
 import { useDispatch, useSelector } from 'react-redux'
 import toast from 'react-hot-toast'
 import { Router, useRouter } from 'next/router'
+import { handleResponse } from 'src/helpers/helpers'
+import { store } from 'src/store'
 
 const UserSuspendDialog = props => {
   // ** Props
@@ -24,26 +33,44 @@ const UserSuspendDialog = props => {
   const router = useRouter()
 
   // ** States
-  const { userId } = useSelector(state => state.user)
+  const { userId, users, secondDialogOpen } = useSelector(state => state.user)
 
   const [userInput, setUserInput] = useState('yes')
-  const [secondDialogOpen, setSecondDialogOpen] = useState(false)
   const handleClose = () => setOpen(false)
   const handleSecondDialogClose = () => {
-    setSecondDialogOpen(false)
+    dispatch(setSecondDialogOpen(false))
+  }
+
+  const updateStates = () => {
+    handleClose()
+
+    // const _users = users ? [...users] : []
+    // const index = _users.findIndex(o => o.id == userId)
+    // _users[index] = {
+    //   ...users[index],
+    //   isActive: false
+    // }
+    // dispatch(setUsers(_users))
   }
 
   const handleConfirmation = value => {
+    handleClose()
     dispatch(deleteUser(userId))
       .then(unwrapResult)
       .then(res => {
-        handleClose()
-        setUserInput('yes')
-        setSecondDialogOpen(true)
+        if (res.hasError) {
+          handleResponse('update', res, () => {})
+        } else {
+          dispatch(setSuspend(true))
+          dispatch(setActivate(false))
+          setUserInput('yes')
+          dispatch(setSecondDialogOpen(true))
+          setOpen(false)
+        }
       })
       .catch(err => {
-        toast.error(err.message, 'Error while Suspend user')
         handleClose()
+        toast.error(err.message, 'Error while Suspend user')
         setUserInput('cancel')
         setSecondDialogOpen(true)
       })
@@ -52,7 +79,6 @@ const UserSuspendDialog = props => {
   const handleCancel = () => {
     handleClose()
     setUserInput('cancel')
-    setSecondDialogOpen(true)
   }
 
   return (

@@ -159,7 +159,7 @@ const OrganizationalSetup = () => {
   })
 
   const updateorg = newReq => {
-    router.replace({ pathname: '/timesheets' })
+    router.replace({ pathname: '/absence-management/leaves' })
   }
 
   const dispatch = useDispatch()

@@ -1,4 +1,3 @@
-
 // ** React Imports
 import { useEffect, useState } from 'react'
 
@@ -34,7 +33,8 @@ import ProfileUpload from '../add/ProfileUpload'
 import { clientRequest } from 'src/helpers/requests'
 import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
-import { handleResponse } from 'src/helpers/helpers'
+import { getBase64String, handleResponse } from 'src/helpers/helpers'
+import { customErrorToast } from 'src/helpers/custom-components/toasts'
 
 const showErrors = (field, valueLen, min) => {
   if (valueLen === 0) {
@@ -112,8 +112,9 @@ const SidebarAddClient = props => {
   })
 
   useEffect(() => {
-    if (editedRowData) {
+    if (editedRowData != null) {
       const {
+        profilePhoto,
         companyName,
         primaryContatctName,
         address,
@@ -123,6 +124,8 @@ const SidebarAddClient = props => {
         taxId,
         isActive
       } = editedRowData
+      // const base64String = getBase64String(profilePhoto)
+      // setProfile([base64String, profilePhoto])
       reset({
         companyName: companyName,
         primaryContactName: primaryContatctName || '',
@@ -133,20 +136,22 @@ const SidebarAddClient = props => {
         taxId: taxId,
         isActive: isActive
       })
+    } else {
+      reset()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editedRowData])
+  }, [open])
 
   const onSubmit = data => {
     const profilePhoto = profile == null ? '' : profile[0].base64String
     const contactName = data.primaryContactName
     delete data.primaryContactName
+    toggle()
 
     const successFunction = () => {
       // dispatch(fetchClients())
       // toast.success(editedRowData ? 'Client Updated' : 'Client Created')
       setEditedRowData(null)
-      toggle()
       handleEdit(null)
       reset(defaultValues)
     }
@@ -157,9 +162,9 @@ const SidebarAddClient = props => {
       .then(res => {
         handleResponse(editedRowData ? 'update' : 'create', res, successFunction)
       })
-      .catch(error => {
-        toast.error(error.message)
-      })
+    // .catch(error => {
+    //   customErrorToast(error.message)
+    // })
   }
 
   const handleProfile = file => {
@@ -167,9 +172,10 @@ const SidebarAddClient = props => {
   }
 
   const handleClose = () => {
-    toggle()
-    reset(defaultValues)
+    reset({})
+    setEditedRowData(null)
     setProfile(null)
+    toggle()
   }
 
   return (
@@ -182,7 +188,7 @@ const SidebarAddClient = props => {
       sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 500 } } }}
     >
       <Header>
-        <Typography variant='h6'>Create New Client</Typography>
+        <Typography variant='h6'>{editedRowData ? 'Edit Client' : 'Create New Client'}</Typography>
         <IconButton size='small' onClick={handleClose} sx={{ color: 'text.primary' }}>
           <Icon icon='mdi:close' fontSize={20} />
         </IconButton>

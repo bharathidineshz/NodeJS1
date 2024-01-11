@@ -8,38 +8,68 @@ import instance from 'src/store/endpoints/interceptor'
 // export const fetchData = createAsyncThunk()
 
 export const fetchClients = createAsyncThunk('appClient/fetchClients', async params => {
-  const response = await instance.get(endpoints.getAllClient)
+  try {
+    const response = await instance.get(endpoints.getAllClient)
 
-  return response.data.result
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const fetchClientById = createAsyncThunk('appClient/fetchClientById', async params => {
-  const response = await instance.get(endpoints.clientById(params))
+  try {
+    const response = await instance.get(endpoints.clientById(params))
 
-  return response.data
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const addClients = createAsyncThunk(
   'appClient/addClients',
   async (data, { getState, dispatch }) => {
-    const response = await instance.post(endpoints.addClient, data)
+    try {
+      const response = await instance.post(endpoints.addClient, data)
 
-    return response
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
 export const updateClient = createAsyncThunk('appClient/updateClient', async data => {
-  const response = await instance.put(endpoints.updateClient, data)
+  try {
+    const response = await instance.put(endpoints.updateClient, data)
 
-  return response
+    return response.data
+  } catch (error) {
+    const { response } = error
+
+    return response.data
+  }
 })
 
 export const deleteClient = createAsyncThunk(
   'appClient/deleteClient',
   async (id, { getState, dispatch }) => {
-    const response = await instance.delete(endpoints.deleteClient(id))
+    try {
+      const response = await instance.delete(endpoints.deleteClient(id))
 
-    return response
+      return response.data
+    } catch (error) {
+      const { response } = error
+
+      return response.data
+    }
   }
 )
 
@@ -57,14 +87,14 @@ export const appClientSlice = createSlice({
   },
   extraReducers: builder => {
     builder.addCase(fetchClients.fulfilled, (state, action) => {
-      state.clients = action.payload
+      state.clients = action.payload.result
     })
     builder.addCase(addClients.fulfilled, (state, action) => {
-      state.clients = [...state.clients, action.payload.data.result]
+      state.clients = [...state.clients, action.payload.result]
     })
     builder.addCase(updateClient.fulfilled, (state, action) => {
       state.clients = state.clients.map(x =>
-        x.id === action.payload.data.result.id ? action.payload.data.result : x
+        x.id === action.payload.result.id ? action.payload.result : x
       )
     })
     builder.addCase(fetchClientById.fulfilled, (state, action) => {

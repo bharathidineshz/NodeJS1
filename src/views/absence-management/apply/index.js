@@ -21,7 +21,7 @@ import { AvatarGroup, Button, Grid, IconButton, Tooltip } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
 import { Icon } from '@iconify/react'
 import OptionsMenu from 'src/@core/components/option-menu'
-import FallbackSpinner from 'src/@core/components/spinner'
+import FallbackSpinner, { BackdropSpinner } from 'src/@core/components/spinner'
 import { unwrapResult } from '@reduxjs/toolkit'
 import Toolbar from 'src/views/absence-management/toolBar'
 import LeaveDashboard from 'src/views/absence-management/dashboard/Dashboard'
@@ -35,7 +35,8 @@ import {
   fetchUserReports,
   fetchDashboard,
   deleteRequest,
-  setMyleaves
+  setMyleaves,
+  setDashboards
 } from 'src/store/absence-management'
 import { formatLocalDate } from 'src/helpers/dateFormats'
 import dynamic from 'next/dynamic'
@@ -44,22 +45,17 @@ import SimpleBackdrop from 'src/@core/components/spinner'
 import { customErrorToast, customSuccessToast } from 'src/helpers/custom-components/toasts'
 import Error404 from 'src/pages/404'
 import { handleResponse } from 'src/helpers/helpers'
+import { LEAVE_STATUS } from 'src/helpers/constants'
 
 const DynamicEditLeaveRequest = dynamic(
   () => import('src/views/absence-management/apply/EditLeaveRequest'),
   {
-    ssr: false,
-    loading: () => {
-      return <FallbackSpinner />
-    }
+    ssr: false
   }
 )
 
 const DynamicDeleteAlert = dynamic(() => import('src/views/components/alerts/DeleteAlert'), {
-  ssr: false,
-  loading: () => {
-    return <FallbackSpinner />
-  }
+  ssr: false
 })
 
 const LeaveApply = () => {
@@ -74,18 +70,15 @@ const LeaveApply = () => {
   const [filteredRows, setFilteredRows] = useState([])
   const dispatch = useDispatch()
   const store = useSelector(state => state.leaveManagement)
+  const _userStore = useSelector(state => state.user)
 
   useEffect(() => {
-    dispatch(fetchUsers())
-      .then(unwrapResult)
-      .then(res => {
-        const currentUser = JSON.parse(localStorage.getItem('userData'))
-        const user = currentUser && res.result?.find(o => currentUser.user === o.email)
-        dispatch(fetchStatus())
-        dispatch(fetchMyLeaves())
-        dispatch(fetchDashboard(user?.id)).then(res => setLoading(false))
-      })
-  }, [])
+    if (store.dashboards == null) {
+      const userId = Number(localStorage.getItem('userId'))
+      if (userId != 0) dispatch(fetchDashboard(userId))
+    }
+    store.myLeaves == null && dispatch(fetchMyLeaves())
+  }, [_userStore.userId, dispatch, store.dashboards, store.myLeaves, store.users])
 
   useEffect(() => {
     setOpen(false)
@@ -166,16 +159,9 @@ const LeaveApply = () => {
       headerName: 'Status',
       field: 'requestStatusId',
       renderCell: params => {
-        const status = store.statuses.find(s => s.id === params.value)
+        const status = LEAVE_STATUS.find(o => o.id == params.value)
 
-        return (
-          <CustomChip
-            size='small'
-            skin='light'
-            color={params.value === 2 ? 'success' : params.value === 3 ? 'error' : 'warning'}
-            label={status?.statusName}
-          />
-        )
+        return <CustomChip size='small' skin='light' color={status.color} label={status.name} />
       }
     },
     {
@@ -185,7 +171,7 @@ const LeaveApply = () => {
       sortable: false,
       renderCell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {row.requestStatusId === 2 ? (
+          {[2, 5, 8].includes(row.requestStatusId) ? (
             <Button
               variant='text'
               color='secondary'
@@ -196,7 +182,7 @@ const LeaveApply = () => {
             >
               Cancel
             </Button>
-          ) : row.requestStatusId === 3 ? null : (
+          ) : [1, 4].includes(row.requestStatusId) ? (
             <IconButton
               onClick={() => {
                 setOpen(false), setRow(row), setOpenAlert(!alert)
@@ -205,7 +191,7 @@ const LeaveApply = () => {
             >
               <Icon icon='mdi:delete-outline' fontSize={20} />
             </IconButton>
-          )}
+          ) : null}
         </Box>
       )
     }
@@ -236,12 +222,20 @@ const LeaveApply = () => {
   //UPDATE Request STATE
   const updateRequestsState = newReq => {
     let myleaves = [...store.myLeaves]
+    let dashboards = [...store.dashboards]
     const index = myleaves.findIndex(item => item.id === newReq.id)
+    let boardIndex = dashboards.findIndex(o => newReq.leavePolicyName === o.name)
+    if (boardIndex != -1)
+      dashboards[boardIndex] = {
+        ...dashboards[boardIndex],
+        balanceCount: dashboards[boardIndex]?.balanceCount + 1
+      }
 
     if (index !== -1) {
       myleaves.splice(index, 1)
     }
     dispatch(setMyleaves(myleaves))
+    dispatch(setDashboards(dashboards))
   }
 
   //delete
@@ -253,9 +247,7 @@ const LeaveApply = () => {
         .then(unwrapResult)
         .then(res => {
           handleResponse('delete', res, updateRequestsState, row)
-          const currentUser = JSON.parse(localStorage.getItem('userData'))
-          const user = currentUser && store.users.find(o => currentUser.user === o.email)
-          dispatch(fetchDashboard(user.id))
+
           setLoading(false)
         })
     } catch (error) {
@@ -265,50 +257,46 @@ const LeaveApply = () => {
 
   return (
     <>
-      {isLoading ? (
-        <SimpleBackdrop />
-      ) : (
-        <Grid container spacing={6}>
-          <Grid item xs={12} md={6} lg={6}>
-            <LeaveDashboard />
-          </Grid>
-          <Grid item xs={12} md={6} lg={6}>
-            <LeaveDetails />
-          </Grid>
-          <Grid item xs={12}>
-            <Card>
-              <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Request' />
-              <DataGrid
-                autoHeight
-                pagination
-                rows={searchValue ? filteredRows : store.myLeaves}
-                columns={columns}
-                rowSelection={false}
-                pageSizeOptions={[5, 10, 25, 50, 100]}
-                loading={store.myLeaves == null}
-                localeText={{ noRowsLabel: 'No Leaves' }}
-                onCellClick={data =>
-                  data.row.requestStatusId == 1 &&
-                  data.field != 'action' &&
-                  handleRowSelection(data)
-                }
-                sx={{
-                  '&:hover': {
-                    cursor: 'pointer'
-                  }
-                }}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: 25
-                    }
-                  }
-                }}
-              />
-            </Card>
-          </Grid>
+      <Grid container spacing={6}>
+        <Grid item xs={12} md={6} lg={6}>
+          <LeaveDashboard />
         </Grid>
-      )}
+        <Grid item xs={12} md={6} lg={6}>
+          <LeaveDetails />
+        </Grid>
+        <Grid item xs={12}>
+          <Card>
+            <Toolbar searchValue={searchValue} handleFilter={handleSearch} label='Request' />
+            <DataGrid
+              autoHeight
+              pagination
+              rows={searchValue ? filteredRows : store.myLeaves || []}
+              columns={columns}
+              rowSelection={false}
+              pageSizeOptions={[5, 10, 25, 50, 100]}
+              loading={store.myLeaves == null}
+              localeText={{ noRowsLabel: 'No Leaves' }}
+              onCellClick={data =>
+                data.row.requestStatusId == 1 || data.field != 'action'
+                  ? handleRowSelection(data)
+                  : null
+              }
+              sx={{
+                '&:hover': {
+                  cursor: 'pointer'
+                }
+              }}
+              initialState={{
+                pagination: {
+                  paginationModel: {
+                    pageSize: 25
+                  }
+                }
+              }}
+            />
+          </Card>
+        </Grid>
+      </Grid>
 
       <DynamicEditLeaveRequest isOpen={isOpen} row={row} setOpen={setOpen} />
       <DynamicDeleteAlert

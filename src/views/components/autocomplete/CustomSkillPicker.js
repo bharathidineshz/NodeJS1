@@ -5,7 +5,7 @@ import { Avatar, Box, Chip } from '@mui/material'
 import CustomChip from 'src/@core/components/mui/chip'
 import { getInitials } from 'src/@core/utils/get-initials'
 
-const CustomSkillPicker = ({ values, items, label, setSkills, ...rest }) => {
+const CustomSkillPicker = ({ values, items, label, setSkills, onRemove, originalItems }) => {
   const [selectedValues, setSelectedValues] = React.useState([])
   const [fieldValue, setFieldValue] = React.useState([])
   const [options, setOptions] = React.useState([])
@@ -26,19 +26,18 @@ const CustomSkillPicker = ({ values, items, label, setSkills, ...rest }) => {
 
   const handleDelete = selectedValue => {
     const values = [...selectedValues]
-    const person = items.find(o => o.skillName === selectedValue.skillName)
+    const skill = originalItems.find(o => o.skillName === selectedValue.skillName)
     const indx = values.findIndex(o => o.skillName === selectedValue.skillName)
     values.splice(indx, 1)
-    !options.includes(person) && options.push(person)
+    !options.includes(skill) && options.push(skill)
     setOptions(options)
+    onRemove(skill)
     setSelectedValues(values)
-    setSkills && setSkills(values)
   }
 
   return (
     <Box>
       <Autocomplete
-        {...rest}
         multiple
         fullWidth
         limitTags={3}

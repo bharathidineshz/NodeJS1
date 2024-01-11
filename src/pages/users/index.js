@@ -46,7 +46,7 @@ import TableHeader from 'src/views/apps/user/list/TableHeader'
 import AddUserDrawer from 'src/views/apps/user/list/AddUserDrawer'
 import { roles } from 'src/helpers/constants'
 import { useRouter } from 'next/router'
-import SimpleBackdrop from 'src/@core/components/spinner'
+import SimpleBackdrop, { BackdropSpinner, Spinner } from 'src/@core/components/spinner'
 
 // ** Vars
 
@@ -100,7 +100,7 @@ const columns = [
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {renderClient(fullName)}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
-            <LinkStyled href={`/users/view/${row.id}`}>{fullName}</LinkStyled>
+            <LinkStyled href={`/users/${row.id}`}>{fullName}</LinkStyled>
           </Box>
         </Box>
       )
@@ -162,83 +162,61 @@ const UserList = ({ apiData }) => {
   const [status, setStatus] = useState('')
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [isLoading, setLoading] = useState(false)
-
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
+  const [filteredData, setFilteredData] = useState([])
 
   // ** Hooks
   const router = useRouter()
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
   useEffect(() => {
-    setLoading(true)
+    store.users == null && setLoading(true)
     dispatch(fetchUsers()).then(res => setLoading(false))
-  }, [dispatch, addUserOpen])
+  }, [dispatch, store.users])
 
-  const handleFilter = useCallback(val => {
-    // Filter logic based on the 'val' (search text)
-    setValue(val)
-  }, [])
+  const handleSearch = value => {
+    setValue(value)
+    const rowData = store.users ? [...store.users] : []
 
-  const filteredData = useMemo(() => {
-    let filtered = store.users // Assuming store.data contains the user data
+    const filtered = rowData?.filter(
+      user =>
+        (user.fullName && user.fullName.toLowerCase().includes(value.toLowerCase())) ||
+        (user.email && user.email.toLowerCase().includes(value.toLowerCase())) ||
+        (user.costPerHour && user.costPerHour.toString().includes(value))
+    )
+    setFilteredData(filtered)
+  }
 
-    console.log(filtered)
-    // Filter by search text
-    if (value) {
-      filtered = filtered.filter(
-        user =>
-          (user.fullName && user.fullName.toLowerCase().includes(value.toLowerCase())) ||
-          (user.email && user.email.toLowerCase().includes(value.toLowerCase()))
-
-        // Add more fields to search if needed
-      )
-    }
-
-    return filtered
-  }, [store.users, value])
-
-  const handleRoleChange = useCallback(e => {
-    setRole(e.target.value)
-  }, [])
-
-  const handlePlanChange = useCallback(e => {
-    setPlan(e.target.value)
-  }, [])
-
-  const handleStatusChange = useCallback(e => {
-    setStatus(e.target.value)
-  }, [])
   const toggleAddUserDrawer = () => setAddUserOpen(!addUserOpen)
 
   const onViewUser = data => {
     dispatch(setUserId(data?.row.id))
-    router.push({
-      pathname: `/users/view/${data?.row.id}`
-    })
+    router.push('/users/[id]', `/users/${data?.row.id}`)
   }
 
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        {isLoading ? (
-          <SimpleBackdrop />
-        ) : (
-          <Card>
-            <CardHeader />
-            <TableHeader value={value} handleFilter={handleFilter} toggle={toggleAddUserDrawer} />
-            <DataGrid
-              autoHeight
-              rows={filteredData ?? []}
-              columns={columns}
-              disableRowSelectionOnClick
-              onRowClick={onViewUser}
-              pageSizeOptions={[10, 25, 50]}
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              localeText={{ noRowsLabel: 'No Users' }}
-            />
-          </Card>
-        )}
+        <Card>
+          <CardHeader />
+          <TableHeader value={value} handleFilter={handleSearch} toggle={toggleAddUserDrawer} />
+          <DataGrid
+            autoHeight
+            rows={value ? filteredData : store.users || []}
+            columns={columns}
+            disableRowSelectionOnClick
+            onRowClick={onViewUser}
+            pageSizeOptions={[5, 10, 25, 50, 100]}
+            loading={isLoading}
+            localeText={{ noRowsLabel: 'No Users' }}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 25
+                }
+              }
+            }}
+          />
+        </Card>
       </Grid>
 
       <AddUserDrawer open={addUserOpen} toggle={toggleAddUserDrawer} />

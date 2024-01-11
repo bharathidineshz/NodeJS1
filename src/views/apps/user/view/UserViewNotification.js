@@ -32,7 +32,10 @@ const UserViewNotification = () => {
       <TableContainer>
         <Table sx={{ minWidth: 500 }}>
           <TableHead
-            sx={{ backgroundColor: theme => (theme.palette.mode === 'light' ? 'grey.50' : 'background.default') }}
+            sx={{
+              backgroundColor: theme =>
+                theme.palette.mode === 'light' ? 'grey.50' : 'background.default'
+            }}
           >
             <TableRow>
               <TableCell>Type</TableCell>
@@ -116,7 +119,7 @@ const UserViewNotification = () => {
           Save Changes
         </Button>
         <Button color='secondary' variant='outlined'>
-          Discard
+          Cancel
         </Button>
       </CardActions>
     </Card>

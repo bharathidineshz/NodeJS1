@@ -104,6 +104,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
       policies[indexToReplace] = newPolicy
     }
     dispatch(setPolicies(policies))
+    reset()
   }
 
   //submit
@@ -112,7 +113,6 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
     try {
       const req = { id: row?.id, ...data }
       setOpen(false)
-      reset()
       dispatch(putPolicy(leavePolicyRequest(req)))
         .then(unwrapResult)
         .then(res => {
@@ -392,7 +392,7 @@ const EditLeavePolicy = ({ isOpen, setOpen, row }) => {
             Cancel
           </Button>
           <Button variant='contained' type='submit' sx={{ mr: 1 }}>
-            Update
+            Submit
           </Button>
         </DialogActions>
       </form>

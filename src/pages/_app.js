@@ -92,13 +92,12 @@ const App = props => {
     if (accessToken) {
       const oldTokenDecoded = jwt.decode(accessToken, { complete: true })
       const user = oldTokenDecoded?.payload
-      const isExpired = dayjs.unix(user?.exp).diff(dayjs()) < 1
-      if (isExpired) {
-        router.replace({
-          pathname: '/login',
-          query: { returnUrl: router.asPath }
-        })
-      }
+      const isExpired = dayjs.unix(user.exp).diff(dayjs()) < 1
+      isExpired
+        ? router.replace({ pathname: '/login' })
+        : router.replace({
+            pathname: router.route == '/' ? '/absence-management/leaves' : router.route
+          })
     } else if (!router.pathname.includes('employee-signup'.toLowerCase())) {
       router.push('/login')
     }

@@ -36,6 +36,7 @@ import { unwrapResult } from '@reduxjs/toolkit'
 import toast from 'react-hot-toast'
 import { fetchSkills } from 'src/store/apps/user'
 import { handleResponse } from 'src/helpers/helpers'
+import { BackdropSpinner } from 'src/@core/components/spinner'
 
 const showErrors = (field, valueLen, min) => {
   if (valueLen === 0) {
@@ -90,16 +91,22 @@ const SidebarAddUser = props => {
 
   // ** State
   const [plan, setPlan] = useState([])
-  const [role, setRole] = useState(4)
+  const [isLoading, setLoading] = useState(false)
   const [skills, setSkills] = useState([])
 
   // ** Hooks
   const dispatch = useDispatch()
   const store = useSelector(state => state.user)
 
+  const [items, setItems] = useState([])
+
   useEffect(() => {
     dispatch(fetchSkills())
   }, [])
+
+  useEffect(() => {
+    setItems(store.skills)
+  }, [store.skills])
 
   const {
     reset,
@@ -116,14 +123,16 @@ const SidebarAddUser = props => {
   })
 
   const updateUsersList = user => {
-    const users = [...store.users]
+    const users = store.users ? [...store.users] : []
     users.unshift(user)
     dispatch(setUsers(users))
+    setLoading(false)
   }
 
   const onSubmit = data => {
     handleClose()
-    const user = store.users.find(o => o.fullName == data.reportingManager)
+    setLoading(true)
+    const user = store.users?.find(o => o.fullName == data.reportingManager)
     const _skills = skills.map(o => o.id)
     const req = {
       ...data,
@@ -141,191 +150,200 @@ const SidebarAddUser = props => {
 
   const handleSkills = values => {
     setSkills(values)
+    const _items = [...items]
+    const _index = _items.findIndex(o => o.id == values[values.length - 1].id)
+    _items.splice(_index, 1)
+    setItems(_items)
   }
 
   const handleClose = () => {
     setSkills([])
+    setItems(store.skills)
     toggle()
     reset()
   }
 
   return (
-    <Drawer
-      open={open}
-      anchor='right'
-      variant='temporary'
-      onClose={handleClose}
-      ModalProps={{ keepMounted: true }}
-      sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
-    >
-      <Header>
-        <Typography variant='h6'>Add User</Typography>
-        <IconButton size='small' onClick={handleClose} sx={{ color: 'text.primary' }}>
-          <Icon icon='mdi:close' fontSize={20} />
-        </IconButton>
-      </Header>
-      <Box sx={{ p: 5 }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <Controller
-              name='firstName'
-              control={control}
-              rules={{ required: true }}
-              render={({ field: { value, onChange } }) => (
-                <TextField
-                  value={value}
-                  label='Full Name'
-                  onChange={onChange}
-                  // placeholder='John Doe'
-                  error={Boolean(errors.firstName)}
-                />
+    <>
+      {isLoading && <BackdropSpinner />}
+      <Drawer
+        open={open}
+        anchor='right'
+        variant='temporary'
+        onClose={handleClose}
+        ModalProps={{ keepMounted: true }}
+        sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
+      >
+        <Header>
+          <Typography variant='h6'>Add User</Typography>
+          <IconButton size='small' onClick={handleClose} sx={{ color: 'text.primary' }}>
+            <Icon icon='mdi:close' fontSize={20} />
+          </IconButton>
+        </Header>
+        <Box sx={{ p: 5 }}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <FormControl fullWidth sx={{ mb: 6 }}>
+              <Controller
+                name='firstName'
+                control={control}
+                rules={{ required: true }}
+                render={({ field: { value, onChange } }) => (
+                  <TextField
+                    value={value}
+                    label='Full Name'
+                    onChange={onChange}
+                    // placeholder='John Doe'
+                    error={Boolean(errors.firstName)}
+                  />
+                )}
+              />
+              {errors.firstName && (
+                <FormHelperText sx={{ color: 'error.main' }}>
+                  {errors.firstName.message}
+                </FormHelperText>
               )}
-            />
-            {errors.firstName && (
-              <FormHelperText sx={{ color: 'error.main' }}>
-                {errors.firstName.message}
-              </FormHelperText>
-            )}
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <Controller
-              name='lastName'
-              control={control}
-              rules={{ required: true }}
-              render={({ field: { value, onChange } }) => (
-                <TextField
-                  value={value}
-                  label='Last Name'
-                  onChange={onChange}
-                  // placeholder='johndoe'
-                  error={Boolean(errors.lastName)}
-                />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 6 }}>
+              <Controller
+                name='lastName'
+                control={control}
+                rules={{ required: true }}
+                render={({ field: { value, onChange } }) => (
+                  <TextField
+                    value={value}
+                    label='Last Name'
+                    onChange={onChange}
+                    // placeholder='johndoe'
+                    error={Boolean(errors.lastName)}
+                  />
+                )}
+              />
+              {errors.lastName && (
+                <FormHelperText sx={{ color: 'error.main' }}>
+                  {errors.lastName.message}
+                </FormHelperText>
               )}
-            />
-            {errors.lastName && (
-              <FormHelperText sx={{ color: 'error.main' }}>
-                {errors.lastName.message}
-              </FormHelperText>
-            )}
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <Controller
-              name='email'
-              control={control}
-              rules={{ required: true }}
-              render={({ field: { value, onChange } }) => (
-                <TextField
-                  type='email'
-                  value={value}
-                  label='Email'
-                  onChange={onChange}
-                  placeholder='johndoe@email.com'
-                  error={Boolean(errors.email)}
-                />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 6 }}>
+              <Controller
+                name='email'
+                control={control}
+                rules={{ required: true }}
+                render={({ field: { value, onChange } }) => (
+                  <TextField
+                    type='email'
+                    value={value}
+                    label='Email'
+                    onChange={onChange}
+                    placeholder='johndoe@email.com'
+                    error={Boolean(errors.email)}
+                  />
+                )}
+              />
+              {errors.email && (
+                <FormHelperText sx={{ color: 'error.main' }}>{errors.email.message}</FormHelperText>
               )}
-            />
-            {errors.email && (
-              <FormHelperText sx={{ color: 'error.main' }}>{errors.email.message}</FormHelperText>
-            )}
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <Controller
-              name='cost'
-              control={control}
-              rules={{ required: true }}
-              render={({ field: { value, onChange } }) => (
-                <TextField
-                  type='number'
-                  value={value}
-                  label='Cost'
-                  onChange={onChange}
-                  // placeholder='(397) 294-5153'
-                  error={Boolean(errors.cost)}
-                />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 6 }}>
+              <Controller
+                name='cost'
+                control={control}
+                rules={{ required: true }}
+                render={({ field: { value, onChange } }) => (
+                  <TextField
+                    type='number'
+                    value={value}
+                    label='Cost'
+                    onChange={onChange}
+                    // placeholder='(397) 294-5153'
+                    error={Boolean(errors.cost)}
+                  />
+                )}
+              />
+              {errors.cost && (
+                <FormHelperText sx={{ color: 'error.main' }}>{errors.cost.message}</FormHelperText>
               )}
-            />
-            {errors.cost && (
-              <FormHelperText sx={{ color: 'error.main' }}>{errors.cost.message}</FormHelperText>
-            )}
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <InputLabel id='role-select'>Select Role</InputLabel>
-            <Controller
-              name='role'
-              control={control}
-              rules={{ required: true }}
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  fullWidth
-                  value={value}
-                  id='select-role'
-                  label='Select Role'
-                  labelId='role-select'
-                  onChange={onChange}
-                  inputProps={{ placeholder: 'Select Role' }}
-                  error={Boolean(errors.role)}
-                >
-                  {Object.keys(roles).map((key, i) => (
-                    <MenuItem key={i} value={i + 1}>
-                      {roles[key].name}
-                    </MenuItem>
-                  ))}
-                </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 6 }}>
+              <InputLabel id='role-select'>Select Role</InputLabel>
+              <Controller
+                name='role'
+                control={control}
+                rules={{ required: true }}
+                render={({ field: { value, onChange } }) => (
+                  <Select
+                    fullWidth
+                    value={value}
+                    id='select-role'
+                    label='Select Role'
+                    labelId='role-select'
+                    onChange={onChange}
+                    inputProps={{ placeholder: 'Select Role' }}
+                    error={Boolean(errors.role)}
+                  >
+                    {Object.keys(roles).map((key, i) => (
+                      <MenuItem key={i} value={i + 1}>
+                        {roles[key].name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+              {errors.role && (
+                <FormHelperText sx={{ color: 'error.main' }}>{errors.role.message}</FormHelperText>
               )}
-            />
-            {errors.role && (
-              <FormHelperText sx={{ color: 'error.main' }}>{errors.role.message}</FormHelperText>
-            )}
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <Controller
-              name='reportingManager'
-              control={control}
-              rules={{ required: store.users?.length > 0 ? true : false }}
-              render={({ field }) => (
-                <Autocomplete
-                  options={store.users}
-                  id='autocomplete-limit-tags'
-                  getOptionLabel={option => (option?.fullName ? option.fullName : option)}
-                  onChange={(e, v) => {
-                    field.onChange(e.target.innerText)
-                  }}
-                  value={field.value?.fullName ? field.value.fullName : field.value}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      error={Boolean(errors.reportingManager)}
-                      label='Reporting Manager'
-                    />
-                  )}
-                />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 6 }}>
+              <Controller
+                name='reportingManager'
+                control={control}
+                rules={{ required: store.users?.length > 0 ? true : false }}
+                render={({ field }) => (
+                  <Autocomplete
+                    options={store.users || []}
+                    id='autocomplete-limit-tags'
+                    getOptionLabel={option => (option?.fullName ? option.fullName : option)}
+                    onChange={(e, v) => {
+                      field.onChange(e.target.innerText)
+                    }}
+                    value={field.value?.fullName ? field.value.fullName : field.value}
+                    renderInput={params => (
+                      <TextField
+                        {...params}
+                        error={Boolean(errors.reportingManager)}
+                        label='Reporting Manager'
+                      />
+                    )}
+                  />
+                )}
+              />
+              {errors.reportingManager && (
+                <FormHelperText sx={{ color: 'error.main' }}>
+                  {errors.reportingManager.message}
+                </FormHelperText>
               )}
-            />
-            {errors.reportingManager && (
-              <FormHelperText sx={{ color: 'error.main' }}>
-                {errors.reportingManager.message}
-              </FormHelperText>
-            )}
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 6 }}>
-            <CustomSkillPicker
-              values={skills}
-              items={store.skills ? store.skills : []}
-              label='Skills'
-              setSkills={handleSkills}
-            />
-          </FormControl>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Button size='large' type='submit' variant='contained' sx={{ mr: 3 }}>
-              Submit
-            </Button>
-            <Button size='large' variant='outlined' color='secondary' onClick={handleClose}>
-              Cancel
-            </Button>
-          </Box>
-        </form>
-      </Box>
-    </Drawer>
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 6 }}>
+              <CustomSkillPicker
+                values={skills}
+                items={items?.length > 0 ? items : store.skills || []}
+                label='Skills'
+                setSkills={handleSkills}
+                originalItems={store.skills ? store.skills : []}
+              />
+            </FormControl>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Button size='large' type='submit' variant='contained' sx={{ mr: 3 }}>
+                Submit
+              </Button>
+              <Button size='large' variant='outlined' color='secondary' onClick={handleClose}>
+                Cancel
+              </Button>
+            </Box>
+          </form>
+        </Box>
+      </Drawer>
+    </>
   )
 }
 
